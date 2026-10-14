@@ -121,7 +121,7 @@ public static class SvgExporter
                 break;
 
             case WireframeKind.Button:
-                Box(svg, x, y, element.Width, element.Height, Paper);
+                Box(svg, x, y, element.Width, element.Height, element.VisualState == ControlVisualState.Selected ? "#e5e7eb" : Paper);
                 Text(svg, middle, centerY + (size / 3), text, size, weight, 1, "middle");
                 break;
 
@@ -152,7 +152,9 @@ public static class SvgExporter
 
             case WireframeKind.Checkbox:
                 Box(svg, x, checkTop, 14, 14, Paper);
-                if (element.Checked)
+                if (element.Indeterminate)
+                    Line(svg, x + 3, checkTop + 7, x + 11, checkTop + 7, 1);
+                else if (element.Checked)
                 {
                     Line(svg, x + 3, checkTop + 7, x + 6, checkTop + 11, 1);
                     Line(svg, x + 6, checkTop + 11, x + 11, checkTop + 3, 1);
@@ -489,6 +491,15 @@ public static class SvgExporter
             }
         }
 
+        if (FormState.HasVisualState(element.Kind) && element.VisualState is ControlVisualState.Focused or ControlVisualState.Error)
+        {
+            svg.Append("<rect x=\"").Append(Number(x + 2)).Append("\" y=\"").Append(Number(y + 2))
+                .Append("\" width=\"").Append(Number(Math.Max(0, element.Width - 4))).Append("\" height=\"").Append(Number(Math.Max(0, element.Height - 4)))
+                .Append("\" fill=\"none\" stroke=\"#1b1e24\" stroke-width=\"2\"")
+                .Append(element.VisualState == ControlVisualState.Error ? " stroke-dasharray=\"4 2\"" : "").Append("/>");
+        }
+        if (FormState.HasFeedback(element.Kind) && !string.IsNullOrEmpty(element.FeedbackText))
+            Text(svg, x + 6, bottom - 2, element.FeedbackText, 10, "400", 1);
         svg.AppendLine("</g>");
     }
 

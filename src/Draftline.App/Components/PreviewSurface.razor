@@ -43,7 +43,8 @@
                 {
                     var item = element;
                     <WireframeElementView Element="@PreviewElement(shown, item)" Interactive="@(!item.HasTransition)"
-                                          DrawingOrder="@(drawOrder++)" StateChanged="StateHasChanged" />
+                                          DrawingOrder="@(drawOrder++)" StateChanged="StateHasChanged"
+                                          CheckedChanged="@(state => ChangeCheck(shown, state))" />
 
                     @if (item.HasTransition && !item.Disabled)
                     {
@@ -70,6 +71,13 @@
         if (!_states.TryGetValue(key, out var state))
             _states[key] = state = authored.Clone();
         return state;
+    }
+
+    private void ChangeCheck(DraftLayer layer, WireframeElement element)
+    {
+        FormState.Check(layer.Elements.Select(authored => PreviewElement(layer, authored)), element,
+            element.Kind == WireframeKind.Radio || element.Indeterminate || !element.Checked);
+        StateHasChanged();
     }
 
     private string SheetClass =>

@@ -17,6 +17,7 @@ else
         <p class="df-inspector__kind">@ElementDefaults.NameOf(element.Kind)</p>
         <TabPanelInspector Element="element" />
         <TreeInspector Element="element" />
+        <FormInspector Element="element" />
 
         @if (ElementState.HasAvailability(element.Kind))
         {
@@ -339,7 +340,7 @@ else
             return;
         }
 
-        Apply(element, "Отметка изменена", target => target.Checked = value);
+        Session.SetCheck(element.Id, value);
     }
 
     private void SetOptions(WireframeElement element, string? value)

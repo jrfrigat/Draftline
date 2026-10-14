@@ -70,6 +70,15 @@ public sealed class WireframeElement
     /// <summary>Whether a checkbox or a radio button is ticked.</summary>
     public bool Checked { get; set; }
 
+    /// <summary>Mixed checkbox state; also used for an indeterminate progress indicator.</summary>
+    public bool Indeterminate { get; set; }
+    /// <summary>Radio controls with the same nonempty group on a screen exclude each other.</summary>
+    public string RadioGroup { get; set; } = string.Empty;
+    /// <summary>Authored visual state of a form control.</summary>
+    public ControlVisualState VisualState { get; set; }
+    /// <summary>Supporting or error text of an input.</summary>
+    public string FeedbackText { get; set; } = string.Empty;
+
     /// <summary>Selected row, tab or section; -1 means no explicit selection.</summary>
     public int SelectedIndex { get; set; } = -1;
 
@@ -146,6 +155,10 @@ public sealed class WireframeElement
         Transition = Transition,
         TargetLayerId = TargetLayerId,
         Checked = Checked,
+        Indeterminate = Indeterminate,
+        RadioGroup = RadioGroup,
+        VisualState = VisualState,
+        FeedbackText = FeedbackText,
         SelectedIndex = SelectedIndex,
         TabContents = new List<string>(TabContents),
         TreeDepths = new List<int>(TreeDepths),

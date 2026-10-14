@@ -119,6 +119,7 @@ public sealed class DraftLayer
             element.ZIndex = order++;
         }
         TabPanels.Normalize(this);
+        FormState.Normalize(this);
     }
 
     private static void NormalizeRows(WireframeElement element)

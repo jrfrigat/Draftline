@@ -1,0 +1,47 @@
+@inject DocumentSession Session
+@if (Element.Kind == WireframeKind.Checkbox)
+{
+    <FlareCheckbox Value="@Element.Indeterminate" ValueChanged="@((bool value) => Session.SetCheck(Element.Id, false, value))">Промежуточное состояние</FlareCheckbox>
+}
+@if (Element.Kind == WireframeKind.Radio)
+{
+    <FlareTextField Label="Группа переключателей" Size="FieldSize.Xs" Value="@Element.RadioGroup" ValueChanged="SetGroup"
+                    HelperText="Одинаковое имя на экране — один выбранный вариант." />
+}
+@if (FormState.HasVisualState(Element.Kind))
+{
+    <FlareSelect Label="Внешнее состояние" Size="FieldSize.Xs" Value="@Element.VisualState.ToString()"
+                 ValueChanged="@((string? value) => SetVisual(value))">
+        <option value="Normal">Обычное</option>
+        <option value="Focused">В фокусе</option>
+        @if (Element.Kind == WireframeKind.Button) { <option value="Selected">Нажата / выбрана</option> }
+        else { <option value="Error">Ошибка</option> }
+    </FlareSelect>
+}
+@if (FormState.HasFeedback(Element.Kind))
+{
+    <FlareTextField Label="Пояснение / сообщение об ошибке" Size="FieldSize.Xs" Value="@Element.FeedbackText" ValueChanged="SetFeedback" />
+}
+@code {
+    /// <summary>The selected form control.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    private void SetGroup(string? value)
+    {
+        var group = value?.Trim() ?? string.Empty;
+        if (group == Element.RadioGroup) return;
+        Session.Edit("Группа переключателей изменена", _ =>
+        {
+            Element.RadioGroup = group;
+            FormState.Check(Session.CurrentLayer.Elements, Element, Element.Checked);
+        });
+    }
+    private void SetVisual(string? value)
+    {
+        if (Enum.TryParse<ControlVisualState>(value, out var state) && state != Element.VisualState)
+            Session.Edit("Внешнее состояние изменено", _ => Element.VisualState = state);
+    }
+    private void SetFeedback(string? value)
+    {
+        if (Element.FeedbackText != (value ?? string.Empty)) Session.Edit("Пояснение изменено", _ => Element.FeedbackText = value ?? string.Empty);
+    }
+}

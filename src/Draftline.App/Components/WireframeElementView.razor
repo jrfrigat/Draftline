@@ -36,13 +36,26 @@
 
         case WireframeKind.TextField:
             <span class="df-field__label">@Element.DisplayText</span>
+            @if (Interactive)
+            {
+                <input class="df-preview-input" aria-label="@Element.DisplayText" value="@Element.Value" placeholder="@Element.Placeholder"
+                       disabled="@Element.Disabled" aria-invalid="@(Element.VisualState == ControlVisualState.Error ? "true" : null)" @onchange="SetPreviewValue" />
+            }
+            else
+            {
             <span class="@ValueClass">@Element.DisplayValue</span>
             <span class="df-field__line"></span>
+            }
             break;
 
         case WireframeKind.TextArea:
             <span class="df-field__label">@Element.DisplayText</span>
-            @if (!string.IsNullOrWhiteSpace(Element.Value))
+            @if (Interactive)
+            {
+                <textarea class="df-preview-area" aria-label="@Element.DisplayText" placeholder="@Element.Placeholder"
+                          disabled="@Element.Disabled" value="@Element.Value" @onchange="SetPreviewValue"></textarea>
+            }
+            else if (!string.IsNullOrWhiteSpace(Element.Value))
             {
                 <span class="df-area__value">@Element.Value</span>
             }
@@ -53,14 +66,14 @@
             @if (Interactive)
             {
                 <button type="button" class="df-check-control df-state-button" role="checkbox"
-                        aria-checked="@(Element.Checked ? "true" : "false")" disabled="@Element.Disabled" @onclick="ToggleChecked">
-                    <span class="df-check@(Element.Checked ? " df-check--on" : string.Empty)" aria-hidden="true"></span>
+                        aria-checked="@(Element.Indeterminate ? "mixed" : Element.Checked ? "true" : "false")" disabled="@Element.Disabled" @onclick="ToggleChecked">
+                    <span class="@CheckClass" aria-hidden="true"></span>
                     @Element.DisplayText
                 </button>
             }
             else
             {
-            <span class="df-check@(Element.Checked ? " df-check--on" : string.Empty)"></span>
+            <span class="@CheckClass"></span>
             <span class="df-check__label">@Element.DisplayText</span>
             }
             break;
@@ -247,6 +260,10 @@
             }
             break;
     }
+    @if (FormState.HasFeedback(Element.Kind) && !string.IsNullOrEmpty(Element.FeedbackText))
+    {
+        <span class="df-control-feedback">@Element.FeedbackText</span>
+    }
 </div>
 
 @code {
@@ -292,6 +309,16 @@
 
     /// <summary>Notifies the preview after a temporary state change.</summary>
     [Parameter] public EventCallback StateChanged { get; set; }
+    /// <summary>Delegates a preview check to the screen so named radio groups can exclude each other.</summary>
+    [Parameter] public EventCallback<WireframeElement> CheckedChanged { get; set; }
+
+    private string CheckClass => "df-check" + (Element.Indeterminate ? " df-check--mixed" : Element.Checked ? " df-check--on" : "");
+    private async Task SetPreviewValue(ChangeEventArgs args)
+    {
+        if (!Interactive || Element.Disabled) return;
+        Element.Value = args.Value?.ToString() ?? string.Empty;
+        await StateChanged.InvokeAsync();
+    }
 
     private RenderFragment Choice(int index, string css, string label) => @<text>
         @if (Interactive || (Authoring && Element.Kind == WireframeKind.Accordion))
@@ -338,6 +365,8 @@
     private async Task ToggleChecked()
     {
         if (!Interactive || Element.Disabled) return;
+        if (CheckedChanged.HasDelegate) { await CheckedChanged.InvokeAsync(Element); return; }
+        Element.Indeterminate = false;
         Element.Checked = Element.Kind == WireframeKind.Radio || !Element.Checked;
         await StateChanged.InvokeAsync();
     }
@@ -349,6 +378,7 @@
         {
             var css = "df-el df-el--" + Element.Kind.ToString().ToLowerInvariant();
             if (Element.Disabled) css += " df-el--disabled";
+            if (FormState.HasVisualState(Element.Kind)) css += " df-el--" + Element.VisualState.ToString().ToLowerInvariant();
             if (Element.Kind == WireframeKind.Select && ElementState.IsExpanded(Element)) css += " df-el--open";
             return Element.Bold ? css + " df-el--bold" : css;
         }
