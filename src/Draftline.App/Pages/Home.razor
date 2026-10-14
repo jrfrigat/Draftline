@@ -5,15 +5,15 @@
 <PageTitle>@Session.Document.Name — Draftline</PageTitle>
 
 @* The editor: the shelf of blocks on the left, the sheet in the middle, the properties of what is
-   selected on the right. The strip above the sheet says what is open and what just happened - the
-   same line carries the storage's word once it is wired in. *@
+   selected on the right with the screens beneath them. Each column is a stack of one block per thing,
+   because a block is the unit that moves between columns - which is how the screens got here - and the
+   unit the IDE shell will dock later. The strip above the sheet says what is open and what just
+   happened - the same line carries the storage's word once it is wired in. *@
 <div class="df-editor">
-<aside class="df-side df-side--palette" aria-label="Экраны и блоки">
-        <h2 class="df-side__title">Экраны</h2>
-        <LayerPanel OnExportAllRequested="ExportAllSvg" />
-
-        <h2 class="df-side__title">Блоки</h2>
-        <BlockPalette AddRequested="AddBlock" />
+    <aside class="df-side">
+        <EditorPanel Title="Блоки" Class="df-pane--grow">
+            <BlockPalette AddRequested="AddBlock" />
+        </EditorPanel>
     </aside>
 
     <section class="df-main" aria-label="Холст макета">
@@ -53,9 +53,14 @@
         }
     </section>
 
-    <aside class="df-side df-side--inspector" aria-label="Свойства">
-        <h2 class="df-side__title">Свойства</h2>
-        <Inspector />
+    <aside class="df-side">
+        <EditorPanel Title="Свойства" Class="df-pane--grow">
+            <Inspector />
+        </EditorPanel>
+
+        <EditorPanel Title="Экраны" Class="df-pane--share">
+            <LayerPanel OnExportAllRequested="ExportAllSvg" />
+        </EditorPanel>
     </aside>
 </div>
 

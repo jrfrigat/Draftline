@@ -1,0 +1,26 @@
+@* One block of a column: its name, then what it holds. A column is layout, a block is what a person
+   sees and what moves - the screens went from the shelf on the left to the column on the right, and
+   the IDE shell will dock these same blocks one by one. The name is a heading rather than a label,
+   because a block that nothing names is a block a screen reader reads straight through. *@
+<section class="@PanelClass" aria-label="@Title">
+    <h2 class="df-pane__title">@Title</h2>
+    <div class="df-pane__body">
+        @Body
+    </div>
+</section>
+
+@code {
+    /// <summary>What this block is called, and what it is announced as.</summary>
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>What the block shows.</summary>
+    [Parameter]
+    public RenderFragment? Body { get; set; }
+
+    /// <summary>Extra classes for the block itself, so a column can decide how its blocks share the room.</summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string PanelClass => string.IsNullOrWhiteSpace(Class) ? "df-pane" : $"df-pane {Class}";
+}
