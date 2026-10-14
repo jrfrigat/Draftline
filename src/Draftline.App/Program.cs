@@ -2,6 +2,7 @@ using Draftline.App;
 using Draftline.App.Services;
 using Draftline.App.Theming;
 using Flare.Abstractions.Tokens;
+using Flare.Components.IDE;
 using Flare.Extensions;
 using Flare.Theme.FluentUI2;
 using Microsoft.AspNetCore.Components.Web;
@@ -27,6 +28,10 @@ builder.Services.AddFlare(options =>
     options.DefaultPalette = Fluent2Palettes.Blue;
     options.DefaultMode = ThemeMode.Auto;
 });
+
+// The IDE shell's companion service: the layout drags its region borders through it. Registered beside
+// the design system because the shell is part of it, not of the editor.
+builder.Services.AddFlareIde();
 
 // The editor's state, one per browser session: the open wireframe, what is selected on it, and the
 // history behind it. Everything that draws or changes a wireframe reads this same object.

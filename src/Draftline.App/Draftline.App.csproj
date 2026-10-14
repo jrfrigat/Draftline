@@ -17,11 +17,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Flare: the component library plus one design system. Fluent UI 2 is the choice because it is
-         the tighter of the presets - a wireframing tool wants canvas, not padding. The theme brings its
-         own tokens package, so nothing else is referenced for it. Versions are pinned to the versions
-         this machine can restore. -->
+    <!-- Flare: the component library, the IDE shell and one design system. Fluent UI 2 is the choice
+         because it is the tighter of the presets - a wireframing tool wants canvas, not padding. The
+         theme brings its own tokens package, so nothing else is referenced for it. The IDE package is
+         the shell the editor page is built on: dockable tool panels, a ribbon, a status line. Versions
+         are pinned to the versions this machine can restore, and they are the same version across the
+         Flare packages on purpose - two of them drifting apart is a broken theme. -->
     <PackageReference Include="Flare.Blazor" Version="0.44.0" />
+    <PackageReference Include="Flare.Components.IDE" Version="0.44.0" />
     <PackageReference Include="Flare.Theme.FluentUI2" Version="0.44.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" PrivateAssets="all" />

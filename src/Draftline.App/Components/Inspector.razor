@@ -10,7 +10,7 @@
    word typed into a label would fill the undo history with a dozen steps. *@
 @if (Session.Selected is not { } element)
 {
-    <p class="df-side__hint">Выберите блок на холсте - его свойства появятся здесь.</p>
+    <p class="df-hint">Выберите блок на холсте - его свойства появятся здесь.</p>
 }
 else
 {
@@ -94,7 +94,7 @@ else
                            ValueChanged="@((string? value) => SetRows(element, value))" />
         }
 
-        <p class="df-side__hint">Выравнивание</p>
+        <p class="df-hint">Выравнивание</p>
         <FlareStack Row="true" Gap="FlareSpacing.XSmall" Wrap="true">
             @foreach (var (alignment, caption) in Alignments)
             {

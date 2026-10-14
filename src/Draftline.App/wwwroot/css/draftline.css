@@ -108,117 +108,48 @@ body {
     opacity: 0.6;
 }
 
-/* --------------------------------------------------------------------- the editor frame */
+/* --------------------------------------------------------------------- the editor's stage */
 
-/* Three regions: the shelf, the sheet, the properties. The sides have fixed widths and the sheet
-   takes everything left, because a wireframing tool lives or dies by how much room the sheet gets.
-
-   The frame carries no padding of its own: the padding Fluent UI 2 puts around a page is switched off
-   in the theme (DraftlineTheme), so the editor spends the whole window instead of floating in it. Its
-   height comes from FlareLayoutContent FillHeight through this 100% - never from a number guessed at
-   the app bar's height, which is what min-height: calc(100vh - 8rem) was. min-height: 0 is the other
-   half of that: a grid item's automatic minimum would let the panels push the frame taller than the
-   window, and then the page scrolls instead of the sheet. What scrolls is the sheet's area and the
-   panels, never the page. */
-.df-editor {
-    display: grid;
-    grid-template-columns: 14rem minmax(0, 1fr) 17rem;
+/* What the IDE shell leaves for the sheet: the middle of the window between the two panel regions. It
+   carries no padding of its own - Fluent UI 2's page padding is switched off in the theme
+   (DraftlineTheme) and the shell's regions sit flush against the window - and its height is the shell's,
+   handed down from FlareLayoutContent FillHeight. min-height: 0 is the other half of that: without it
+   the column refuses to shrink and the page scrolls instead of the sheet. What scrolls is the sheet's
+   area and the panels, never the page. */
+.df-stage {
+    display: flex;
+    flex-direction: column;
     gap: 0.5rem;
-    align-items: stretch;
     height: 100%;
     min-height: 0;
-    padding: 0;
-    box-sizing: border-box;
 }
 
-/* A column is layout only: the box a person sees belongs to the block inside it (EditorPanel). A block
-   is the unit that moves - the screens left the shelf on the left for the column on the right - and
-   the unit the IDE shell will dock later. */
-.df-side {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-height: 0;
-}
-
-/* One block: a name over what it holds. */
-.df-pane {
-    display: flex;
-    flex: 0 1 auto;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-height: 0;
-    padding: 0.6rem;
-    border: 1px solid var(--flare-color-outline-variant, #c9ccd4);
-    background: var(--flare-color-surface-container, #ffffff);
-}
-
-/* The block that takes the room the column has left: the properties. */
-.df-pane--grow {
-    flex: 1 1 auto;
-}
-
-/* The block that shares the column and is capped - the screens. A wireframe of twenty screens must not
-   push the properties off the window, so the list gets a share of the height and scrolls inside
-   itself. */
-.df-pane--share {
-    flex: 0 1 auto;
-    max-height: 45%;
-}
-
-.df-pane__title {
-    margin: 0;
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    opacity: 0.7;
-}
-
-/* What the block holds scrolls; the block around it does not, so a block never grows a scrollbar of
-   its own beside the one inside it. */
-.df-pane__body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-height: 0;
-    overflow: auto;
-}
-
-.df-side__hint {
+/* A quiet line of guidance inside a panel: what to do where nothing is selected yet. */
+.df-hint {
     margin: 0;
     font-size: 0.8rem;
     opacity: 0.6;
 }
 
-.df-main {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-width: 0;
-    min-height: 0;
-}
+/* --------------------------------------------------------------------- the status line */
 
-.df-toolbar {
+/* The shell's status line: what is open, how big it is, and the last word from a file. Reference rather
+   than a place to look at, so it stays one quiet row. */
+.df-status {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.35rem 0.6rem;
-    border: 1px solid var(--flare-color-outline-variant, #c9ccd4);
-    background: var(--flare-color-surface-container, #ffffff);
+    gap: 1rem;
+    width: 100%;
+    font-size: 0.78rem;
 }
 
-.df-toolbar__name {
+.df-status__name {
     font-weight: 600;
 }
 
-.df-toolbar__status {
-    font-size: 0.78rem;
-    opacity: 0.65;
-}
-
-.df-toolbar__spacer {
-    flex: 1 1 auto;
+.df-status__note {
+    margin-left: auto;
+    opacity: 0.75;
 }
 
 /* The area the sheet sits in. It scrolls on its own, so a sheet taller than the window is reached by
@@ -1187,17 +1118,5 @@ body {
     outline-offset: 1px;
 }
 
-@media (max-width: 900px) {
-    .df-editor {
-        grid-template-columns: 1fr;
-    }
-
-    /* Stacked, a column is a row: the column no longer needs a cap of its own, each block does. */
-    .df-side {
-        max-height: none;
-    }
-
-    .df-pane {
-        max-height: 12rem;
-    }
-}
+/* No narrow-screen rules of our own: the IDE shell's own CSS decides how its regions behave when the
+   window is small, and the sheet keeps scrolling inside whatever room it is given. */

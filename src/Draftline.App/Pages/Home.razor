@@ -4,65 +4,93 @@
 
 <PageTitle>@Session.Document.Name — Draftline</PageTitle>
 
-@* The editor: the shelf of blocks on the left, the sheet in the middle, the properties of what is
-   selected on the right with the screens beneath them. Each column is a stack of one block per thing,
-   because a block is the unit that moves between columns - which is how the screens got here - and the
-   unit the IDE shell will dock later. The strip above the sheet says what is open and what just
-   happened - the same line carries the storage's word once it is wired in. *@
-<div class="df-editor">
-    <aside class="df-side">
-        <EditorPanel Title="Блоки" Class="df-pane--grow">
+@* The editor on Flare's IDE shell: the ribbon carries the document's actions, the panels dock at the
+   sides, the sheet owns the middle and the status line says what is open and what just happened. The
+   shell lives on the page rather than in MainLayout because the ribbon's actions are the page's - undo,
+   export, preview - and so is the canvas they act on.
+
+   While the wireframe is being previewed both panel regions fold to their rails: the same "the
+   constructor is off" the preview promises, done by the frame's own means, and the view comes back on
+   the way out. *@
+<FlareIdeLayout LeftPanelWidth="14rem"
+                RightPanelWidth="18rem"
+                LeftCollapsed="_blocksFolded"
+                LeftCollapsedChanged="@((bool folded) => _blocksFolded = folded)"
+                RightCollapsed="_sidesFolded"
+                RightCollapsedChanged="@((bool folded) => _sidesFolded = folded)">
+    <Ribbon>
+        <FlareRibbon>
+            <FlareRibbonTab Title="Макет">
+                <FlareRibbonGroup Label="Документ">
+                    <ProjectMenu />
+                </FlareRibbonGroup>
+                <FlareRibbonGroup Label="Правка">
+                    <FlareRibbonButton Label="Отменить" Tooltip="Шаг назад"
+                                       Disabled="@(!Session.CanUndo)" OnClick="Undo" />
+                    <FlareRibbonButton Label="Повторить" Tooltip="Шаг вперёд"
+                                       Disabled="@(!Session.CanRedo)" OnClick="Redo" />
+                </FlareRibbonGroup>
+            </FlareRibbonTab>
+
+            <FlareRibbonTab Title="Файл">
+                <FlareRibbonGroup Label="Обмен">
+                    <FlareRibbonButton Label="Экспорт SVG" Tooltip="Открытый экран как рисунок"
+                                       Disabled="@(Session.Document.TotalElements == 0)" OnClick="ExportSvg" />
+                    <FlareRibbonButton Label="Все экраны в SVG" Tooltip="Каждый экран отдельным файлом"
+                                       Disabled="@(Session.Document.Layers.Count < 2)" OnClick="ExportAllSvg" />
+                    <FlareRibbonButton Label="Выгрузить JSON" Tooltip="Макет в файл" OnClick="ExportJson" />
+                    <FlareRibbonButton Label="Загрузить JSON" Tooltip="Макет из файла" OnClick="ImportJson" />
+                </FlareRibbonGroup>
+            </FlareRibbonTab>
+
+            <FlareRibbonTab Title="Вид">
+                <FlareRibbonGroup Label="Режим">
+                    <FlareRibbonButton Label="@(Session.IsPreviewing ? "К редактору" : "Просмотр")"
+                                       Tooltip="Показать макет так, как его увидит человек"
+                                       OnClick="TogglePreview" />
+                </FlareRibbonGroup>
+            </FlareRibbonTab>
+        </FlareRibbon>
+    </Ribbon>
+
+    <LeftToolPanel>
+        <FlareToolPanel Title="Блоки" Position="ToolPanelPosition.Left">
             <BlockPalette AddRequested="AddBlock" />
-        </EditorPanel>
-    </aside>
+        </FlareToolPanel>
+    </LeftToolPanel>
 
-    <section class="df-main" aria-label="Холст макета">
-        <div class="df-toolbar">
-            <ProjectMenu />
-            <span class="df-toolbar__spacer"></span>
-            <FlareButton Variant="ButtonVariant.Text" Disabled="@(!Session.CanUndo)" OnClick="Undo">
-                Отменить
-            </FlareButton>
-            <FlareButton Variant="ButtonVariant.Text" Disabled="@(!Session.CanRedo)" OnClick="Redo">
-                Повторить
-            </FlareButton>
-
-            <FlareButton Variant="ButtonVariant.Text" OnClick="TogglePreview">
-                @(Session.IsPreviewing ? "К редактору" : "Просмотр")
-            </FlareButton>
-
-            <FlareButton Variant="ButtonVariant.Text" Disabled="@(Session.Document.TotalElements == 0)"
-                         OnClick="ExportSvg">
-                Экспорт SVG
-            </FlareButton>
-            <FlareButton Variant="ButtonVariant.Text" OnClick="ExportJson">Выгрузить JSON</FlareButton>
-            <FlareButton Variant="ButtonVariant.Text" OnClick="ImportJson">Загрузить JSON</FlareButton>
-
-            @if (_notice is not null)
+    <ChildContent>
+        <section class="df-stage" aria-label="Холст макета">
+            @if (Session.IsPreviewing)
             {
-                <span class="df-toolbar__notice">@_notice</span>
+                <PreviewSurface />
             }
-        </div>
-        @if (Session.IsPreviewing)
-        {
-            <PreviewSurface />
-        }
-        else
-        {
-            <CanvasView @ref="_canvas" />
-        }
-    </section>
+            else
+            {
+                <CanvasView @ref="_canvas" />
+            }
+        </section>
+    </ChildContent>
 
-    <aside class="df-side">
-        <EditorPanel Title="Свойства" Class="df-pane--grow">
+    <RightToolPanel>
+        <FlareToolPanel Title="Свойства" Position="ToolPanelPosition.Right">
             <Inspector />
-        </EditorPanel>
+        </FlareToolPanel>
 
-        <EditorPanel Title="Экраны" Class="df-pane--share">
-            <LayerPanel OnExportAllRequested="ExportAllSvg" />
-        </EditorPanel>
-    </aside>
-</div>
+        <FlareToolPanel Title="Экраны" Position="ToolPanelPosition.Right">
+            <LayerPanel />
+        </FlareToolPanel>
+    </RightToolPanel>
+
+    <StatusBar>
+        <div class="df-status">
+            <span class="df-status__name">@Session.Document.Name</span>
+            <span>@Session.CurrentLayer.Name</span>
+            <span>@Session.Document.TotalElements блоков · @Session.Document.Layers.Count экранов</span>
+            <span class="df-status__note">@_notice</span>
+        </div>
+    </StatusBar>
+</FlareIdeLayout>
 
 @code {
     [Inject]
@@ -73,6 +101,12 @@
 
     private CanvasView? _canvas;
     private string? _notice;
+
+    /// <summary>Whether the block shelf is folded to its rail.</summary>
+    private bool _blocksFolded;
+
+    /// <summary>Whether the properties and screens are folded to their rail.</summary>
+    private bool _sidesFolded;
 
     /// <inheritdoc />
     protected override void OnInitialized() => Session.Changed += OnSessionChanged;
@@ -140,5 +174,14 @@
         _notice = null;
     }
 
-    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
+    private void OnSessionChanged()
+    {
+        // The panels fold while the wireframe is being previewed and unfold on the way back: a preview is
+        // the wireframe as an application, and an application has no block shelf beside it. A panel the
+        // person folded by hand before previewing comes back unfolded - the price of not keeping a second
+        // copy of a state the frame already owns, and one word of the rail away from being put back.
+        (_blocksFolded, _sidesFolded) = Session.IsPreviewing ? (true, true) : (false, false);
+
+        InvokeAsync(StateHasChanged);
+    }
 }

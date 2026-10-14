@@ -6,11 +6,6 @@
 <div class="df-layers">
     <div class="df-layers__head">
         <FlareButton Variant="ButtonVariant.Text" OnClick="@(() => Session.AddLayer())">Экран</FlareButton>
-        <FlareButton Variant="ButtonVariant.Text"
-                     Disabled="@(Session.Document.Layers.Count < 2)"
-                     OnClick="ExportAll">
-            Все экраны в SVG
-        </FlareButton>
     </div>
 
     @foreach (var layer in Session.Document.Layers)
@@ -63,10 +58,6 @@
 </div>
 
 @code {
-    /// <summary>Asks the shell to hand every screen over as a file; the file service lives there.</summary>
-    [Parameter]
-    public EventCallback OnExportAllRequested { get; set; }
-
     private string? _renamingId;
 
     /// <summary>The class of a row: the open screen is marked, the rest are not.</summary>
@@ -82,6 +73,4 @@
         _renamingId = null;
         Session.RenameLayer(layer.Id, name ?? string.Empty);
     }
-
-    private Task ExportAll() => OnExportAllRequested.InvokeAsync();
 }
