@@ -1,6 +1,5 @@
 @implements IDisposable
 @inject DocumentSession Session
-@inject DocumentFileService Files
 
 @* The properties of the selected block.
    
@@ -94,20 +93,6 @@ else
                            ValueChanged="@((string? value) => SetRows(element, value))" />
         }
 
-        <p class="df-hint">Выравнивание</p>
-        <FlareStack Row="true" Gap="FlareSpacing.XSmall" Wrap="true">
-            @foreach (var (alignment, caption) in Alignments)
-            {
-                var target = alignment;
-                <FlareButton Variant="ButtonVariant.Text" OnClick="@(() => Align(element, target))">@caption</FlareButton>
-            }
-        </FlareStack>
-
-        <FlareStack Row="true" Gap="FlareSpacing.XSmall" Wrap="true">
-            <FlareButton Variant="ButtonVariant.Text" OnClick="Session.BringSelectedToFront">Поверх</FlareButton>
-            <FlareButton Variant="ButtonVariant.Text" OnClick="Session.SendSelectedToBack">Вниз</FlareButton>
-        </FlareStack>
-
         <FlareDivider />
 
         @if (Session.Document.Layers.Count > 1)
@@ -131,25 +116,11 @@ else
             }
         }
 
-        <FlareButton Variant="ButtonVariant.Outlined"
-                     OnClick="@(() => Files.DownloadSvgAsync(Session.Document, Session.CurrentLayer, element))">
-            Выгрузить этот блок в SVG
-        </FlareButton>
+
     </div>
 }
 
 @code {
-    private static readonly (ElementAlignment Alignment, string Caption)[] Alignments =
-    {
-        (ElementAlignment.Left, "Влево"),
-        (ElementAlignment.CenterHorizontally, "По центру"),
-        (ElementAlignment.Right, "Вправо"),
-        (ElementAlignment.Top, "Вверх"),
-        (ElementAlignment.CenterVertically, "По середине"),
-        (ElementAlignment.Bottom, "Вниз"),
-        (ElementAlignment.MatchWidth, "Во всю ширину"),
-        (ElementAlignment.MatchHeight, "Во всю высоту")
-    };
 
     /// <inheritdoc />
     protected override void OnInitialized() => Session.Changed += OnStateChanged;
@@ -355,21 +326,6 @@ else
         Apply(element, "Пункты изменены", target => target.Options = options);
     }
 
-    private void Align(WireframeElement element, ElementAlignment alignment) =>
-        Apply(element, "Выравнивание", target =>
-        {
-            var aligned = CanvasGeometry.Align(
-                target.Bounds,
-                alignment,
-                Session.Document.GridSize,
-                Session.CurrentLayer.CanvasWidth,
-                Session.CurrentLayer.CanvasHeight);
-
-            target.X = aligned.X;
-            target.Y = aligned.Y;
-            target.Width = aligned.Width;
-            target.Height = aligned.Height;
-        });
 
     /// <summary>Changes the block inside the document, through the one door it has.</summary>
     private void Apply(WireframeElement element, string label, Action<WireframeElement> change) =>

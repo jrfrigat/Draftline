@@ -1,0 +1,72 @@
+@inject DocumentSession Session
+@inject DocumentFileService Files
+@implements IDisposable
+
+<FlareRibbonGroup Label="Блок">
+    <FlareRibbonButton Label="Дублировать" Tooltip="Копия выбранного блока (Ctrl+D)"
+                       Disabled="@SingleDisabled" OnClick="Duplicate" />
+    <FlareRibbonButton Label="Удалить" Tooltip="Удалить выделенные блоки (Delete)"
+                       Disabled="@SelectionDisabled" OnClick="Remove" />
+    <FlareRibbonButton Label="SVG блока" Tooltip="Выгрузить выбранный блок в SVG"
+                       Disabled="@SingleDisabled" OnClick="Export" />
+</FlareRibbonGroup>
+<FlareRibbonGroup Label="Выравнивание по холсту">
+    @foreach (var (alignment, caption) in Alignments)
+    {
+        var target = alignment;
+        <FlareRibbonButton Label="@caption" Tooltip="@($"{caption} относительно холста")"
+                           Disabled="@SingleDisabled" OnClick="@(() => Align(target))" />
+    }
+</FlareRibbonGroup>
+<FlareRibbonGroup Label="Размер">
+    <FlareRibbonButton Label="Во всю ширину" Tooltip="Растянуть блок по ширине холста"
+                       Disabled="@SingleDisabled" OnClick="@(() => Align(ElementAlignment.MatchWidth))" />
+    <FlareRibbonButton Label="Во всю высоту" Tooltip="Растянуть блок по высоте холста"
+                       Disabled="@SingleDisabled" OnClick="@(() => Align(ElementAlignment.MatchHeight))" />
+</FlareRibbonGroup>
+<FlareRibbonGroup Label="Порядок">
+    <FlareRibbonButton Label="На передний план" Tooltip="Поверх остальных блоков"
+                       Disabled="@SelectionDisabled" OnClick="Session.BringSelectedToFront" />
+    <FlareRibbonButton Label="На задний план" Tooltip="Позади остальных блоков"
+                       Disabled="@SelectionDisabled" OnClick="Session.SendSelectedToBack" />
+</FlareRibbonGroup>
+
+@code {
+    protected override void OnInitialized() => Session.Changed += OnChanged;
+    public void Dispose() => Session.Changed -= OnChanged;
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private bool SingleDisabled => Session.IsPreviewing || Session.Selected is null;
+    private bool SelectionDisabled => Session.IsPreviewing || Session.Selection.Count == 0;
+
+    private static readonly (ElementAlignment Alignment, string Caption)[] Alignments =
+    {
+        (ElementAlignment.Left, "Влево"),
+        (ElementAlignment.CenterHorizontally, "По центру горизонтально"),
+        (ElementAlignment.Right, "Вправо"),
+        (ElementAlignment.Top, "Вверх"),
+        (ElementAlignment.CenterVertically, "По центру вертикально"),
+        (ElementAlignment.Bottom, "Вниз")
+    };
+
+    private void Duplicate() => Session.DuplicateSelected();
+    private void Remove() => Session.RemoveSelected();
+
+    private Task Export() => Session.Selected is { } element
+        ? Files.DownloadSvgAsync(Session.Document, Session.CurrentLayer, element)
+        : Task.CompletedTask;
+
+    private void Align(ElementAlignment alignment)
+    {
+        if (SingleDisabled || Session.Selected is not { } element) return;
+
+        Session.Edit("Выравнивание", _ =>
+        {
+            if (Session.CurrentLayer.Find(element.Id) is not { } target) return;
+            var bounds = CanvasGeometry.Align(target.Bounds, alignment, Session.Document.GridSize,
+                Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
+            (target.X, target.Y, target.Width, target.Height) =
+                (bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        });
+    }
+}
