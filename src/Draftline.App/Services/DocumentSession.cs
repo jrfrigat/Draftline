@@ -14,6 +14,9 @@ public sealed class DocumentSession
 {
     private readonly DocumentHistory _history;
     private readonly List<string> _selection = new();
+    private DraftDocument? _gestureBefore;
+    private string? _gestureLabel;
+    private bool _gestureChanged;
 
     /// <summary>A session holding a new, empty wireframe.</summary>
     public DocumentSession()
@@ -263,6 +266,65 @@ public sealed class DocumentSession
 
         Edit(label, document => rearrange(document, selected));
     }
+
+    /// <summary>
+    /// Starts a change that will be drawn many times but recorded once - a drag, a resize. The
+    /// document is snapshotted here, so everything <see cref="Preview"/> does between this call and
+    /// <see cref="EndGesture"/> becomes a single step in the history. Without that, dragging a block
+    /// across the sheet would fill the history with one step per pixel of movement.
+    /// </summary>
+    public void BeginGesture(string label)
+    {
+        _gestureBefore = Document.Clone();
+        _gestureLabel = label;
+        _gestureChanged = false;
+
+        Status = label;
+        Changed?.Invoke();
+    }
+
+    /// <summary>Changes the document while a gesture is running: no history step, one repaint.</summary>
+    public void Preview(Action<DraftDocument> change)
+    {
+        ArgumentNullException.ThrowIfNull(change);
+
+        change(Document);
+        Document.Touch();
+
+        _gestureChanged = true;
+        IsDirty = true;
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Ends the gesture. What it did becomes one undoable step - unless nothing actually moved, in
+    /// which case a press and release with no drag leaves no trace in the history at all.
+    /// </summary>
+    public bool EndGesture()
+    {
+        var before = _gestureBefore;
+        var label = _gestureLabel ?? "Изменение";
+        var changed = _gestureChanged;
+
+        _gestureBefore = null;
+        _gestureLabel = null;
+        _gestureChanged = false;
+
+        if (before is null || !changed)
+        {
+            return false;
+        }
+
+        _history.Record(before, label);
+        Status = label;
+
+        Changed?.Invoke();
+        return true;
+    }
+
+    /// <summary>True while a gesture is being drawn.</summary>
+    public bool IsGestureRunning => _gestureBefore is not null;
 
     private void PruneSelection() => _selection.RemoveAll(id => Document.Find(id) is null);
 }

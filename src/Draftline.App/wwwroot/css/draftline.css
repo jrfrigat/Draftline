@@ -110,11 +110,11 @@ body {
 
 /* --------------------------------------------------------------------- the editor frame */
 
-/* Three regions, fixed widths on the sides and the canvas taking what is left: a wireframing tool
-   lives or dies by how much room the canvas gets. */
-.draftline-editor {
+/* Three regions: the shelf, the sheet, the properties. The sides have fixed widths and the sheet
+   takes everything left, because a wireframing tool lives or dies by how much room the sheet gets. */
+.df-editor {
     display: grid;
-    grid-template-columns: 15rem minmax(0, 1fr) 18rem;
+    grid-template-columns: 14rem minmax(0, 1fr) 17rem;
     gap: 0.75rem;
     align-items: stretch;
     height: 100%;
@@ -123,46 +123,427 @@ body {
     box-sizing: border-box;
 }
 
-.draftline-side {
+.df-side {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.5rem;
     padding: 0.6rem;
     border: 1px solid var(--flare-color-outline-variant, #c9ccd4);
     background: var(--flare-color-surface-container, #ffffff);
     overflow: auto;
 }
 
-.draftline-canvas-host {
+.df-side__title {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.df-side__hint {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+.df-main {
     display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.df-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--flare-color-outline-variant, #c9ccd4);
+    background: var(--flare-color-surface-container, #ffffff);
+}
+
+.df-toolbar__name {
+    font-weight: 600;
+}
+
+.df-toolbar__status {
+    font-size: 0.78rem;
+    opacity: 0.65;
+}
+
+.df-toolbar__spacer {
+    flex: 1 1 auto;
+}
+
+/* The area the sheet sits in. It scrolls on its own, so a sheet taller than the window is reached by
+   scrolling the sheet and not by scrolling the whole page away from the palette. */
+.df-canvas-host {
+    position: relative;
+    display: flex;
+    flex-direction: column;
     align-items: flex-start;
-    justify-content: center;
+    justify-content: flex-start;
     padding: 0.75rem;
     border: 1px dashed var(--flare-color-outline-variant, #c9ccd4);
     background: var(--flare-color-surface-container-low, #f0f1f5);
     overflow: auto;
+    flex: 1 1 auto;
 }
 
-/* The plane a wireframe is drawn on. It is deliberately plain: no shadow, no rounding, a ruled
-   border - the document's own size is what the geometry means, and the canvas shows exactly that. */
-.draftline-canvas {
+/* The sheet itself: exactly the document's size, a ruled border, no shadow and no rounding. What the
+   person sees here is the geometry the document means, not a picture of it. */
+.df-sheet {
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 24rem;
-    min-height: 16rem;
+    flex: 0 0 auto;
     background: #ffffff;
     border: 1px solid var(--flare-color-outline, #6f7480);
     box-shadow: none;
+    outline: none;
+    touch-action: none;
+}
+
+.df-canvas-hint {
+    margin: 0.6rem 0 0;
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+/* The selection: a ruled frame and eight handles. The handles are what the pointer is measured
+   against, so their size here and HandleRadius in C# are two numbers that have to agree. */
+.df-selection {
+    position: absolute;
+    border: 1px solid var(--flare-color-primary, #7c3aed);
+    pointer-events: none;
+    z-index: 100000;
+}
+
+.df-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    background: #ffffff;
+    border: 1px solid var(--flare-color-primary, #7c3aed);
+}
+
+.df-handle--nw {
+    cursor: nwse-resize;
+}
+
+.df-handle--n {
+    cursor: ns-resize;
+}
+
+.df-handle--ne {
+    cursor: nesw-resize;
+}
+
+.df-handle--e {
+    cursor: ew-resize;
+}
+
+.df-handle--se {
+    cursor: nwse-resize;
+}
+
+.df-handle--s {
+    cursor: ns-resize;
+}
+
+.df-handle--sw {
+    cursor: nesw-resize;
+}
+
+.df-handle--w {
+    cursor: ew-resize;
+}
+
+/* The frame drawn while a selection is being pulled over the sheet. */
+.df-marquee {
+    position: absolute;
+    border: 1px dashed var(--flare-color-primary, #7c3aed);
+    background: color-mix(in srgb, var(--flare-color-primary, #7c3aed) 8%, transparent);
+    pointer-events: none;
+    z-index: 100001;
+}
+
+/* --------------------------------------------------------------------- the shelf of blocks */
+
+.df-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.df-palette__row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.2rem;
+}
+
+.df-palette__button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 auto;
+    padding: 0.3rem 0.45rem;
+    border: 1px solid transparent;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.df-palette__button:hover {
+    border-color: var(--flare-color-outline-variant, #c9ccd4);
+    background: var(--flare-color-surface-container-high, #f5f6fa);
+}
+
+.df-palette__glyph {
+    width: 1.3rem;
+    text-align: center;
+    opacity: 0.85;
+}
+
+.df-palette__name {
+    font-size: 0.85rem;
+}
+
+.df-palette__grip {
+    display: flex;
+    align-items: center;
+    padding: 0 0.35rem;
+    cursor: grab;
+    opacity: 0.35;
+    user-select: none;
+}
+
+.df-palette__grip:hover {
+    opacity: 0.85;
+}
+
+/* --------------------------------------------------------------------- the blocks on the sheet */
+
+/* One idea behind every block: a rectangle with a ruled border, straight corners, and a word or a
+   line inside. No gradients, no shadows, no rounding - a wireframe says what a screen is made of,
+   and anyone who wants a corner radius is in another tool on purpose.
+
+   The sheet stays white in both light and dark mode, and the blocks stay dark on it: the canvas is
+   the document's own paper, not a part of the app's chrome. Its colour is the one thing a wireframe
+   is not allowed to be about. */
+.df-el {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #1b1e24;
+    background: #ffffff;
+    border: 1px solid #1b1e24;
+    user-select: none;
+}
+
+.df-el--bold {
+    font-weight: 700;
+}
+
+/* A panel is a region, so it is drawn as a box with nothing in it but its name. */
+.df-el--panel {
+    align-items: flex-start;
+    padding: 2px 6px;
+    background: transparent;
+}
+
+.df-panel__label {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.df-el--heading,
+.df-el--text {
+    align-items: flex-start;
+    border: none;
+    background: none;
+}
+
+.df-el--heading {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.df-el--text {
+    padding: 0 2px;
+}
+
+.df-text {
+    white-space: pre-wrap;
+}
+
+.df-el--button {
+    justify-content: center;
+}
+
+.df-button {
+    padding: 0 0.6rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.df-el--textfield,
+.df-el--select {
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 0 6px;
+}
+
+.df-field__label {
+    flex: 1 1 auto;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* The field's caret: one vertical rule, which is all a wireframe needs to say "you type here". */
+.df-field__line {
+    flex: 0 0 auto;
+    width: 1px;
+    height: 60%;
+    background: #1b1e24;
+}
+
+.df-el--textarea {
+    align-items: flex-start;
+    padding: 4px 6px;
+}
+
+/* Ruled lines, drawn with a repeating pattern rather than with a gradient ramp: the lines are the
+   only thing that pattern makes. */
+.df-area__rules {
+    position: absolute;
+    inset: 22px 6px 6px 6px;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0 15px,
+        rgb(27 30 36 / 35%) 15px 16px);
+}
+
+.df-el--checkbox,
+.df-el--radio {
+    gap: 6px;
+    border: none;
+    background: none;
+}
+
+.df-check {
+    position: relative;
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #1b1e24;
+}
+
+.df-check--on::after {
+    content: "×";
+    position: absolute;
+    inset: -3px 0 0 2px;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.df-radio {
+    position: relative;
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #1b1e24;
+    border-radius: 50%;
+}
+
+.df-radio--on::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: #1b1e24;
+}
+
+.df-check__label {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.df-select__arrow {
+    flex: 0 0 auto;
+    opacity: 0.7;
+}
+
+.df-el--list {
+    display: block;
+    padding: 0;
+}
+
+.df-list__row {
+    display: block;
+    padding: 5px 8px;
+    border-bottom: 1px solid #1b1e24;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.df-list__row:last-child {
+    border-bottom: none;
+}
+
+/* A picture is not drawn, it is crossed out: the two diagonals are what everyone has drawn in a box
+   since wireframes were made with a pen. They are painted rather than rotated, so they stay correct
+   at any size the block is dragged to. */
+.df-image__cross {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(to top right,
+            transparent calc(50% - 0.5px), #1b1e24 calc(50% - 0.5px),
+            #1b1e24 calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+        linear-gradient(to top left,
+            transparent calc(50% - 0.5px), #1b1e24 calc(50% - 0.5px),
+            #1b1e24 calc(50% + 0.5px), transparent calc(50% + 0.5px));
+}
+
+.df-image__caption {
+    position: relative;
+    padding: 0 6px;
+    background: #ffffff;
+    font-size: 11px;
+}
+
+.df-el--divider {
+    border: none;
+    background: none;
+}
+
+.df-el--divider::after {
+    content: "";
+    display: block;
+    width: 100%;
+    border-top: 1px solid #1b1e24;
 }
 
 @media (max-width: 900px) {
-    .draftline-editor {
+    .df-editor {
         grid-template-columns: 1fr;
     }
 
-    .draftline-side {
+    .df-side {
         max-height: 12rem;
     }
 }

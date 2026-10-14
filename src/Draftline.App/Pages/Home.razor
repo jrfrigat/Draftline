@@ -1,30 +1,54 @@
 @page "/"
+@implements IDisposable
+@inject DocumentSession Session
 
-<PageTitle>Draftline</PageTitle>
+<PageTitle>@Session.Document.Name — Draftline</PageTitle>
 
-@* The editor's three regions, as the shell draws them: the blocks on the left, the canvas in the
-   middle, the properties of the selected block on the right. This story builds the frame; the
-   palette and the real blocks arrive with the canvas story, the inspector with the export story. *@
-<div class="draftline-editor">
-    <aside class="draftline-side draftline-side--palette" aria-label="Блоки">
-        <FlareText Element="h2" Typo="TypographyScale.TitleMedium">Блоки</FlareText>
-        <FlareText Element="p" Typo="TypographyScale.BodySmall" Color="FlareColor.OnSurfaceVariant">
-            Палитра low-fi блоков появится здесь.
-        </FlareText>
+@* The editor: the shelf of blocks on the left, the sheet in the middle, the properties of what is
+   selected on the right. The strip above the sheet says what is open and what just happened - the
+   same line carries the storage's word once it is wired in. *@
+<div class="df-editor">
+    <aside class="df-side df-side--palette" aria-label="Блоки">
+        <h2 class="df-side__title">Блоки</h2>
+        <BlockPalette AddRequested="AddBlock" />
     </aside>
 
-    <section class="draftline-canvas-host" aria-label="Холст макета">
-        <div class="draftline-canvas">
-            <FlareText Element="p" Typo="TypographyScale.BodyMedium" Color="FlareColor.OnSurfaceVariant">
-                Пустой холст
-            </FlareText>
+    <section class="df-main" aria-label="Холст макета">
+        <div class="df-toolbar">
+            <span class="df-toolbar__name">@Session.Document.Name</span>
+            <span class="df-toolbar__status">@Session.Status</span>
+            <span class="df-toolbar__spacer"></span>
+            <FlareButton Variant="ButtonVariant.Text" Disabled="@(!Session.CanUndo)" OnClick="Undo">
+                Отменить
+            </FlareButton>
+            <FlareButton Variant="ButtonVariant.Text" Disabled="@(!Session.CanRedo)" OnClick="Redo">
+                Повторить
+            </FlareButton>
         </div>
+        <CanvasView @ref="_canvas" />
     </section>
 
-    <aside class="draftline-side draftline-side--inspector" aria-label="Свойства">
-        <FlareText Element="h2" Typo="TypographyScale.TitleMedium">Свойства</FlareText>
-        <FlareText Element="p" Typo="TypographyScale.BodySmall" Color="FlareColor.OnSurfaceVariant">
-            Инспектор выбранного блока появится здесь.
-        </FlareText>
+    <aside class="df-side df-side--inspector" aria-label="Свойства">
+        <h2 class="df-side__title">Свойства</h2>
+        <p class="df-side__hint">Инспектор выбранного блока появится в следующей истории.</p>
     </aside>
 </div>
+
+@code {
+    private CanvasView? _canvas;
+
+    /// <inheritdoc />
+    protected override void OnInitialized() => Session.Changed += OnSessionChanged;
+
+    /// <inheritdoc />
+    public void Dispose() => Session.Changed -= OnSessionChanged;
+
+    /// <summary>A block asked for from the palette lands in a cascade, not on top of the last one.</summary>
+    private void AddBlock(WireframeKind kind) => _canvas?.AddCascade(kind);
+
+    private void Undo() => Session.Undo();
+
+    private void Redo() => Session.Redo();
+
+    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
+}

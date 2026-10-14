@@ -1,0 +1,111 @@
+@* One block, drawn the Draftline way: a rectangle, a line and a word - and nothing that pretends to
+   be a finished design. Every kind is a few spans; the classes live in draftline.css, so the low-fi
+   look (straight corners, no gradients, no shadows, hatching instead of a picture) is in one place
+   and the same for the canvas, a future preview and the SVG export's reference. *@
+<div class="@CssClass" style="@Style">
+    @switch (Element.Kind)
+    {
+        case WireframeKind.Panel:
+            @if (!string.IsNullOrWhiteSpace(Element.Text))
+            {
+                <span class="df-panel__label">@Element.Text</span>
+            }
+            break;
+
+        case WireframeKind.Heading:
+            <span class="df-heading">@Element.DisplayText</span>
+            break;
+
+        case WireframeKind.Text:
+            <span class="df-text">@Element.DisplayText</span>
+            break;
+
+        case WireframeKind.Button:
+            <span class="df-button">@Element.DisplayText</span>
+            break;
+
+        case WireframeKind.TextField:
+            <span class="df-field__label">@Element.DisplayText</span>
+            <span class="df-field__line"></span>
+            break;
+
+        case WireframeKind.TextArea:
+            <span class="df-field__label">@Element.DisplayText</span>
+            <span class="df-area__rules"></span>
+            break;
+
+        case WireframeKind.Checkbox:
+            <span class="df-check@(Element.Checked ? " df-check--on" : string.Empty)"></span>
+            <span class="df-check__label">@Element.DisplayText</span>
+            break;
+
+        case WireframeKind.Radio:
+            <span class="df-radio@(Element.Checked ? " df-radio--on" : string.Empty)"></span>
+            <span class="df-check__label">@Element.DisplayText</span>
+            break;
+
+        case WireframeKind.Select:
+            <span class="df-field__label">@Element.DisplayText</span>
+            <span class="df-select__arrow">▾</span>
+            break;
+
+        case WireframeKind.List:
+            @foreach (var row in Rows)
+            {
+                <span class="df-list__row">@row</span>
+            }
+            break;
+
+        case WireframeKind.Image:
+            <span class="df-image__cross"></span>
+            @if (!string.IsNullOrWhiteSpace(Element.Text))
+            {
+                <span class="df-image__caption">@Element.Text</span>
+            }
+            break;
+
+        case WireframeKind.Divider:
+            break;
+    }
+</div>
+
+@code {
+    /// <summary>The block this view draws.</summary>
+    [Parameter, EditorRequired]
+    public WireframeElement Element { get; set; } = null!;
+
+    /// <summary>The classes that say which block this is and how its text is set.</summary>
+    private string CssClass
+    {
+        get
+        {
+            var css = "df-el df-el--" + Element.Kind.ToString().ToLowerInvariant();
+            return Element.Bold ? css + " df-el--bold" : css;
+        }
+    }
+
+    private IEnumerable<string> Rows =>
+        Element.Options.Count > 0 ? Element.Options : ElementDefaults.DefaultOptions;
+
+    private string Style
+    {
+        get
+        {
+            var style =
+                $"left:{Element.X.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
+                $"top:{Element.Y.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
+                $"width:{Element.Width.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
+                $"height:{Element.Height.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
+                $"z-index:{Element.ZIndex};";
+
+            if (Math.Abs(Element.FontScale - 1) > 0.001)
+            {
+                var size = Math.Round(12 * Element.FontScale, 1)
+                    .ToString(System.Globalization.CultureInfo.InvariantCulture);
+                style += $"font-size:{size}px;";
+            }
+
+            return style;
+        }
+    }
+}

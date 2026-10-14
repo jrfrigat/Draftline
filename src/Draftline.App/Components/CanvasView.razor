@@ -1,0 +1,402 @@
+@implements IAsyncDisposable
+@inject IJSRuntime Js
+@inject DocumentSession Session
+@inject PaletteDrag Palette
+
+@* The sheet, and everything that happens on it.
+   JavaScript reports where the pointer is and which key was pressed; every decision - what was
+   grabbed, what it does, what gets selected - is made here in C#, where the document lives. That is
+   why this component is the only place that knows the canvas has gestures at all. *@
+<div class="df-canvas-host">
+    <div class="df-sheet" @ref="_sheet" tabindex="0" style="@SheetStyle">
+        @foreach (var element in Session.Document.InDrawOrder())
+        {
+            <WireframeElementView Element="element" />
+        }
+
+        @if (Session.Selected is { } selected)
+        {
+            <div class="df-selection" style="@RectStyle(selected.Bounds)">
+                @foreach (var (handle, x, y) in CanvasInteraction.HandlesOf(selected.Bounds))
+                {
+                    <span class="df-handle df-handle--@HandleClass(handle)"
+                          style="@HandleStyle(selected.Bounds, x, y)"></span>
+                }
+            </div>
+        }
+
+        @if (_marquee is { } frame)
+        {
+            <div class="df-marquee" style="@RectStyle(frame)"></div>
+        }
+    </div>
+
+    @if (Session.Document.Elements.Count == 0)
+    {
+        <p class="df-canvas-hint">
+            Пустой холст. Добавьте блок из палитры или перетащите его сюда.
+        </p>
+    }
+</div>
+
+@code {
+    private ElementReference _sheet;
+    private IJSObjectReference? _module;
+    private DotNetObjectReference<CanvasView>? _self;
+    private bool _attached;
+
+    private CanvasGesture _gesture = CanvasGesture.None;
+    private ResizeHandle? _handle;
+    private Rect _origin;
+    private double _startX;
+    private double _startY;
+    private Dictionary<string, Rect> _dragOrigins = new(StringComparer.Ordinal);
+    private Rect? _marquee;
+    private string _cursor = "default";
+    private int _cascade;
+
+    /// <summary>
+    /// Puts a block on the sheet when the palette was clicked rather than dragged. The blocks land in
+    /// a cascade instead of on top of one another, because the second click is almost never meant to
+    /// hide the first block.
+    /// </summary>
+    public void AddCascade(WireframeKind kind)
+    {
+        var (width, height) = ElementDefaults.SizeOf(kind);
+        var step = Session.Document.GridSize > 1 ? Session.Document.GridSize * 3 : 24;
+        var offset = _cascade * step;
+        _cascade = (_cascade + 1) % 8;
+
+        var x = Math.Min(48 + offset, Math.Max(0, Session.Document.CanvasWidth - width));
+        var y = Math.Min(48 + offset, Math.Max(0, Session.Document.CanvasHeight - height));
+
+        Session.Add(kind, x, y);
+    }
+
+    /// <inheritdoc />
+    protected override void OnInitialized()
+    {
+        Session.Changed += OnSessionChanged;
+    }
+
+    /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _module = await Js.InvokeAsync<IJSObjectReference>("import", "./js/draftline-canvas.js");
+        _self = DotNetObjectReference.Create(this);
+
+        await _module.InvokeVoidAsync("attach", _sheet, _self);
+        _attached = true;
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        Session.Changed -= OnSessionChanged;
+
+        if (_attached && _module is not null)
+        {
+            try
+            {
+                await _module.InvokeVoidAsync("detach");
+            }
+            catch (JSDisconnectedException)
+            {
+                // The page is going away, so there is nothing left to detach from.
+            }
+        }
+
+        if (_module is not null)
+        {
+            await _module.DisposeAsync();
+            _module = null;
+        }
+
+        _self?.Dispose();
+        _self = null;
+        _attached = false;
+    }
+
+    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
+
+    // --- what the pointer does -------------------------------------------------------------------
+
+    /// <summary>A press on the sheet: grab a handle, grab a block, or start a selection frame.</summary>
+    [JSInvokable]
+    public void OnPointerDown(double x, double y, bool additive)
+    {
+        // A handle of the selected block wins over everything under the pointer: it is small, it is
+        // deliberate, and it is drawn on top of whatever it belongs to.
+        if (Session.Selected is { } selected && CanvasInteraction.HandleAt(selected.Bounds, x, y) is { } handle)
+        {
+            _gesture = CanvasGesture.Resize;
+            _handle = handle;
+            _origin = selected.Bounds;
+            _startX = x;
+            _startY = y;
+            _cursor = "nwse-resize";
+            Session.BeginGesture("Размер изменён");
+            return;
+        }
+
+        var hit = Session.Document.HitTest(x, y);
+
+        if (hit is null)
+        {
+            Session.ClearSelection();
+            _gesture = CanvasGesture.Marquee;
+            _startX = x;
+            _startY = y;
+            _marquee = new Rect(x, y, 0, 0);
+            _cursor = "crosshair";
+            StateHasChanged();
+            return;
+        }
+
+        if (additive)
+        {
+            var ids = Session.Selection.ToList();
+            if (!ids.Remove(hit.Id))
+            {
+                ids.Add(hit.Id);
+            }
+
+            Session.SetSelection(ids);
+        }
+        else if (!Session.Selection.Contains(hit.Id))
+        {
+            Session.Select(hit.Id);
+        }
+
+        _gesture = CanvasGesture.Move;
+        _startX = x;
+        _startY = y;
+        _cursor = "grabbing";
+        _dragOrigins = Session.Selection
+            .Select(id => Session.Document.Find(id))
+            .Where(element => element is not null)
+            .ToDictionary(element => element!.Id, element => element!.Bounds);
+
+        Session.BeginGesture(Session.Selection.Count > 1 ? "Блоки перемещены" : "Блок перемещён");
+        StateHasChanged();
+    }
+
+    /// <summary>The pointer moving with the button down: the gesture follows it.</summary>
+    [JSInvokable]
+    public void OnPointerMove(double x, double y)
+    {
+        if (_gesture == CanvasGesture.None)
+        {
+            return;
+        }
+
+        var deltaX = x - _startX;
+        var deltaY = y - _startY;
+
+        switch (_gesture)
+        {
+            case CanvasGesture.Move:
+                Session.Preview(document =>
+                {
+                    foreach (var (id, origin) in _dragOrigins)
+                    {
+                        if (document.Find(id) is not { } element)
+                        {
+                            continue;
+                        }
+
+                        var moved = CanvasGeometry.Move(origin, deltaX, deltaY, document.CanvasWidth, document.CanvasHeight);
+                        element.X = moved.X;
+                        element.Y = moved.Y;
+                    }
+                });
+                break;
+
+            case CanvasGesture.Resize when _handle is { } handle:
+                var id = Session.Selection.FirstOrDefault();
+                Session.Preview(document =>
+                {
+                    if (document.Find(id) is not { } element)
+                    {
+                        return;
+                    }
+
+                    var resized = CanvasInteraction.Resize(
+                        _origin, handle, deltaX, deltaY, document.GridSize, document.CanvasWidth, document.CanvasHeight);
+
+                    element.X = resized.X;
+                    element.Y = resized.Y;
+                    element.Width = resized.Width;
+                    element.Height = resized.Height;
+                });
+                break;
+
+            case CanvasGesture.Marquee:
+                _marquee = CanvasInteraction.MarqueeBetween(_startX, _startY, x, y);
+                StateHasChanged();
+                break;
+        }
+    }
+
+    /// <summary>The button came up: the gesture ends, and a frame becomes a selection.</summary>
+    [JSInvokable]
+    public void OnPointerUp(double x, double y)
+    {
+        switch (_gesture)
+        {
+            case CanvasGesture.Marquee:
+                if (_marquee is { } frame)
+                {
+                    var caught = Session.Document.Elements
+                        .Where(element => CanvasInteraction.Intersects(frame, element.Bounds))
+                        .OrderBy(element => element.ZIndex)
+                        .Select(element => element.Id)
+                        .ToList();
+
+                    Session.SetSelection(caught);
+                }
+
+                _marquee = null;
+                break;
+
+            case CanvasGesture.Move:
+            case CanvasGesture.Resize:
+                // One step in the history for the whole drag, not one for every pixel of it.
+                Session.EndGesture();
+                break;
+        }
+
+        _gesture = CanvasGesture.None;
+        _handle = null;
+        _cursor = "default";
+        _dragOrigins.Clear();
+        StateHasChanged();
+    }
+
+    /// <summary>Something was dropped on the sheet: the block the palette was carrying lands here.</summary>
+    [JSInvokable]
+    public void OnDrop(double x, double y)
+    {
+        if (Palette.Take() is not { } kind)
+        {
+            return;
+        }
+
+        // The pointer is the middle of the block, which is where a hand expects the shape to be when
+        // it lets go: dropping by the corner leaves every block half off the sheet.
+        var (width, height) = ElementDefaults.SizeOf(kind);
+        Session.Add(kind, x - (width / 2), y - (height / 2));
+        StateHasChanged();
+    }
+
+    /// <summary>A key was pressed while the editor is in front of the person.</summary>
+    [JSInvokable]
+    public bool OnKey(string key, bool shift)
+    {
+        var step = CanvasInteraction.NudgeStep(Session.Document.GridSize, shift);
+
+        switch (key)
+        {
+            case "Delete":
+                return Session.RemoveSelected();
+
+            case "Duplicate":
+                Session.DuplicateSelected();
+                return true;
+
+            case "Undo":
+                return Session.Undo();
+
+            case "Redo":
+                return Session.Redo();
+
+            case "Escape":
+                Session.ClearSelection();
+                return true;
+
+            case "Front":
+                Session.BringSelectedToFront();
+                return true;
+
+            case "Back":
+                Session.SendSelectedToBack();
+                return true;
+
+            case "Left":
+                return Nudge(-step, 0);
+
+            case "Right":
+                return Nudge(step, 0);
+
+            case "Up":
+                return Nudge(0, -step);
+
+            case "Down":
+                return Nudge(0, step);
+
+            default:
+                return false;
+        }
+    }
+
+    private bool Nudge(double deltaX, double deltaY)
+    {
+        var ids = Session.Selection.ToList();
+        if (ids.Count == 0)
+        {
+            return false;
+        }
+
+        Session.Edit(ids.Count > 1 ? "Блоки сдвинуты" : "Блок сдвинут", document =>
+        {
+            foreach (var id in ids)
+            {
+                if (document.Find(id) is not { } element)
+                {
+                    continue;
+                }
+
+                var moved = CanvasGeometry.Move(element.Bounds, deltaX, deltaY, document.CanvasWidth, document.CanvasHeight);
+                element.X = moved.X;
+                element.Y = moved.Y;
+            }
+        });
+
+        return true;
+    }
+
+    // --- how it looks ----------------------------------------------------------------------------
+
+    private string SheetStyle =>
+        $"width:{Number(Session.Document.CanvasWidth)}px;" +
+        $"height:{Number(Session.Document.CanvasHeight)}px;" +
+        $"cursor:{_cursor};";
+
+    private static string RectStyle(Rect rect) =>
+        $"left:{Number(rect.X)}px;top:{Number(rect.Y)}px;" +
+        $"width:{Number(rect.Width)}px;height:{Number(rect.Height)}px;";
+
+    private static string HandleStyle(Rect bounds, double x, double y) =>
+        $"left:{Number(x - bounds.X)}px;top:{Number(y - bounds.Y)}px;";
+
+    /// <summary>The class that gives a handle its cursor and its shape, by which edge it drags.</summary>
+    private static string HandleClass(ResizeHandle handle) => handle switch
+    {
+        ResizeHandle.NorthWest => "nw",
+        ResizeHandle.North => "n",
+        ResizeHandle.NorthEast => "ne",
+        ResizeHandle.East => "e",
+        ResizeHandle.SouthEast => "se",
+        ResizeHandle.South => "s",
+        ResizeHandle.SouthWest => "sw",
+        _ => "w"
+    };
+
+    private static string Number(double value) =>
+        value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+}

@@ -1,4 +1,5 @@
 using Draftline.App;
+using Draftline.App.Services;
 using Flare.Abstractions.Tokens;
 using Flare.Extensions;
 using Flare.Theme.MaterialDesign3.Tokens;
@@ -21,5 +22,12 @@ builder.Services.AddFlare(options =>
     options.DefaultPalette = Md3Palettes.Violet;
     options.DefaultMode = ThemeMode.Auto;
 });
+
+// The editor's state, one per browser session: the open wireframe, what is selected on it, and the
+// history behind it. Everything that draws or changes a wireframe reads this same object.
+builder.Services.AddScoped<DocumentSession>();
+
+// What the palette is carrying while a block is dragged from it onto the sheet.
+builder.Services.AddScoped<PaletteDrag>();
 
 await builder.Build().RunAsync();
