@@ -165,6 +165,7 @@ public sealed class DraftDocument
     /// </summary>
     public void Normalize()
     {
+        var legacyTabHeaders = SchemaVersion < 6;
         SchemaVersion = CurrentSchemaVersion;
         Id = string.IsNullOrWhiteSpace(Id) ? Guid.NewGuid().ToString("n") : Id;
         Name = string.IsNullOrWhiteSpace(Name) ? "Без имени" : Name.Trim();
@@ -210,6 +211,12 @@ public sealed class DraftDocument
                 layer.CanvasHeight = CanvasHeight > 0 ? CanvasHeight : DefaultCanvasHeight;
             }
 
+            if (legacyTabHeaders)
+            {
+                foreach (var tabs in (layer.Elements ?? new List<WireframeElement>()).Where(element => element.Kind == WireframeKind.Tabs &&
+                             element.Height <= TabPanels.HeaderHeight))
+                    tabs.Height = ElementDefaults.SizeOf(WireframeKind.Tabs).Height;
+            }
             layer.Normalize();
 
             if (!identities.Add(layer.Id))
