@@ -46,9 +46,10 @@ dotnet run --project src/Draftline.App
 
 ## Технические решения
 
-- **Flare 0.44.0** (`Flare.Blazor` + `Flare.Theme.MaterialDesign3Expressive`), тема подключается в
+- **Flare 0.44.0** (`Flare.Blazor` + `Flare.Theme.FluentUI2`), тема подключается в
   `Program.cs` через `AddFlare`, а первый кадр красит `flare-bootstrap.js` из `<head>` — тот же
-  набор темы, палитры и режима, что и в коде.
+  набор темы, палитры и режима, что и в коде. Выбрана Fluent UI 2, а не Material Design: из пресетов
+  она самая компактная, а инструменту вайрфреймов нужно место под холст, а не отступы.
 - **Версионирование документа** — поле `schemaVersion`: файл макета должен открываться и через год.
 - **Сериализация** — `System.Text.Json` с source-generated контекстом: в WASM рефлексия по типам
   ненадёжна, контекст делает JSON-контракт явным и безопасным для trimming.
