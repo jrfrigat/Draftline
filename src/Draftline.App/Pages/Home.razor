@@ -19,7 +19,12 @@
                 RightCollapsed="_sidesFolded"
                 RightCollapsedChanged="@((bool folded) => _sidesFolded = folded)">
     <Ribbon>
-        <FlareRibbon>
+        <div class="df-ribbon-shell">
+            <div class="df-ribbon-brand">
+                <img src="draftline.svg" alt="" width="20" height="20" />
+                <span>Draftline</span>
+            </div>
+        <FlareRibbon Class="df-ribbon">
             <FlareRibbonTab Title="Макет">
                 <FlareRibbonGroup Label="Документ">
                     <ProjectMenu />
@@ -51,6 +56,7 @@
                 </FlareRibbonGroup>
             </FlareRibbonTab>
         </FlareRibbon>
+        </div>
     </Ribbon>
 
     <LeftToolPanel>

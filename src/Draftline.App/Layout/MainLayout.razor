@@ -1,27 +1,8 @@
 @inherits LayoutComponentBase
 
-@* The shell, as Draftline draws it: a quiet top bar over the whole width and the editor below it.
-   The bar says what the product is and where its documents live; every document action belongs to
-   the screen that has the document, not to the frame around it.
-
-   The two overlay providers are registered here once, which is what makes @inject IDialogService and
-   @inject ISnackbarService work on any page. *@
+@* The editor owns its ribbon and branding. Keep only the full-height content and the shared overlay
+   providers here, so a second header does not take space away from the canvas. *@
 <FlareLayout>
-    <FlareLayoutAppBar DrawerToggle="false">
-        <FlareStack Row="true" Align="FlareAlignItems.Center" Gap="FlareSpacing.Small" Class="draftline-appbar">
-            <FlareStack Row="true" Align="FlareAlignItems.Center" Gap="FlareSpacing.XSmall">
-                <span class="draftline-brand" aria-hidden="true">D</span>
-                <FlareText Element="span" Typo="TypographyScale.TitleLarge" Weight="FontWeight.SemiBold">
-                    Draftline
-                </FlareText>
-                <span class="draftline-tag">low-fi wireframes</span>
-            </FlareStack>
-            <span class="draftline-appbar__note">
-                Макеты живут в этом браузере: без сервера, без аккаунтов, без сети
-            </span>
-        </FlareStack>
-    </FlareLayoutAppBar>
-
     <FlareLayoutContent FillHeight="true">
         @Body
     </FlareLayoutContent>

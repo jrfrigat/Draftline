@@ -82,37 +82,28 @@ body {
     }
 }
 
-/* --------------------------------------------------------------------- the top bar */
+/* --------------------------------------------------------------------- the ribbon brand */
 
-.draftline-appbar {
-    width: 100%;
+.df-ribbon-shell {
+    position: relative;
 }
 
-.draftline-brand {
-    display: inline-flex;
+.df-ribbon-brand {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0.75rem;
+    height: 2rem;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    width: 1.65rem;
-    height: 1.65rem;
-    background: var(--flare-color-primary, #7c3aed);
-    color: var(--flare-color-on-primary, #ffffff);
-    font-weight: 700;
-    font-size: 0.95rem;
+    gap: 0.4rem;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    white-space: nowrap;
 }
 
-.draftline-tag {
-    padding: 0.1rem 0.4rem;
-    border: 1px solid var(--flare-color-outline-variant, #c9ccd4);
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    opacity: 0.75;
-}
-
-.draftline-appbar__note {
-    margin-left: auto;
-    font-size: 0.78rem;
-    opacity: 0.6;
+.df-ribbon > .flare-ribbon__tabs {
+    padding-inline-start: 8rem;
+    min-height: 2rem;
 }
 
 /* --------------------------------------------------------------------- the editor's stage */
