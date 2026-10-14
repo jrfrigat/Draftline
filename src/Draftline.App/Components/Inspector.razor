@@ -16,6 +16,7 @@ else
     <div class="df-inspector">
         <p class="df-inspector__kind">@ElementDefaults.NameOf(element.Kind)</p>
         <TabPanelInspector Element="element" />
+        <TreeInspector Element="element" />
 
         @if (ElementState.HasAvailability(element.Kind))
         {
@@ -106,7 +107,7 @@ else
             </FlareCheckbox>
         }
 
-        @if (ElementDefaults.HasRows(element.Kind))
+        @if (ElementDefaults.HasRows(element.Kind) && element.Kind != WireframeKind.Tree)
         {
             <FlareTextArea Label="Пункты, по одному в строке; значение после знака =" Size="FieldSize.Xs"
                            Value="@OptionsText(element)"
@@ -374,6 +375,7 @@ else
         {
             target.SelectedIndex = index;
             ElementState.Normalize(target);
+            if (target.Kind == WireframeKind.Tree) TreeState.Reveal(target, target.SelectedIndex);
         });
     }
 

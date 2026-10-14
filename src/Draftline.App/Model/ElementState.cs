@@ -17,7 +17,7 @@ public static class ElementState
 
     /// <summary>Whether the kind can reveal more content.</summary>
     public static bool HasDisclosure(WireframeKind kind) => kind is
-        WireframeKind.Select or WireframeKind.Accordion or WireframeKind.Tree;
+        WireframeKind.Select or WireframeKind.Accordion;
 
     /// <summary>Whether availability is meaningful for this control.</summary>
     public static bool HasAvailability(WireframeKind kind) => HasChoice(kind) || kind is

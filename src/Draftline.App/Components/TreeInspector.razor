@@ -1,0 +1,30 @@
+@inject DocumentSession Session
+@if (Element.Kind == WireframeKind.Tree)
+{
+    <FlareTextArea Label="Структура дерева: два пробела — уровень вложенности" Size="FieldSize.Xs"
+                   Value="@TreeState.Structure(Element)" ValueChanged="SetStructure" />
+    @foreach (var index in Enumerable.Range(0, Element.TreeDepths.Count))
+    {
+        @if (TreeState.IsBranch(Element, index))
+        {
+            <FlareCheckbox Value="@Element.ExpandedNodes.Contains(index)" ValueChanged="@((bool open) => SetOpen(index, open))">
+                Раскрыт: @ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label
+            </FlareCheckbox>
+        }
+    }
+}
+@code {
+    /// <summary>The selected tree.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    private void SetStructure(string? text)
+    {
+        if ((text ?? string.Empty) == TreeState.Structure(Element)) return;
+        Session.Edit("Структура дерева изменена", _ => TreeState.Parse(Element, text ?? string.Empty));
+    }
+    private void SetOpen(int index, bool open) => Session.Edit("Ветвь дерева изменена", _ =>
+    {
+        Element.ExpandedNodes.Remove(index);
+        if (open) Element.ExpandedNodes.Add(index);
+        if (!TreeState.Visible(Element).Contains(Element.SelectedIndex)) Element.SelectedIndex = index;
+    });
+}

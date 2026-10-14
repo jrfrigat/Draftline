@@ -361,26 +361,17 @@ public static class SvgExporter
 
             case WireframeKind.Tree:
             {
-                var nodes = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
-
-                for (var nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+                var rowNumber = 0;
+                foreach (var nodeIndex in TreeState.Visible(element))
                 {
-                    if (nodeIndex > 0 && !ElementState.IsExpanded(element)) break;
-                    var (label, _) = ElementDefaults.SplitOption(nodes[nodeIndex]);
-                    var itemTop = y + (size * 1.5 * nodeIndex) + size;
-
-                    // The first row is the parent and the rest hang under it: a tree in a wireframe is
-                    // about showing that something nests, not about drawing branches.
-                    if (nodeIndex == 0)
-                    {
-                        Text(svg, x + 4, itemTop, ElementState.IsExpanded(element) ? "▾" : "▸", size, "400", 0.8);
-                    }
-                    if (nodeIndex == ElementState.Index(element))
-                        Box(svg, x, itemTop - size, element.Width, size * 1.5, "#e5e7eb");
-                    Text(svg, x + (nodeIndex == 0 ? 18 : 24), itemTop, label, size,
-                        nodeIndex == ElementState.Index(element) || nodeIndex == 0 ? "700" : "400", 1);
+                    var top = y + rowNumber++ * 24;
+                    if (top + 24 > bottom) break;
+                    if (nodeIndex == ElementState.Index(element)) Box(svg, x, top, element.Width, 24, "#e5e7eb");
+                    var left = x + 8 + element.TreeDepths[nodeIndex] * 16;
+                    var prefix = TreeState.IsBranch(element, nodeIndex) ? (element.ExpandedNodes.Contains(nodeIndex) ? "▾ " : "▸ ") : "";
+                    Text(svg, left, top + 16, prefix + ElementDefaults.SplitOption(ElementState.Items(element)[nodeIndex]).Label,
+                        size, nodeIndex == ElementState.Index(element) ? "700" : weight, 1);
                 }
-
                 break;
             }
 

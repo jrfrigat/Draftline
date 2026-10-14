@@ -193,11 +193,7 @@
             break;
 
         case WireframeKind.Tree:
-            @for (var index = 0; index < ElementState.Items(Element).Count; index++)
-            {
-                if (index > 0 && !ElementState.IsExpanded(Element)) break;
-                @Choice(index, "df-tree__item", (index == 0 ? (ElementState.IsExpanded(Element) ? "▾ " : "▸ ") : "") + ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label)
-            }
+            <TreeElement Element="Element" Interactive="Interactive" Authoring="Authoring" NodeSelected="TreeSelected" StateChanged="StateChanged" />
             break;
 
         case WireframeKind.Progress:
@@ -265,6 +261,8 @@
     [Parameter] public bool Authoring { get; set; }
     /// <summary>Receives a tab choice to record through DocumentSession.</summary>
     [Parameter] public EventCallback<int> TabSelected { get; set; }
+    /// <summary>Receives an authored tree node choice.</summary>
+    [Parameter] public EventCallback<int> TreeSelected { get; set; }
     /// <summary>The resolved drawing order, keeping group backgrounds behind their children.</summary>
     [Parameter] public int? DrawingOrder { get; set; }
 

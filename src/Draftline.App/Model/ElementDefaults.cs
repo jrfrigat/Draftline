@@ -88,6 +88,7 @@ public static class ElementDefaults
             element.Value = "60";
         }
 
+        TreeState.Normalize(element);
         return element;
     }
 

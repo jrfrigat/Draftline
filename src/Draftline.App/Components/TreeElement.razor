@@ -1,0 +1,40 @@
+<div class="df-tree" role="tree" aria-label="Дерево">
+    @foreach (var index in TreeState.Visible(Element))
+    {
+        var rowIndex = index;
+        var branch = TreeState.IsBranch(Element, index);
+        var label = ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label;
+        var text = (branch ? (Element.ExpandedNodes.Contains(index) ? "▾ " : "▸ ") : "") + label;
+        @if (Interactive || Authoring)
+        {
+            <button type="button" class="df-tree__row df-state-button @(Element.SelectedIndex == index ? "df-item--selected" : "")"
+                    role="treeitem" aria-level="@(Element.TreeDepths[index] + 1)" aria-selected="@(Element.SelectedIndex == index ? "true" : "false")"
+                    aria-expanded="@(branch ? (Element.ExpandedNodes.Contains(index) ? "true" : "false") : null)"
+                    style="@($"padding-left:{8 + Element.TreeDepths[index] * 16}px")" disabled="@(Interactive && Element.Disabled)"
+                    @onclick="() => Choose(rowIndex)">@text</button>
+        }
+        else
+        {
+            <span class="df-tree__row @(Element.SelectedIndex == index ? "df-item--selected" : "")" style="@($"padding-left:{8 + Element.TreeDepths[index] * 16}px")">@text</span>
+        }
+    }
+</div>
+
+@code {
+    /// <summary>The authored tree or preview copy.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    /// <summary>Allows temporary preview interactions.</summary>
+    [Parameter] public bool Interactive { get; set; }
+    /// <summary>Allows authored interactions through the session callback.</summary>
+    [Parameter] public bool Authoring { get; set; }
+    /// <summary>Authored node choice.</summary>
+    [Parameter] public EventCallback<int> NodeSelected { get; set; }
+    /// <summary>Preview repaint after a temporary change.</summary>
+    [Parameter] public EventCallback StateChanged { get; set; }
+
+    private async Task Choose(int index)
+    {
+        if (Authoring) await NodeSelected.InvokeAsync(index);
+        else if (Interactive && !Element.Disabled) { TreeState.Choose(Element, index); await StateChanged.InvokeAsync(); }
+    }
+}

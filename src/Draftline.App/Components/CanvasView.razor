@@ -12,7 +12,8 @@
         @{ var drawOrder = 0; }
         @foreach (var element in TabPanels.Visible(Session.CurrentLayer))
         {
-            <WireframeElementView Element="element" DrawingOrder="@(drawOrder++)" Authoring="true" TabSelected="@(index => Session.SelectTab(element.Id, index))" />
+            <WireframeElementView Element="element" DrawingOrder="@(drawOrder++)" Authoring="true" TabSelected="@(index => Session.SelectTab(element.Id, index))"
+                                  TreeSelected="@(index => Session.SelectTreeNode(element.Id, index))" />
         }
 
         @if (Session.Selected is { } selected)

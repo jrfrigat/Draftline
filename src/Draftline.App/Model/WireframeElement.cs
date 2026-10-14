@@ -76,6 +76,11 @@ public sealed class WireframeElement
     /// <summary>Text in each tab panel, indexed like Options; removed panels retain their text.</summary>
     public List<string> TabContents { get; set; } = new();
 
+    /// <summary>Depth of each tree row, aligned with Options.</summary>
+    public List<int> TreeDepths { get; set; } = new();
+    /// <summary>Indices of expanded tree branches.</summary>
+    public List<int> ExpandedNodes { get; set; } = new();
+
     /// <summary>Identity of the tab group this block belongs to, or empty for a sheet-level block.</summary>
     public string ParentTabsId { get; set; } = string.Empty;
 
@@ -143,6 +148,8 @@ public sealed class WireframeElement
         Checked = Checked,
         SelectedIndex = SelectedIndex,
         TabContents = new List<string>(TabContents),
+        TreeDepths = new List<int>(TreeDepths),
+        ExpandedNodes = new List<int>(ExpandedNodes),
         ParentTabsId = ParentTabsId,
         ParentTabIndex = ParentTabIndex,
         Expanded = Expanded,
