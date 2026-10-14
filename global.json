@@ -1,0 +1,15 @@
+{
+  // The floor is the .NET 10 SDK the machine has; rollForward latestFeature accepts 10.0.400 and any
+  // higher 10.0 feature band, so a newer machine still builds and an older one fails loudly here
+  // instead of somewhere inside the Razor compiler.
+  "sdk": {
+    "version": "10.0.400",
+    "rollForward": "latestFeature",
+    "allowPrerelease": false
+  },
+  // xunit.v3 builds the test projects as Microsoft.Testing.Platform applications, so "dotnet test"
+  // has to be told which runner drives them - the VSTest bridge is gone on the .NET 10 SDK.
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
+  }
+}

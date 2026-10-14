@@ -1,0 +1,22 @@
+/.aiko/
+/.mcp.json
+/.cursor/mcp.json
+/.zcode/config.json
+/.cline/
+/.clinerules/
+/.codex/
+/.agents/
+/.claude/
+/CLAUDE.md
+/AGENTS.md
+
+# Build output of the .NET solution.
+[Bb]in/
+[Oo]bj/
+[Tt]estResults/
+*.user
+
+
+# Agent scaffolding, for the same reason .claude/ and .cline/ are ignored: Aiko writes it.
+/.cursor/
+/.zcode/

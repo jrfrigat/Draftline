@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Draftline.App</RootNamespace>
+    <AssemblyName>Draftline.App</AssemblyName>
+    <!-- The editor is a client-only PWA: no backend, no API, no server state. Documents live in the
+         browser and the app shell is cached by wwwroot/service-worker.published.js. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <BlazorWebAssemblyLoadAllGlobalizationData>false</BlazorWebAssemblyLoadAllGlobalizationData>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Flare: the component library plus one design system (Material Design 3 Expressive) and the
+         palette package the seed palette type lives in. Versions are pinned to the versions this
+         machine can restore - bumping them is a deliberate act, not a floating range. -->
+    <PackageReference Include="Flare.Blazor" Version="0.44.0" />
+    <PackageReference Include="Flare.Theme.MaterialDesign3Expressive" Version="0.44.0" />
+    <PackageReference Include="Flare.Theme.MaterialDesign3.Tokens" Version="0.44.0" />
+    <PackageReference Include="Flare.Icons.MaterialDesign3.Svg" Version="0.44.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Two workers, one path: the development one does nothing (a cache is the last thing a
+         developer wants while typing), the published one is the offline shell the PWA promises. -->
+    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,168 @@
+/*
+  Draftline's own chrome. Everything a theme can express stays a Flare token - colours, type, spacing
+  and motion all come from the design system this file does not restate. What lives here is only what
+  a component library has no opinion about: the frame the editor sits in, the splash before .NET
+  starts, and the plane a wireframe is drawn on.
+*/
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+#app {
+    height: 100%;
+}
+
+/* --------------------------------------------------------------------- the first frame */
+
+/* FlareThemeProvider removes #flare-splash once the app has booted; until then this is what the
+   visitor sees instead of a white page. */
+#flare-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: var(--flare-color-surface, #f6f7fb);
+    color: var(--flare-color-on-surface, #14161b);
+    font-family: 'Inter', system-ui, sans-serif;
+    transition: opacity 240ms ease-out;
+}
+
+#flare-splash strong {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+#flare-splash small {
+    font-weight: 400;
+    opacity: 0.6;
+}
+
+.draftline-splash-mark {
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.draftline-splash-mark i {
+    width: 0.6rem;
+    height: 0.6rem;
+    background: var(--flare-color-primary, #7c3aed);
+    animation: draftline-splash-pulse 900ms ease-in-out infinite alternate;
+}
+
+.draftline-splash-mark i:nth-child(2) {
+    animation-delay: 150ms;
+}
+
+.draftline-splash-mark i:nth-child(3) {
+    animation-delay: 300ms;
+}
+
+@keyframes draftline-splash-pulse {
+    from {
+        opacity: 0.25;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* --------------------------------------------------------------------- the top bar */
+
+.draftline-appbar {
+    width: 100%;
+}
+
+.draftline-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    background: var(--flare-color-primary, #7c3aed);
+    color: var(--flare-color-on-primary, #ffffff);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.draftline-tag {
+    padding: 0.1rem 0.4rem;
+    border: 1px solid var(--flare-color-outline-variant, #c9ccd4);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.draftline-appbar__note {
+    margin-left: auto;
+    font-size: 0.78rem;
+    opacity: 0.6;
+}
+
+/* --------------------------------------------------------------------- the editor frame */
+
+/* Three regions, fixed widths on the sides and the canvas taking what is left: a wireframing tool
+   lives or dies by how much room the canvas gets. */
+.draftline-editor {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr) 18rem;
+    gap: 0.75rem;
+    align-items: stretch;
+    height: 100%;
+    min-height: calc(100vh - 8rem);
+    padding: 0.75rem;
+    box-sizing: border-box;
+}
+
+.draftline-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.6rem;
+    border: 1px solid var(--flare-color-outline-variant, #c9ccd4);
+    background: var(--flare-color-surface-container, #ffffff);
+    overflow: auto;
+}
+
+.draftline-canvas-host {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0.75rem;
+    border: 1px dashed var(--flare-color-outline-variant, #c9ccd4);
+    background: var(--flare-color-surface-container-low, #f0f1f5);
+    overflow: auto;
+}
+
+/* The plane a wireframe is drawn on. It is deliberately plain: no shadow, no rounding, a ruled
+   border - the document's own size is what the geometry means, and the canvas shows exactly that. */
+.draftline-canvas {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24rem;
+    min-height: 16rem;
+    background: #ffffff;
+    border: 1px solid var(--flare-color-outline, #6f7480);
+    box-shadow: none;
+}
+
+@media (max-width: 900px) {
+    .draftline-editor {
+        grid-template-columns: 1fr;
+    }
+
+    .draftline-side {
+        max-height: 12rem;
+    }
+}

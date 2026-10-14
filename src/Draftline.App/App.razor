@@ -1,0 +1,16 @@
+@* The theme provider wraps the router, so every screen renders under the registered theme and the
+   overlay services find their way back here. The shell - bar, content frame, providers - lives in
+   MainLayout. *@
+<FlareThemeProvider>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(Layout.MainLayout)">
+                <FlareText Element="h1" Typo="TypographyScale.HeadlineSmall">Такой страницы в Draftline нет</FlareText>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</FlareThemeProvider>

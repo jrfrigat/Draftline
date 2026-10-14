@@ -1,0 +1,30 @@
+@page "/"
+
+<PageTitle>Draftline</PageTitle>
+
+@* The editor's three regions, as the shell draws them: the blocks on the left, the canvas in the
+   middle, the properties of the selected block on the right. This story builds the frame; the
+   palette and the real blocks arrive with the canvas story, the inspector with the export story. *@
+<div class="draftline-editor">
+    <aside class="draftline-side draftline-side--palette" aria-label="Блоки">
+        <FlareText Element="h2" Typo="TypographyScale.TitleMedium">Блоки</FlareText>
+        <FlareText Element="p" Typo="TypographyScale.BodySmall" Color="FlareColor.OnSurfaceVariant">
+            Палитра low-fi блоков появится здесь.
+        </FlareText>
+    </aside>
+
+    <section class="draftline-canvas-host" aria-label="Холст макета">
+        <div class="draftline-canvas">
+            <FlareText Element="p" Typo="TypographyScale.BodyMedium" Color="FlareColor.OnSurfaceVariant">
+                Пустой холст
+            </FlareText>
+        </div>
+    </section>
+
+    <aside class="draftline-side draftline-side--inspector" aria-label="Свойства">
+        <FlareText Element="h2" Typo="TypographyScale.TitleMedium">Свойства</FlareText>
+        <FlareText Element="p" Typo="TypographyScale.BodySmall" Color="FlareColor.OnSurfaceVariant">
+            Инспектор выбранного блока появится здесь.
+        </FlareText>
+    </aside>
+</div>
