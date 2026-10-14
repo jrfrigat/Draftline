@@ -65,7 +65,7 @@ public sealed class DocumentSession
     public DraftLayer AddLayer()
     {
         var name = "Экран " + (Document.Layers.Count + 1);
-        var created = Document.AddLayer(name);
+        var created = DraftLayer.Create(name);
 
         _currentLayerId = created.Id;
         _selection.Clear();
