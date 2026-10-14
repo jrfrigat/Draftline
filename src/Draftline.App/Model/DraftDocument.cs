@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Draftline.App.Model;
 
 /// <summary>
@@ -16,13 +18,14 @@ public sealed class DraftDocument
     /// 1 - the first shape of the format: a sheet, a list of blocks, a caption on each.
     /// 2 - blocks carry data: a value, a hint and a second line, and a list row may carry a value.
     /// 3 - a table carries columns and rows.
+    /// 4 - a wireframe carries screens, and a block may point at another one.
     /// </summary>
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
-    /// <summary>A sheet in pixels, as a new wireframe starts.</summary>
+    /// <summary>A sheet in pixels, as a new screen starts.</summary>
     public const double DefaultCanvasWidth = 960;
 
-    /// <summary>A sheet in pixels, as a new wireframe starts.</summary>
+    /// <summary>A sheet in pixels, as a new screen starts.</summary>
     public const double DefaultCanvasHeight = 640;
 
     /// <summary>Version of the format this document is written in.</summary>
@@ -34,17 +37,14 @@ public sealed class DraftDocument
     /// <summary>What the person called this wireframe.</summary>
     public string Name { get; set; } = "Без имени";
 
-    /// <summary>Width of the sheet, in pixels.</summary>
-    public double CanvasWidth { get; set; } = DefaultCanvasWidth;
-
-    /// <summary>Height of the sheet, in pixels.</summary>
-    public double CanvasHeight { get; set; } = DefaultCanvasHeight;
-
     /// <summary>The grid the canvas snaps to, in pixels; 1 means no grid.</summary>
     public int GridSize { get; set; } = CanvasGeometry.DefaultGridSize;
 
-    /// <summary>The blocks on the sheet.</summary>
-    public List<WireframeElement> Elements { get; set; } = new();
+    /// <summary>The screens of this wireframe, in the order they are listed.</summary>
+    public List<DraftLayer> Layers { get; set; } = new();
+
+    /// <summary>The screen a preview opens on; empty means the first one.</summary>
+    public string StartLayerId { get; set; } = string.Empty;
 
     /// <summary>When the wireframe was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
@@ -52,53 +52,106 @@ public sealed class DraftDocument
     /// <summary>When it was last changed.</summary>
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    /// <summary>An empty wireframe with a name.</summary>
-    public static DraftDocument CreateNew(string name) =>
-        new() { Name = string.IsNullOrWhiteSpace(name) ? "Без имени" : name };
+    /// <summary>
+    /// The sheet of a file written before screens existed. It is read, migrated into the first screen by
+    /// <see cref="Normalize"/>, and never written again: a current file carries screens only.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public double CanvasWidth { get; set; }
 
-    /// <summary>The blocks, back to front - the order they are drawn and hit-tested in.</summary>
-    public IEnumerable<WireframeElement> InDrawOrder() => Elements.OrderBy(element => element.ZIndex);
+    /// <summary>Height of the sheet of a file written before screens existed.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public double CanvasHeight { get; set; }
 
-    /// <summary>The topmost block under a point, or null when the point is on the sheet itself.</summary>
-    public WireframeElement? HitTest(double x, double y) =>
-        Elements.Where(element => element.Contains(x, y))
-            .OrderByDescending(element => element.ZIndex)
-            .FirstOrDefault();
+    /// <summary>The blocks of a file written before screens existed.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public List<WireframeElement> Elements { get; set; } = new();
 
-    /// <summary>The next free drawing order.</summary>
-    public int NextZIndex() => Elements.Count == 0 ? 1 : Elements.Max(element => element.ZIndex) + 1;
-
-    /// <summary>The block with this identity, or null.</summary>
-    public WireframeElement? Find(string? id) =>
-        string.IsNullOrEmpty(id) ? null : Elements.FirstOrDefault(element => element.Id == id);
-
-    /// <summary>Puts a block in front of every other one.</summary>
-    public void BringToFront(WireframeElement element)
+    /// <summary>An empty wireframe with a name and one screen to draw on.</summary>
+    public static DraftDocument CreateNew(string name)
     {
-        ArgumentNullException.ThrowIfNull(element);
-        element.ZIndex = NextZIndex();
+        var document = new DraftDocument { Name = string.IsNullOrWhiteSpace(name) ? "Без имени" : name };
+        var layer = DraftLayer.Create("Экран 1");
+
+        document.Layers.Add(layer);
+        document.StartLayerId = layer.Id;
+
+        return document;
     }
 
-    /// <summary>Puts a block behind every other one.</summary>
-    public void SendToBack(WireframeElement element)
+    /// <summary>The screen with this identity, or null.</summary>
+    public DraftLayer? FindLayer(string? id) =>
+        string.IsNullOrEmpty(id) ? null : Layers.FirstOrDefault(layer => layer.Id == id);
+
+    /// <summary>The screen a preview opens on: the one named as the start, or the first there is.</summary>
+    public DraftLayer StartLayer => FindLayer(StartLayerId) ?? Layers[0];
+
+    /// <summary>Marks a screen as the one a preview opens on.</summary>
+    public void SetStartLayer(string id)
     {
-        ArgumentNullException.ThrowIfNull(element);
-        element.ZIndex = Elements.Count == 0 ? 0 : Elements.Min(other => other.ZIndex) - 1;
+        if (FindLayer(id) is not null)
+        {
+            StartLayerId = id;
+        }
     }
+
+    /// <summary>Adds a screen at the end and returns it.</summary>
+    public DraftLayer AddLayer(string name)
+    {
+        var layer = DraftLayer.Create(name);
+        Layers.Add(layer);
+        return layer;
+    }
+
+    /// <summary>
+    /// Removes a screen. The last one is never removed - a wireframe with no screen is not a wireframe -
+    /// and the transitions that led to it go with it, because a block pointing at a screen that no
+    /// longer exists is a block that would walk the preview into a wall.
+    /// </summary>
+    public bool RemoveLayer(string id)
+    {
+        if (Layers.Count <= 1 || FindLayer(id) is not { } layer)
+        {
+            return false;
+        }
+
+        Layers.Remove(layer);
+
+        foreach (var element in AllElements)
+        {
+            if (element.TargetLayerId == id)
+            {
+                element.Transition = TransitionKind.None;
+                element.TargetLayerId = string.Empty;
+            }
+        }
+
+        if (StartLayerId == id)
+        {
+            StartLayerId = Layers[0].Id;
+        }
+
+        return true;
+    }
+
+    /// <summary>Every block of every screen - what a count, an export or a migration walks.</summary>
+    public IEnumerable<WireframeElement> AllElements => Layers.SelectMany(layer => layer.Elements);
+
+    /// <summary>How many blocks the whole wireframe holds.</summary>
+    public int TotalElements => Layers.Sum(layer => layer.Elements.Count);
 
     /// <summary>Notes that the document was written to just now.</summary>
     public void Touch() => UpdatedAt = DateTimeOffset.UtcNow;
 
-    /// <summary>A deep copy: the blocks are copies of their own, options included.</summary>
+    /// <summary>A deep copy: every screen and every block in it is a copy of its own.</summary>
     public DraftDocument Clone() => new()
     {
         SchemaVersion = SchemaVersion,
         Id = Id,
         Name = Name,
-        CanvasWidth = CanvasWidth,
-        CanvasHeight = CanvasHeight,
         GridSize = GridSize,
-        Elements = Elements.Select(element => element.Clone()).ToList(),
+        Layers = Layers.Select(layer => layer.Clone()).ToList(),
+        StartLayerId = StartLayerId,
         CreatedAt = CreatedAt,
         UpdatedAt = UpdatedAt
     };
@@ -114,8 +167,6 @@ public sealed class DraftDocument
         SchemaVersion = CurrentSchemaVersion;
         Id = string.IsNullOrWhiteSpace(Id) ? Guid.NewGuid().ToString("n") : Id;
         Name = string.IsNullOrWhiteSpace(Name) ? "Без имени" : Name.Trim();
-        CanvasWidth = CanvasWidth > 0 ? CanvasWidth : DefaultCanvasWidth;
-        CanvasHeight = CanvasHeight > 0 ? CanvasHeight : DefaultCanvasHeight;
         GridSize = GridSize > 0 ? GridSize : CanvasGeometry.DefaultGridSize;
 
         if (CreatedAt == default)
@@ -128,61 +179,64 @@ public sealed class DraftDocument
             UpdatedAt = CreatedAt;
         }
 
-        Elements ??= new List<WireframeElement>();
+        Layers ??= new List<DraftLayer>();
+
+        // A file written before screens existed kept its blocks on the document itself. Those blocks
+        // become the one screen such a file has: nothing is invented and nothing is lost, which is the
+        // only honest way to read an older picture.
+        if (Layers.Count == 0)
+        {
+            var migrated = DraftLayer.Create("Экран 1");
+            migrated.CanvasWidth = CanvasWidth > 0 ? CanvasWidth : DefaultCanvasWidth;
+            migrated.CanvasHeight = CanvasHeight > 0 ? CanvasHeight : DefaultCanvasHeight;
+            migrated.Elements = Elements ?? new List<WireframeElement>();
+            Layers.Add(migrated);
+        }
 
         var identities = new HashSet<string>(StringComparer.Ordinal);
-        var order = 1;
 
-        foreach (var element in InDrawOrder())
+        foreach (var layer in Layers)
         {
-            if (string.IsNullOrWhiteSpace(element.Id) || !identities.Add(element.Id))
+            // The size an older file named belongs to the screen it had, so a screen that arrives
+            // without one takes it before the default does.
+            if (layer.CanvasWidth <= 0)
             {
-                element.Id = Guid.NewGuid().ToString("n");
-                identities.Add(element.Id);
+                layer.CanvasWidth = CanvasWidth > 0 ? CanvasWidth : DefaultCanvasWidth;
             }
 
-            element.Text ??= string.Empty;
-            element.Value ??= string.Empty;
-            element.Placeholder ??= string.Empty;
-            element.SecondaryText ??= string.Empty;
-            element.Options ??= new List<string>();
-            element.Columns ??= new List<string>();
-            element.Rows ??= new List<List<string>>();
-
-            if (element.Columns.Count > 0)
+            if (layer.CanvasHeight <= 0)
             {
-                for (var index = 0; index < element.Rows.Count; index++)
-                {
-                    var row = element.Rows[index] ??= new List<string>();
-
-                    // A table is read as a rectangle: a shorter row is filled with empty cells and a
-                    // longer one is cut. Otherwise every renderer downstream would have to defend
-                    // itself against a row that does not match its header.
-                    while (row.Count < element.Columns.Count)
-                    {
-                        row.Add(string.Empty);
-                    }
-
-                    while (row.Count > element.Columns.Count)
-                    {
-                        row.RemoveAt(row.Count - 1);
-                    }
-
-                    for (var cell = 0; cell < row.Count; cell++)
-                    {
-                        row[cell] ??= string.Empty;
-                    }
-                }
+                layer.CanvasHeight = CanvasHeight > 0 ? CanvasHeight : DefaultCanvasHeight;
             }
-            element.FontScale = element.FontScale > 0 ? element.FontScale : 1;
 
-            var bounds = CanvasGeometry.Clamp(element.Bounds, CanvasWidth, CanvasHeight);
-            element.X = bounds.X;
-            element.Y = bounds.Y;
-            element.Width = bounds.Width;
-            element.Height = bounds.Height;
+            layer.Normalize();
 
-            element.ZIndex = order++;
+            if (!identities.Add(layer.Id))
+            {
+                layer.Id = Guid.NewGuid().ToString("n");
+                identities.Add(layer.Id);
+            }
         }
+
+        if (FindLayer(StartLayerId) is null)
+        {
+            StartLayerId = Layers[0].Id;
+        }
+
+        // A transition into a screen that no longer exists is not a transition: it is cleared here
+        // rather than left pointing at nothing, because a preview would otherwise walk into a wall.
+        foreach (var element in AllElements)
+        {
+            if (element.Transition != TransitionKind.None && FindLayer(element.TargetLayerId) is null)
+            {
+                element.Transition = TransitionKind.None;
+                element.TargetLayerId = string.Empty;
+            }
+        }
+
+        // The members an older file used are emptied, so writing this document back carries screens only.
+        CanvasWidth = 0;
+        CanvasHeight = 0;
+        Elements = new List<WireframeElement>();
     }
 }

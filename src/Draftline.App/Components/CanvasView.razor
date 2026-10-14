@@ -9,7 +9,7 @@
    why this component is the only place that knows the canvas has gestures at all. *@
 <div class="df-canvas-host">
     <div class="df-sheet" @ref="_sheet" tabindex="0" style="@SheetStyle">
-        @foreach (var element in Session.Document.InDrawOrder())
+        @foreach (var element in Session.CurrentLayer.InDrawOrder())
         {
             <WireframeElementView Element="element" />
         }
@@ -31,7 +31,7 @@
         }
     </div>
 
-    @if (Session.Document.Elements.Count == 0)
+    @if (Session.CurrentLayer.Elements.Count == 0)
     {
         <p class="df-canvas-hint">
             Пустой холст. Добавьте блок из палитры или перетащите его сюда.
@@ -67,8 +67,8 @@
         var offset = _cascade * step;
         _cascade = (_cascade + 1) % 8;
 
-        var x = Math.Min(48 + offset, Math.Max(0, Session.Document.CanvasWidth - width));
-        var y = Math.Min(48 + offset, Math.Max(0, Session.Document.CanvasHeight - height));
+        var x = Math.Min(48 + offset, Math.Max(0, Session.CurrentLayer.CanvasWidth - width));
+        var y = Math.Min(48 + offset, Math.Max(0, Session.CurrentLayer.CanvasHeight - height));
 
         Session.Add(kind, x, y);
     }
@@ -144,7 +144,7 @@
             return;
         }
 
-        var hit = Session.Document.HitTest(x, y);
+        var hit = Session.CurrentLayer.HitTest(x, y);
 
         if (hit is null)
         {
@@ -178,7 +178,7 @@
         _startY = y;
         _cursor = "grabbing";
         _dragOrigins = Session.Selection
-            .Select(id => Session.Document.Find(id))
+            .Select(id => Session.CurrentLayer.Find(id))
             .Where(element => element is not null)
             .ToDictionary(element => element!.Id, element => element!.Bounds);
 
@@ -205,12 +205,12 @@
                 {
                     foreach (var (id, origin) in _dragOrigins)
                     {
-                        if (document.Find(id) is not { } element)
+                        if (Session.CurrentLayer.Find(id) is not { } element)
                         {
                             continue;
                         }
 
-                        var moved = CanvasGeometry.Move(origin, deltaX, deltaY, document.CanvasWidth, document.CanvasHeight);
+                        var moved = CanvasGeometry.Move(origin, deltaX, deltaY, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
                         element.X = moved.X;
                         element.Y = moved.Y;
                     }
@@ -221,13 +221,13 @@
                 var id = Session.Selection.FirstOrDefault();
                 Session.Preview(document =>
                 {
-                    if (document.Find(id) is not { } element)
+                    if (Session.CurrentLayer.Find(id) is not { } element)
                     {
                         return;
                     }
 
                     var resized = CanvasInteraction.Resize(
-                        _origin, handle, deltaX, deltaY, document.GridSize, document.CanvasWidth, document.CanvasHeight);
+                        _origin, handle, deltaX, deltaY, document.GridSize, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
 
                     element.X = resized.X;
                     element.Y = resized.Y;
@@ -252,7 +252,7 @@
             case CanvasGesture.Marquee:
                 if (_marquee is { } frame)
                 {
-                    var caught = Session.Document.Elements
+                    var caught = Session.CurrentLayer.Elements
                         .Where(element => CanvasInteraction.Intersects(frame, element.Bounds))
                         .OrderBy(element => element.ZIndex)
                         .Select(element => element.Id)
@@ -356,12 +356,12 @@
         {
             foreach (var id in ids)
             {
-                if (document.Find(id) is not { } element)
+                if (Session.CurrentLayer.Find(id) is not { } element)
                 {
                     continue;
                 }
 
-                var moved = CanvasGeometry.Move(element.Bounds, deltaX, deltaY, document.CanvasWidth, document.CanvasHeight);
+                var moved = CanvasGeometry.Move(element.Bounds, deltaX, deltaY, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
                 element.X = moved.X;
                 element.Y = moved.Y;
             }
@@ -373,8 +373,8 @@
     // --- how it looks ----------------------------------------------------------------------------
 
     private string SheetStyle =>
-        $"width:{Number(Session.Document.CanvasWidth)}px;" +
-        $"height:{Number(Session.Document.CanvasHeight)}px;" +
+        $"width:{Number(Session.CurrentLayer.CanvasWidth)}px;" +
+        $"height:{Number(Session.CurrentLayer.CanvasHeight)}px;" +
         $"cursor:{_cursor};";
 
     private static string RectStyle(Rect rect) =>

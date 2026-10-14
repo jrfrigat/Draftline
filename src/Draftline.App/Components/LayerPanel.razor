@@ -1,0 +1,87 @@
+@inject DocumentSession Session
+
+@* The screens of the wireframe. A wireframe of anything real is several pictures, and this is the
+   shelf they stand on: which one is open, which one a preview starts from, and which of them lead
+   somewhere. The blocks themselves live on the sheet; this is only the list. *@
+<div class="df-layers">
+    <div class="df-layers__head">
+        <FlareButton Variant="ButtonVariant.Text" OnClick="@(() => Session.AddLayer())">Экран</FlareButton>
+        <FlareButton Variant="ButtonVariant.Text"
+                     Disabled="@(Session.Document.Layers.Count < 2)"
+                     OnClick="ExportAll">
+            Все экраны в SVG
+        </FlareButton>
+    </div>
+
+    @foreach (var layer in Session.Document.Layers)
+    {
+        var item = layer;
+
+        <div class="@RowClass(item)">
+            @if (item.Id == _renamingId)
+            {
+                <FlareTextField Label="Имя экрана" Size="FieldSize.Xs"
+                                Value="@item.Name"
+                                ValueChanged="@((string? value) => CommitRename(item, value))" />
+            }
+            else
+            {
+                <button type="button" class="df-layers__name" @onclick="() => Session.SelectLayer(item.Id)">
+                    @item.Name
+                </button>
+
+                <span class="df-layers__count" title="Блоков на экране">@item.Elements.Count</span>
+
+                @if (item.Id == Session.Document.StartLayerId)
+                {
+                    <span class="df-layers__mark" title="Просмотр начинается с этого экрана">вход</span>
+                }
+                else
+                {
+                    <button type="button" class="df-layers__action" title="Начинать просмотр с этого экрана"
+                            @onclick="() => Session.SetStartLayer(item.Id)">вход</button>
+                }
+
+                @if (OutgoingTransitions(item) > 0)
+                {
+                    <span class="df-layers__mark" title="Столько блоков ведут на другой экран">
+                        →@OutgoingTransitions(item)
+                    </span>
+                }
+
+                <button type="button" class="df-layers__action" title="Переименовать"
+                        @onclick="() => _renamingId = item.Id">✎</button>
+
+                @if (Session.Document.Layers.Count > 1)
+                {
+                    <button type="button" class="df-layers__action" title="Удалить экран"
+                            @onclick="() => Session.RemoveLayer(item.Id)">×</button>
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Asks the shell to hand every screen over as a file; the file service lives there.</summary>
+    [Parameter]
+    public EventCallback OnExportAllRequested { get; set; }
+
+    private string? _renamingId;
+
+    /// <summary>The class of a row: the open screen is marked, the rest are not.</summary>
+    private string RowClass(DraftLayer layer) =>
+        layer.Id == Session.CurrentLayerId ? "df-layers__row df-layers__row--current" : "df-layers__row";
+
+    /// <summary>How many blocks on this screen lead somewhere - what a preview would walk.</summary>
+    private static int OutgoingTransitions(DraftLayer layer) =>
+        layer.Elements.Count(element => element.HasTransition);
+
+    private void CommitRename(DraftLayer layer, string? name)
+    {
+        _renamingId = null;
+        Session.RenameLayer(layer.Id, name ?? string.Empty);
+    }
+
+    private Task ExportAll() => OnExportAllRequested.InvokeAsync();
+}

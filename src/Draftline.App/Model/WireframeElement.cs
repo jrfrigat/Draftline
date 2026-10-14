@@ -58,6 +58,15 @@ public sealed class WireframeElement
     /// </summary>
     public List<List<string>> Rows { get; set; } = new();
 
+    /// <summary>What the block does when it is pressed in the preview: nothing, navigate, open a dialog.</summary>
+    public TransitionKind Transition { get; set; } = TransitionKind.None;
+
+    /// <summary>The screen a transition leads to; empty when the block leads nowhere.</summary>
+    public string TargetLayerId { get; set; } = string.Empty;
+
+    /// <summary>True when pressing this block in the preview goes somewhere.</summary>
+    public bool HasTransition => Transition != TransitionKind.None && !string.IsNullOrEmpty(TargetLayerId);
+
     /// <summary>Whether a checkbox or a radio button is ticked.</summary>
     public bool Checked { get; set; }
 
@@ -111,6 +120,8 @@ public sealed class WireframeElement
         SecondaryText = SecondaryText,
         Columns = new List<string>(Columns),
         Rows = Rows.Select(row => new List<string>(row)).ToList(),
+        Transition = Transition,
+        TargetLayerId = TargetLayerId,
         Checked = Checked,
         FontScale = FontScale,
         Bold = Bold,

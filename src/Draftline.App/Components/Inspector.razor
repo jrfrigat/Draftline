@@ -110,8 +110,29 @@ else
 
         <FlareDivider />
 
+        @if (Session.Document.Layers.Count > 1)
+        {
+            <FlareSelect Label="Переход при нажатии" Size="FieldSize.Xs"
+                         Value="@element.TargetLayerId"
+                         ValueChanged="@((string? value) => Session.SetTransition(element, value, IsDialog(element)))">
+                <option value="">Нет</option>
+                @foreach (var layer in Session.Document.Layers)
+                {
+                    <option value="@layer.Id">@layer.Name</option>
+                }
+            </FlareSelect>
+
+            @if (element.HasTransition)
+            {
+                <FlareCheckbox Value="@IsDialog(element)"
+                               ValueChanged="@((bool value) => Session.SetTransition(element, element.TargetLayerId, value))">
+                    Открывать диалогом
+                </FlareCheckbox>
+            }
+        }
+
         <FlareButton Variant="ButtonVariant.Outlined"
-                     OnClick="@(() => Files.DownloadSvgAsync(Session.Document, element))">
+                     OnClick="@(() => Files.DownloadSvgAsync(Session.Document, Session.CurrentLayer, element))">
             Выгрузить этот блок в SVG
         </FlareButton>
     </div>
@@ -251,6 +272,10 @@ else
         Apply(element, "Текст изменён", target => target.Text = text);
     }
 
+    /// <summary>True when the block opens its target as a dialog over the screen, not in its place.</summary>
+    private static bool IsDialog(WireframeElement element) =>
+        element.Transition == TransitionKind.OpenDialog;
+
     private void SetFontScale(WireframeElement element, double? value)
     {
         if (value is not { } scale || Math.Abs(scale - element.FontScale) < 0.001)
@@ -337,8 +362,8 @@ else
                 target.Bounds,
                 alignment,
                 Session.Document.GridSize,
-                Session.Document.CanvasWidth,
-                Session.Document.CanvasHeight);
+                Session.CurrentLayer.CanvasWidth,
+                Session.CurrentLayer.CanvasHeight);
 
             target.X = aligned.X;
             target.Y = aligned.Y;
@@ -350,7 +375,7 @@ else
     private void Apply(WireframeElement element, string label, Action<WireframeElement> change) =>
         Session.Edit(label, document =>
         {
-            if (document.Find(element.Id) is { } target)
+            if (Session.CurrentLayer.Find(element.Id) is { } target)
             {
                 change(target);
             }

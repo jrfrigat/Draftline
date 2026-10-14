@@ -8,7 +8,10 @@
    selected on the right. The strip above the sheet says what is open and what just happened - the
    same line carries the storage's word once it is wired in. *@
 <div class="df-editor">
-    <aside class="df-side df-side--palette" aria-label="Блоки">
+<aside class="df-side df-side--palette" aria-label="Экраны и блоки">
+        <h2 class="df-side__title">Экраны</h2>
+        <LayerPanel OnExportAllRequested="ExportAllSvg" />
+
         <h2 class="df-side__title">Блоки</h2>
         <BlockPalette AddRequested="AddBlock" />
     </aside>
@@ -24,7 +27,7 @@
                 Повторить
             </FlareButton>
 
-            <FlareButton Variant="ButtonVariant.Text" Disabled="@(Session.Document.Elements.Count == 0)"
+            <FlareButton Variant="ButtonVariant.Text" Disabled="@(Session.Document.TotalElements == 0)"
                          OnClick="ExportSvg">
                 Экспорт SVG
             </FlareButton>
@@ -69,9 +72,12 @@
     private void Redo() => Session.Redo();
 
     /// <summary>The whole sheet as a drawing. One block on its own is exported from the inspector.</summary>
-    private Task ExportSvg() => Files.DownloadSvgAsync(Session.Document);
+    private Task ExportSvg() => Files.DownloadSvgAsync(Session.Document, Session.CurrentLayer);
 
     private Task ExportJson() => Files.DownloadJsonAsync(Session.Document);
+
+    /// <summary>Every screen of the wireframe, one file each.</summary>
+    private Task ExportAllSvg() => Files.DownloadAllSvgAsync(Session.Document);
 
     /// <summary>
     /// Takes a wireframe out of a file. A file that is not a wireframe is an ordinary answer to asking

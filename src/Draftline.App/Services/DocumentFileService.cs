@@ -37,15 +37,17 @@ public sealed class DocumentFileService : IAsyncDisposable
             .ConfigureAwait(false);
     }
 
-    /// <summary>Hands the wireframe to the person as an SVG drawing - the whole sheet, or one block.</summary>
+    /// <summary>Hands one screen to the person as an SVG drawing - the whole sheet, or one block.</summary>
     public async Task DownloadSvgAsync(
         DraftDocument document,
+        DraftLayer layer,
         WireframeElement? element = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(layer);
 
-        var drawing = element is null ? SvgExporter.Export(document) : SvgExporter.Export(document, element);
+        var drawing = element is null ? SvgExporter.Export(layer) : SvgExporter.ExportElement(element);
         var suffix = element is null ? string.Empty : "-" + element.Kind.ToString().ToLowerInvariant();
 
         var module = await ModuleAsync(cancellationToken).ConfigureAwait(false);
@@ -53,10 +55,32 @@ public sealed class DocumentFileService : IAsyncDisposable
         await module.InvokeVoidAsync(
                 "download",
                 cancellationToken,
-                FileNameFor(document, suffix + ".svg"),
+                FileNameFor(document, suffix + ".svg", layer.Name),
                 "image/svg+xml",
                 drawing)
             .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Hands every screen to the person, one file each. A wireframe of five screens is five pictures,
+    /// and one file carrying all of them would be a format nobody could open anywhere.
+    /// </summary>
+    public async Task DownloadAllSvgAsync(DraftDocument document, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        var module = await ModuleAsync(cancellationToken).ConfigureAwait(false);
+
+        foreach (var (name, svg) in SvgExporter.ExportAll(document))
+        {
+            await module.InvokeVoidAsync(
+                    "download",
+                    cancellationToken,
+                    FileNameFor(document, ".svg", name),
+                    "image/svg+xml",
+                    svg)
+                .ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -72,13 +96,17 @@ public sealed class DocumentFileService : IAsyncDisposable
     }
 
     /// <summary>
-    /// What the file is called: the wireframe's own name with everything a file system would rather not
-    /// see replaced by a dash, so two people exporting the same wireframe get the same file name.
+    /// What the file is called: the wireframe's own name, and the screen's when the file is one screen,
+    /// with everything a file system would rather not see replaced by a dash - so two people exporting
+    /// the same wireframe get the same file names.
     /// </summary>
-    public static string FileNameFor(DraftDocument document, string extension)
+    public static string FileNameFor(DraftDocument document, string extension, string? layerName = null)
     {
         ArgumentNullException.ThrowIfNull(document);
-        return Slug(document.Name) + extension;
+
+        return string.IsNullOrWhiteSpace(layerName)
+            ? Slug(document.Name) + extension
+            : Slug(document.Name) + "-" + Slug(layerName) + extension;
     }
 
     /// <summary>A name that is safe everywhere: letters, digits, single dashes between them.</summary>

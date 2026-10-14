@@ -98,7 +98,7 @@ public sealed class ProjectCatalog
 
         line.Name = document.Name;
         line.UpdatedAt = document.UpdatedAt;
-        line.ElementCount = document.Elements.Count;
+        line.ElementCount = document.TotalElements;
 
         await _storage.SetAsync(
                 IndexKey,

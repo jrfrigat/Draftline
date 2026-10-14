@@ -982,6 +982,88 @@ body {
     border-left: none;
 }
 
+/* --------------------------------------------------------------------- the shelf of screens */
+
+/* The screens of one wireframe. The open one is marked with a bar and ink; the rest stay quiet, because
+   the shelf is not the drawing - it is where the drawing is taken from. */
+.df-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.df-layers__head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 0.35rem;
+}
+
+.df-layers__row {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.25rem;
+    border-left: 3px solid transparent;
+}
+
+.df-layers__row--current {
+    border-left-color: #1b1e24;
+    background: rgb(27 30 36 / 6%);
+}
+
+.df-layers__name {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.df-layers__name:hover {
+    text-decoration: underline;
+}
+
+.df-layers__row--current .df-layers__name {
+    font-weight: 700;
+}
+
+.df-layers__count,
+.df-layers__mark {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    opacity: 0.6;
+}
+
+.df-layers__mark {
+    padding: 0 0.2rem;
+    border: 1px solid currentcolor;
+    border-radius: 0;
+}
+
+.df-layers__action {
+    flex: 0 0 auto;
+    padding: 0 0.2rem;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 0.8rem;
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+.df-layers__action:hover {
+    opacity: 1;
+}
+
 @media (max-width: 900px) {
     .df-editor {
         grid-template-columns: 1fr;

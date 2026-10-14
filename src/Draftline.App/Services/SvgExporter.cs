@@ -21,17 +21,17 @@ public static class SvgExporter
     private const string Paper = "#ffffff";
     private const string Font = "Inter, Segoe UI, system-ui, sans-serif";
 
-    /// <summary>The whole sheet as an SVG drawing.</summary>
-    public static string Export(DraftDocument document)
+    /// <summary>The whole sheet of one screen as an SVG drawing.</summary>
+    public static string Export(DraftLayer layer)
     {
-        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(layer);
 
-        var width = Math.Max(1, document.CanvasWidth);
-        var height = Math.Max(1, document.CanvasHeight);
+        var width = Math.Max(1, layer.CanvasWidth);
+        var height = Math.Max(1, layer.CanvasHeight);
         var svg = new StringBuilder();
 
         Start(svg, width, height);
-        foreach (var element in document.InDrawOrder())
+        foreach (var element in layer.InDrawOrder())
         {
             WriteElement(svg, element);
         }
@@ -40,10 +40,19 @@ public static class SvgExporter
         return svg.ToString();
     }
 
-    /// <summary>One block on a sheet of its own - what a person wants when they export a single control.</summary>
-    public static string Export(DraftDocument document, WireframeElement element)
+    /// <summary>Every screen of a document as a drawing of its own, in the order the screens are listed.</summary>
+    public static IReadOnlyList<(string Name, string Svg)> ExportAll(DraftDocument document)
     {
         ArgumentNullException.ThrowIfNull(document);
+
+        return document.Layers
+            .Select(layer => (layer.Name, Export(layer)))
+            .ToList();
+    }
+
+    /// <summary>One block on a sheet of its own - what a person wants when they export a single control.</summary>
+    public static string ExportElement(WireframeElement element)
+    {
         ArgumentNullException.ThrowIfNull(element);
 
         var width = Math.Max(1, element.Width);
