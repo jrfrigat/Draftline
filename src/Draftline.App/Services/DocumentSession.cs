@@ -74,6 +74,139 @@ public sealed class DocumentSession
         return created;
     }
 
+    private readonly List<string> _previewPath = new();
+    private bool _dialogOpen;
+
+    /// <summary>True while the wireframe is being shown rather than drawn.</summary>
+    public bool IsPreviewing => _previewPath.Count > 0;
+
+    /// <summary>The screen being shown; null while the editor is open.</summary>
+    public string? PreviewLayerId => IsPreviewing ? _previewPath[^1] : null;
+
+    /// <summary>True when the screen on top was opened as a dialog over the one under it.</summary>
+    public bool IsDialogOpen => _dialogOpen;
+
+    /// <summary>The screen a dialog stands over, or null.</summary>
+    public string? DialogHostLayerId =>
+        _dialogOpen && _previewPath.Count > 1 ? _previewPath[^2] : null;
+
+    /// <summary>Whether there is a screen to step back to.</summary>
+    public bool CanGoBack => _previewPath.Count > 1;
+
+    /// <summary>The screen being shown in the preview, or null.</summary>
+    public DraftLayer? PreviewLayer => PreviewLayerId is { } id ? Document.FindLayer(id) : null;
+
+    /// <summary>The screen a dialog stands over, or null.</summary>
+    public DraftLayer? DialogHostLayer => DialogHostLayerId is { } id ? Document.FindLayer(id) : null;
+
+    /// <summary>
+    /// Starts the preview at the screen a wireframe opens on. The path is state of this session and not
+    /// of the document: walking a wireframe must not change it, and an undo after a walk would be an
+    /// undo of something nobody drew.
+    /// </summary>
+    public void EnterPreview()
+    {
+        _previewPath.Clear();
+        _previewPath.Add(Document.StartLayer.Id);
+        _dialogOpen = false;
+        _selection.Clear();
+        Status = "Просмотр: " + Document.StartLayer.Name;
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>Leaves the preview.</summary>
+    public void ExitPreview()
+    {
+        if (!IsPreviewing)
+        {
+            return;
+        }
+
+        _previewPath.Clear();
+        _dialogOpen = false;
+        Status = "Просмотр закрыт";
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Does what a block says when it is pressed in the preview: nothing, another screen, or this screen
+    /// with a dialog over it. False when the block leads nowhere.
+    /// </summary>
+    public bool FollowTransition(WireframeElement? element)
+    {
+        if (!IsPreviewing || element is null || !element.HasTransition
+            || Document.FindLayer(element.TargetLayerId) is not { } target)
+        {
+            return false;
+        }
+
+        if (element.Transition == TransitionKind.OpenDialog)
+        {
+            if (_dialogOpen)
+            {
+                _previewPath[^1] = target.Id;
+            }
+            else
+            {
+                _previewPath.Add(target.Id);
+                _dialogOpen = true;
+            }
+        }
+        else
+        {
+            // A dialog over the screen being left would stay over the wrong one.
+            if (_dialogOpen)
+            {
+                _previewPath.RemoveAt(_previewPath.Count - 1);
+                _dialogOpen = false;
+            }
+
+            _previewPath.Add(target.Id);
+        }
+
+        Status = "Просмотр: " + target.Name;
+        Changed?.Invoke();
+        return true;
+    }
+
+    /// <summary>Closes the open dialog. False when none is open.</summary>
+    public bool CloseDialog()
+    {
+        if (!_dialogOpen)
+        {
+            return false;
+        }
+
+        _previewPath.RemoveAt(_previewPath.Count - 1);
+        _dialogOpen = false;
+        Status = "Просмотр: " + (Document.FindLayer(_previewPath[^1])?.Name ?? string.Empty);
+
+        Changed?.Invoke();
+        return true;
+    }
+
+    /// <summary>Steps back one screen, closing a dialog first. False when there is nowhere back.</summary>
+    public bool GoBack()
+    {
+        if (CloseDialog())
+        {
+            return true;
+        }
+
+        if (_previewPath.Count <= 1)
+        {
+            return false;
+        }
+
+        _previewPath.RemoveAt(_previewPath.Count - 1);
+        Status = "Просмотр: " + (Document.FindLayer(_previewPath[^1])?.Name ?? string.Empty);
+
+        Changed?.Invoke();
+        return true;
+    }
+
     /// <summary>Renames a screen.</summary>
     public void RenameLayer(string id, string name)
     {

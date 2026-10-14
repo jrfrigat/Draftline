@@ -27,6 +27,10 @@
                 Повторить
             </FlareButton>
 
+            <FlareButton Variant="ButtonVariant.Text" OnClick="TogglePreview">
+                @(Session.IsPreviewing ? "К редактору" : "Просмотр")
+            </FlareButton>
+
             <FlareButton Variant="ButtonVariant.Text" Disabled="@(Session.Document.TotalElements == 0)"
                          OnClick="ExportSvg">
                 Экспорт SVG
@@ -39,7 +43,14 @@
                 <span class="df-toolbar__notice">@_notice</span>
             }
         </div>
-        <CanvasView @ref="_canvas" />
+        @if (Session.IsPreviewing)
+        {
+            <PreviewSurface />
+        }
+        else
+        {
+            <CanvasView @ref="_canvas" />
+        }
     </section>
 
     <aside class="df-side df-side--inspector" aria-label="Свойства">
@@ -70,6 +81,22 @@
     private void Undo() => Session.Undo();
 
     private void Redo() => Session.Redo();
+
+    /// <summary>
+    /// Shows the wireframe the way its reader will see it, or goes back to the editor. The walk lives in
+    /// the session, so the canvas and the preview are two faces of one state rather than two editors.
+    /// </summary>
+    private void TogglePreview()
+    {
+        if (Session.IsPreviewing)
+        {
+            Session.ExitPreview();
+        }
+        else
+        {
+            Session.EnterPreview();
+        }
+    }
 
     /// <summary>The whole sheet as a drawing. One block on its own is exported from the inspector.</summary>
     private Task ExportSvg() => Files.DownloadSvgAsync(Session.Document, Session.CurrentLayer);

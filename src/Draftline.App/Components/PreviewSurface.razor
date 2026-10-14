@@ -1,0 +1,91 @@
+@inject DocumentSession Session
+
+@* The wireframe as its reader sees it: no grid, no selection, no handles - the screen, and the blocks
+   that lead somewhere actually leading there. A block that leads somewhere is a real button, so a
+   wireframe can be walked with the keyboard as well as with a mouse - and the button is what carries
+   the focus ring, which the drawing itself must not have. *@
+<div class="df-preview" tabindex="0" @onkeydown="OnKeyDown">
+    @if (Session.PreviewLayer is { } shown)
+    {
+        <div class="df-preview__bar">
+            <FlareButton Variant="ButtonVariant.Text"
+                         Disabled="@(!Session.CanGoBack)"
+                         OnClick="() => Session.GoBack()">
+                Назад
+            </FlareButton>
+
+            <span class="df-preview__name">@shown.Name</span>
+            <span class="df-preview__spacer"></span>
+
+            <FlareButton Variant="ButtonVariant.Text" OnClick="() => Session.ExitPreview()">
+                К редактору
+            </FlareButton>
+        </div>
+
+        <div class="df-preview__stage">
+            @if (Session.DialogHostLayer is { } host)
+            {
+                <div class="df-preview__scrim"></div>
+
+                <div class="df-preview__sheet df-preview__sheet--behind"
+                     style="width:@Number(host.CanvasWidth)px;height:@Number(host.CanvasHeight)px;">
+                    @foreach (var behind in host.InDrawOrder())
+                    {
+                        <WireframeElementView Element="behind" />
+                    }
+                </div>
+            }
+
+            <div class="@SheetClass" style="width:@Number(shown.CanvasWidth)px;height:@Number(shown.CanvasHeight)px;">
+                @foreach (var element in shown.InDrawOrder())
+                {
+                    var item = element;
+                    <WireframeElementView Element="item" />
+
+                    @if (item.HasTransition)
+                    {
+                        <button type="button"
+                                class="df-preview__hotspot"
+                                style="@HotspotStyle(item)"
+                                title="@LeadsTo(item)"
+                                @onclick="() => Session.FollowTransition(item)"></button>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string SheetClass =>
+        Session.IsDialogOpen ? "df-preview__sheet df-preview__sheet--dialog" : "df-preview__sheet";
+
+    private static string HotspotStyle(WireframeElement element) =>
+        $"left:{Number(element.X)}px;top:{Number(element.Y)}px;width:{Number(element.Width)}px;" +
+        $"height:{Number(element.Height)}px;";
+
+    private string LeadsTo(WireframeElement element) =>
+        element.Transition == TransitionKind.OpenDialog
+            ? "Открыть диалог: " + LayerNameOf(element.TargetLayerId)
+            : "Перейти: " + LayerNameOf(element.TargetLayerId);
+
+    private string LayerNameOf(string id) => Session.Document.FindLayer(id)?.Name ?? string.Empty;
+
+    private static string Number(double value) =>
+        value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+
+    private void OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key != "Escape")
+        {
+            return;
+        }
+
+        // Escape closes the dialog if one is open and leaves the preview if none is: one key, the two
+        // things a person means by pressing it.
+        if (!Session.CloseDialog())
+        {
+            Session.ExitPreview();
+        }
+    }
+}

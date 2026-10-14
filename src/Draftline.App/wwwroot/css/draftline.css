@@ -1064,6 +1064,85 @@ body {
     opacity: 1;
 }
 
+/* --------------------------------------------------------------------- the preview */
+
+/* Showing the wireframe rather than drawing it: the sheet on a plain ground, the screen's own shadow
+   when it is a dialog, and a button over every block that leads somewhere. */
+.df-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    outline: none;
+}
+
+.df-preview__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.df-preview__name {
+    font-weight: 700;
+}
+
+.df-preview__spacer {
+    flex: 1 1 auto;
+}
+
+.df-preview__stage {
+    display: grid;
+    justify-items: center;
+    align-items: start;
+    padding: 1rem;
+    overflow: auto;
+}
+
+/* The dialog stands in the same cell as the screen under it, so the two overlap instead of sitting
+   side by side. */
+.df-preview__stage > * {
+    grid-area: 1 / 1;
+}
+
+.df-preview__sheet {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid #1b1e24;
+}
+
+.df-preview__sheet--behind {
+    opacity: 0.4;
+}
+
+.df-preview__sheet--dialog {
+    z-index: 2;
+    border-width: 2px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / 25%);
+}
+
+.df-preview__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: rgb(27 30 36 / 45%);
+}
+
+.df-preview__hotspot {
+    position: absolute;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.df-preview__hotspot:hover {
+    background: rgb(27 30 36 / 8%);
+}
+
+.df-preview__hotspot:focus-visible {
+    outline: 2px solid #1b1e24;
+    outline-offset: 1px;
+}
+
 @media (max-width: 900px) {
     .df-editor {
         grid-template-columns: 1fr;
