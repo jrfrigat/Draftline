@@ -51,6 +51,24 @@ else
             </div>
         }
 
+        @if (ElementDefaults.AcceptsValue(element.Kind))
+        {
+            <FlareTextField Label="Значение" Size="FieldSize.Xs"
+                            Value="@element.Value"
+                            ValueChanged="@((string? value) => SetValue(element, value))" />
+
+            <FlareTextField Label="Подсказка" Size="FieldSize.Xs"
+                            Value="@element.Placeholder"
+                            ValueChanged="@((string? value) => SetPlaceholder(element, value))" />
+        }
+
+        @if (ElementDefaults.AcceptsSecondaryText(element.Kind))
+        {
+            <FlareTextField Label="Вторая строка" Size="FieldSize.Xs"
+                            Value="@element.SecondaryText"
+                            ValueChanged="@((string? value) => SetSecondaryText(element, value))" />
+        }
+
         @if (ElementDefaults.HasCheck(element.Kind))
         {
             <FlareCheckbox Value="@element.Checked" ValueChanged="@((bool value) => SetChecked(element, value))">
@@ -60,7 +78,7 @@ else
 
         @if (ElementDefaults.HasRows(element.Kind))
         {
-            <FlareTextArea Label="Пункты, по одному в строке" Size="FieldSize.Xs"
+            <FlareTextArea Label="Пункты, по одному в строке; значение после знака =" Size="FieldSize.Xs"
                            Value="@OptionsText(element)"
                            ValueChanged="@((string? value) => SetOptions(element, value))" />
         }
@@ -169,6 +187,39 @@ else
         }
 
         Apply(element, "Масштаб текста изменён", target => target.FontScale = Math.Clamp(scale, 0.5, 4));
+    }
+
+    private void SetValue(WireframeElement element, string? value)
+    {
+        var text = value ?? string.Empty;
+        if (text == element.Value)
+        {
+            return;
+        }
+
+        Apply(element, "Значение изменено", target => target.Value = text);
+    }
+
+    private void SetPlaceholder(WireframeElement element, string? value)
+    {
+        var text = value ?? string.Empty;
+        if (text == element.Placeholder)
+        {
+            return;
+        }
+
+        Apply(element, "Подсказка изменена", target => target.Placeholder = text);
+    }
+
+    private void SetSecondaryText(WireframeElement element, string? value)
+    {
+        var text = value ?? string.Empty;
+        if (text == element.SecondaryText)
+        {
+            return;
+        }
+
+        Apply(element, "Вторая строка изменена", target => target.SecondaryText = text);
     }
 
     private void SetBold(WireframeElement element, bool value)

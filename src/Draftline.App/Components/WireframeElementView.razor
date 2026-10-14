@@ -10,6 +10,10 @@
             {
                 <span class="df-panel__label">@Element.Text</span>
             }
+            @if (!string.IsNullOrWhiteSpace(Element.SecondaryText))
+            {
+                <span class="df-panel__description">@Element.SecondaryText</span>
+            }
             break;
 
         case WireframeKind.Heading:
@@ -17,7 +21,13 @@
             break;
 
         case WireframeKind.Text:
-            <span class="df-text">@Element.DisplayText</span>
+            <span class="df-text-block">
+                <span class="df-text">@Element.DisplayText</span>
+                @if (!string.IsNullOrWhiteSpace(Element.SecondaryText))
+                {
+                    <span class="df-text__secondary">@Element.SecondaryText</span>
+                }
+            </span>
             break;
 
         case WireframeKind.Button:
@@ -26,11 +36,16 @@
 
         case WireframeKind.TextField:
             <span class="df-field__label">@Element.DisplayText</span>
+            <span class="@ValueClass">@Element.DisplayValue</span>
             <span class="df-field__line"></span>
             break;
 
         case WireframeKind.TextArea:
             <span class="df-field__label">@Element.DisplayText</span>
+            @if (!string.IsNullOrWhiteSpace(Element.Value))
+            {
+                <span class="df-area__value">@Element.Value</span>
+            }
             <span class="df-area__rules"></span>
             break;
 
@@ -46,13 +61,20 @@
 
         case WireframeKind.Select:
             <span class="df-field__label">@Element.DisplayText</span>
+            <span class="@ValueClass">@Element.DisplayValue</span>
             <span class="df-select__arrow">▾</span>
             break;
 
         case WireframeKind.List:
-            @foreach (var row in Rows)
+            @foreach (var (label, value) in Rows)
             {
-                <span class="df-list__row">@row</span>
+                <span class="df-list__row">
+                    <span class="df-list__label">@label</span>
+                    @if (!string.IsNullOrEmpty(value))
+                    {
+                        <span class="df-list__value">@value</span>
+                    }
+                </span>
             }
             break;
 
@@ -84,8 +106,12 @@
         }
     }
 
-    private IEnumerable<string> Rows =>
-        Element.Options.Count > 0 ? Element.Options : ElementDefaults.DefaultOptions;
+    private IEnumerable<(string Label, string Value)> Rows =>
+        (Element.Options.Count > 0 ? Element.Options : ElementDefaults.DefaultOptions)
+        .Select(ElementDefaults.SplitOption);
+
+    /// <summary>The class of a value: a hint is drawn lighter than something someone actually typed.</summary>
+    private string ValueClass => Element.ShowsHint ? "df-field__value df-field__value--hint" : "df-field__value";
 
     private string Style
     {

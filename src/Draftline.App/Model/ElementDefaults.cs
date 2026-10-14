@@ -89,6 +89,27 @@ public static class ElementDefaults
         _ => kind.ToString()
     };
 
+    /// <summary>
+    /// Splits a row of a list or a dropdown into its label and its value: "Товары = 128" is a row whose
+    /// label is "Товары" and whose value is 128. A row without a "=" carries no value, which is the
+    /// ordinary case and not a mistake - most rows of a wireframe list are just words.
+    ///
+    /// One function, three callers: the canvas, the SVG writer and the inspector all have to agree on
+    /// what a row means, and this is the only place that decides.
+    /// </summary>
+    public static (string Label, string Value) SplitOption(string option)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+
+        var separator = option.IndexOf('=', StringComparison.Ordinal);
+        if (separator < 0)
+        {
+            return (option.Trim(), string.Empty);
+        }
+
+        return (option[..separator].Trim(), option[(separator + 1)..].Trim());
+    }
+
     /// <summary>True when the kind carries a list of rows a person can edit.</summary>
     public static bool HasRows(WireframeKind kind) => kind is WireframeKind.List or WireframeKind.Select;
 
@@ -99,4 +120,12 @@ public static class ElementDefaults
     public static bool IsTextual(WireframeKind kind) =>
         kind is WireframeKind.Heading or WireframeKind.Text or WireframeKind.Button
             or WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Checkbox or WireframeKind.Radio;
+
+    /// <summary>True when the kind has a second line worth writing: a description, a detail, a caption.</summary>
+    public static bool AcceptsSecondaryText(WireframeKind kind) =>
+        kind is WireframeKind.Text or WireframeKind.Heading or WireframeKind.Panel or WireframeKind.List;
+
+    /// <summary>True when the kind stands for something a person types or chooses, so a value makes sense.</summary>
+    public static bool AcceptsValue(WireframeKind kind) =>
+        kind is WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Select;
 }

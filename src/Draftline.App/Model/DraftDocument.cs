@@ -12,8 +12,11 @@ public sealed class DraftDocument
     /// <summary>
     /// The version of the file format. It is written into every file and read before anything else,
     /// because a file from a newer Draftline may mean something else by the same field name.
+    ///
+    /// 1 - the first shape of the format: a sheet, a list of blocks, a caption on each.
+    /// 2 - blocks carry data: a value, a hint and a second line, and a list row may carry a value.
     /// </summary>
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     /// <summary>A sheet in pixels, as a new wireframe starts.</summary>
     public const double DefaultCanvasWidth = 960;
@@ -138,6 +141,9 @@ public sealed class DraftDocument
             }
 
             element.Text ??= string.Empty;
+            element.Value ??= string.Empty;
+            element.Placeholder ??= string.Empty;
+            element.SecondaryText ??= string.Empty;
             element.Options ??= new List<string>();
             element.FontScale = element.FontScale > 0 ? element.FontScale : 1;
 

@@ -34,6 +34,20 @@ public sealed class WireframeElement
     /// <summary>Rows of a list or a dropdown; every other kind ignores it.</summary>
     public List<string> Options { get; set; } = new();
 
+    /// <summary>
+    /// What stands in the block, as opposed to what it is called: the text someone typed into a field,
+    /// the row a dropdown is showing. A block that says "Логин" is a label; one that says
+    /// "Логин: ivan@example.com" is a screen somebody has already used, and that is the difference
+    /// between a drawing of a form and a description of one.
+    /// </summary>
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>The hint an empty field carries - what the input says before anyone typed in it.</summary>
+    public string Placeholder { get; set; } = string.Empty;
+
+    /// <summary>The second line of a block: a row's detail, a panel's description, a caption.</summary>
+    public string SecondaryText { get; set; } = string.Empty;
+
     /// <summary>Whether a checkbox or a radio button is ticked.</summary>
     public bool Checked { get; set; }
 
@@ -52,6 +66,19 @@ public sealed class WireframeElement
     /// <summary>The words to draw: the block's own, or the placeholder its kind carries.</summary>
     public string DisplayText => string.IsNullOrWhiteSpace(Text) ? ElementDefaults.PlaceholderFor(Kind) : Text;
 
+    /// <summary>What stands in the block: its value, or the hint when nothing stands there yet.</summary>
+    public string DisplayValue => string.IsNullOrWhiteSpace(Value) ? Placeholder : Value;
+
+    /// <summary>
+    /// True when the block has no value and is only showing its hint. The canvas draws a hint in a
+    /// lighter ink, because "nothing typed here" and "typed nothing" are two different screens.
+    /// </summary>
+    public bool ShowsHint => string.IsNullOrWhiteSpace(Value);
+
+    /// <summary>The rows of a list or a dropdown, each split into its label and its value.</summary>
+    public IEnumerable<(string Label, string Value)> OptionRows =>
+        Options.Select(ElementDefaults.SplitOption);
+
     /// <summary>True when the point falls inside the block.</summary>
     public bool Contains(double x, double y) => Bounds.Contains(x, y);
 
@@ -69,6 +96,9 @@ public sealed class WireframeElement
         Height = Height,
         Text = Text,
         Options = new List<string>(Options),
+        Value = Value,
+        Placeholder = Placeholder,
+        SecondaryText = SecondaryText,
         Checked = Checked,
         FontScale = FontScale,
         Bold = Bold,

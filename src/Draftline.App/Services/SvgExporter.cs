@@ -84,6 +84,11 @@ public static class SvgExporter
                     Text(svg, x + 6, y + 14, text.ToUpperInvariant(), 11, "400", 0.7);
                 }
 
+                if (!string.IsNullOrWhiteSpace(element.SecondaryText))
+                {
+                    Text(svg, x + 6, y + 28, element.SecondaryText, 10, "400", 0.65);
+                }
+
                 break;
 
             case WireframeKind.Heading:
@@ -92,6 +97,12 @@ public static class SvgExporter
 
             case WireframeKind.Text:
                 WriteLines(svg, text, x + 2, y + size, size, element.Height);
+
+                if (!string.IsNullOrWhiteSpace(element.SecondaryText))
+                {
+                    Text(svg, x + 2, y + size + (size * 1.35), element.SecondaryText, size * 0.9, "400", 0.7);
+                }
+
                 break;
 
             case WireframeKind.Button:
@@ -102,12 +113,19 @@ public static class SvgExporter
             case WireframeKind.TextField:
                 Box(svg, x, y, element.Width, element.Height, Paper);
                 Text(svg, x + 6, centerY + (size / 3), text, size, weight, 1);
+                Text(svg, right - 12, centerY + (size / 3), element.DisplayValue, size, "400",
+                    element.ShowsHint ? 0.55 : 1, "end");
                 Line(svg, right - 6, centerY - (element.Height * 0.3), right - 6, centerY + (element.Height * 0.3), 1);
                 break;
 
             case WireframeKind.TextArea:
                 Box(svg, x, y, element.Width, element.Height, Paper);
                 Text(svg, x + 6, y + size + 2, text, size, weight, 1);
+
+                if (!string.IsNullOrWhiteSpace(element.Value))
+                {
+                    WriteLines(svg, element.Value, x + 6, y + size + 2 + (size * 1.35), size, element.Height);
+                }
 
                 // Ruled lines: what a person draws in a box on paper to say "there is more room here".
                 for (var lineY = y + 37; lineY < bottom - 4; lineY += 16)
@@ -141,6 +159,8 @@ public static class SvgExporter
             case WireframeKind.Select:
                 Box(svg, x, y, element.Width, element.Height, Paper);
                 Text(svg, x + 6, centerY + (size / 3), text, size, weight, 1);
+                Text(svg, right - 22, centerY + (size / 3), element.DisplayValue, size, "400",
+                    element.ShowsHint ? 0.55 : 1, "end");
                 Tri(svg, right - 20, centerY - 3, right - 8, centerY - 3, right - 14, centerY + 4);
                 break;
 
@@ -154,7 +174,16 @@ public static class SvgExporter
                 foreach (var row in rows)
                 {
                     var rowTop = y + (rowHeight * index);
-                    Text(svg, x + 8, rowTop + (rowHeight / 2) + 4, row, size, weight, 1);
+                    var (label, value) = ElementDefaults.SplitOption(row);
+
+                    Text(svg, x + 8, rowTop + (rowHeight / 2) + 4, label, size, weight, 1);
+
+                    // A row may carry a value, and in a list the value belongs on the right: the eye
+                    // reads a column of numbers down the edge, not scattered through the sentences.
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        Text(svg, right - 8, rowTop + (rowHeight / 2) + 4, value, size, "400", 0.7, "end");
+                    }
 
                     index++;
                     if (index < rows.Count)

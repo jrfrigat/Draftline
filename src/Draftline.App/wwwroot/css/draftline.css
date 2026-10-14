@@ -642,6 +642,68 @@ body {
     color: var(--flare-color-error, #b3261e);
 }
 
+/* --------------------------------------------------------------------- the data in a block */
+
+/* A value someone typed is ink; a hint is a lighter suggestion. Drawing both the same would make a
+   screen that says "Логин: admin" look identical to one that says "Логин: введите имя". */
+.df-field__value {
+    flex: 0 1 auto;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.df-field__value--hint {
+    opacity: 0.5;
+    font-style: italic;
+}
+
+.df-area__value {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 20px;
+    white-space: pre-wrap;
+    pointer-events: none;
+}
+
+/* Rows of a list: the label on the left, the value on the right edge, where a column of numbers
+   belongs. */
+.df-list__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.df-list__label {
+    flex: 1 1 auto;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.df-list__value {
+    flex: 0 0 auto;
+    opacity: 0.7;
+}
+
+.df-text-block {
+    display: flex;
+    flex-direction: column;
+}
+
+.df-text__secondary,
+.df-panel__description {
+    font-size: 0.9em;
+    opacity: 0.7;
+}
+
+.df-panel__description {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+}
+
 @media (max-width: 900px) {
     .df-editor {
         grid-template-columns: 1fr;
