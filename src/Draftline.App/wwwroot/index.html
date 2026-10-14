@@ -20,10 +20,13 @@
       Flare's bootstrap: it paints the theme before .NET boots, so the page never appears in one look
       and then switches to another. The three data-default-* values are the same theme, palette and
       mode Program.cs registers - they have to agree, and this is the pair that is easiest to break.
-      It must stay synchronous (no async, no defer) and it has to come before the stylesheets.
+      The theme is Fluent UI 2 built on itself with the layout's page padding removed, so its id is
+      deliberately not "fluent2": what is painted here is exactly what Program.cs registers. Nothing on
+      the first frame wears Fluent UI 2's scoped component styles, and the splash is styled by our own
+      stylesheet with token fallbacks, so the one instant before .NET is up looks right either way.
     -->
     <script src="_content/Flare.Components/js/flare-bootstrap.js"
-            data-default-theme="fluent2"
+            data-default-theme="draftline-fluent2"
             data-default-palette="fluent-blue"
             data-default-mode="auto"></script>
     <link rel="stylesheet" href="_content/Flare.Components/css/flare-components.css" />

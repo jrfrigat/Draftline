@@ -1,5 +1,6 @@
 using Draftline.App;
 using Draftline.App.Services;
+using Draftline.App.Theming;
 using Flare.Abstractions.Tokens;
 using Flare.Extensions;
 using Flare.Theme.FluentUI2;
@@ -13,14 +14,16 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // One design system, one palette, no theme switch: Draftline is a wireframing tool, so the chrome
-// stays quiet on purpose and the canvas owns the attention. Fluent UI 2 is the tighter preset - more
-// of the screen goes to the sheet - and the neutral blue palette keeps the one accent the low-fi look
-// is allowed. The mode follows the machine until the visitor decides otherwise: the same defaults the
-// bootstrap script in index.html paints the first frame with, because two of those disagreeing is a
-// flash of the wrong colour.
+// stays quiet on purpose and the canvas owns the attention. The theme is Fluent UI 2 - the tighter
+// preset, more of the screen goes to the sheet - with one of its values changed for an editor: the
+// padding it puts around a page is gone, so the canvas reaches the window's edges (see DraftlineTheme,
+// which also says why the value is changed in the theme and not in our stylesheet). The neutral blue
+// palette keeps the one accent the low-fi look is allowed. The mode follows the machine until the
+// visitor decides otherwise: the same defaults the bootstrap script in index.html paints the first
+// frame with, because two of those disagreeing is a flash of the wrong colour.
 builder.Services.AddFlare(options =>
 {
-    options.DefaultTheme = new FluentUI2Theme();
+    options.DefaultTheme = DraftlineTheme.Build();
     options.DefaultPalette = Fluent2Palettes.Blue;
     options.DefaultMode = ThemeMode.Auto;
 });
