@@ -15,8 +15,9 @@ public sealed class DraftDocument
     ///
     /// 1 - the first shape of the format: a sheet, a list of blocks, a caption on each.
     /// 2 - blocks carry data: a value, a hint and a second line, and a list row may carry a value.
+    /// 3 - a table carries columns and rows.
     /// </summary>
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     /// <summary>A sheet in pixels, as a new wireframe starts.</summary>
     public const double DefaultCanvasWidth = 960;
@@ -145,6 +146,34 @@ public sealed class DraftDocument
             element.Placeholder ??= string.Empty;
             element.SecondaryText ??= string.Empty;
             element.Options ??= new List<string>();
+            element.Columns ??= new List<string>();
+            element.Rows ??= new List<List<string>>();
+
+            if (element.Columns.Count > 0)
+            {
+                for (var index = 0; index < element.Rows.Count; index++)
+                {
+                    var row = element.Rows[index] ??= new List<string>();
+
+                    // A table is read as a rectangle: a shorter row is filled with empty cells and a
+                    // longer one is cut. Otherwise every renderer downstream would have to defend
+                    // itself against a row that does not match its header.
+                    while (row.Count < element.Columns.Count)
+                    {
+                        row.Add(string.Empty);
+                    }
+
+                    while (row.Count > element.Columns.Count)
+                    {
+                        row.RemoveAt(row.Count - 1);
+                    }
+
+                    for (var cell = 0; cell < row.Count; cell++)
+                    {
+                        row[cell] ??= string.Empty;
+                    }
+                }
+            }
             element.FontScale = element.FontScale > 0 ? element.FontScale : 1;
 
             var bounds = CanvasGeometry.Clamp(element.Bounds, CanvasWidth, CanvasHeight);

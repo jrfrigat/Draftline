@@ -4,21 +4,26 @@
    to the spot it belongs in: clicking when you are arranging things, dragging when you already know
    where the block goes. Both exist because both are how people work, and neither is a mode. *@
 <div class="df-palette">
-    @foreach (var kind in ElementDefaults.All)
+    @foreach (var (title, kinds) in ElementDefaults.Sections)
     {
-        var item = kind;
-        <div class="df-palette__row">
-            <button type="button" class="df-palette__button" @onclick="() => AddRequested.InvokeAsync(item)">
-                <span class="df-palette__glyph" aria-hidden="true">@GlyphOf(item)</span>
-                <span class="df-palette__name">@ElementDefaults.NameOf(item)</span>
-            </button>
-            <span class="df-palette__grip"
-                  draggable="true"
-                  title="Перетащите блок на холст"
-                  @ondragstart="() => Palette.Start(item)"
-                  @ondragend="Palette.End"
-                  aria-hidden="true">⠿</span>
-        </div>
+        <p class="df-palette__section">@title</p>
+
+        @foreach (var kind in kinds)
+        {
+            var item = kind;
+            <div class="df-palette__row">
+                <button type="button" class="df-palette__button" @onclick="() => AddRequested.InvokeAsync(item)">
+                    <span class="df-palette__glyph" aria-hidden="true">@GlyphOf(item)</span>
+                    <span class="df-palette__name">@ElementDefaults.NameOf(item)</span>
+                </button>
+                <span class="df-palette__grip"
+                      draggable="true"
+                      title="Перетащите блок на холст"
+                      @ondragstart="() => Palette.Start(item)"
+                      @ondragend="Palette.End"
+                      aria-hidden="true">⠿</span>
+            </div>
+        }
     }
 </div>
 
@@ -45,6 +50,20 @@
         WireframeKind.List => "≣",
         WireframeKind.Image => "⌧",
         WireframeKind.Divider => "―",
+        WireframeKind.DataGrid => "▦",
+        WireframeKind.Tabs => "▤",
+        WireframeKind.MenuBar => "☰",
+        WireframeKind.Accordion => "≡",
+        WireframeKind.Tree => "⊞",
+        WireframeKind.Progress => "▰",
+        WireframeKind.Slider => "◧",
+        WireframeKind.Badge => "◈",
+        WireframeKind.Avatar => "◯",
+        WireframeKind.Calendar => "▩",
+        WireframeKind.Map => "⌖",
+        WireframeKind.Video => "▶",
+        WireframeKind.Breadcrumbs => "›",
+        WireframeKind.StatusBar => "▬",
         _ => "▫"
     };
 }

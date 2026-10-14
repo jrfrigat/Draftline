@@ -88,6 +88,108 @@
 
         case WireframeKind.Divider:
             break;
+
+        case WireframeKind.DataGrid:
+            <span class="df-table">
+                <span class="df-table__row df-table__head">
+                    @foreach (var column in Element.Columns)
+                    {
+                        <span class="df-table__cell">@column</span>
+                    }
+                </span>
+                @foreach (var row in Element.Rows)
+                {
+                    <span class="df-table__row">
+                        @foreach (var cell in row)
+                        {
+                            <span class="df-table__cell">@cell</span>
+                        }
+                    </span>
+                }
+            </span>
+            break;
+
+        case WireframeKind.Tabs:
+            @foreach (var (label, _) in Rows)
+            {
+                <span class="df-tabs__tab">@label</span>
+            }
+            break;
+
+        case WireframeKind.MenuBar:
+            @foreach (var (label, _) in Rows)
+            {
+                <span class="df-menu__item">@label</span>
+            }
+            break;
+
+        case WireframeKind.Accordion:
+            @foreach (var (label, _) in Rows)
+            {
+                <span class="df-accordion__section">
+                    <span class="df-accordion__title">@label</span>
+                    <span class="df-accordion__mark">+</span>
+                </span>
+            }
+            break;
+
+        case WireframeKind.Tree:
+            @foreach (var (label, _) in Rows)
+            {
+                <span class="df-tree__item">@label</span>
+            }
+            break;
+
+        case WireframeKind.Progress:
+            <span class="df-progress__fill" style="@FillStyle"></span>
+            break;
+
+        case WireframeKind.Slider:
+            <span class="df-slider__track"></span>
+            <span class="df-slider__handle" style="@HandleStyle"></span>
+            break;
+
+        case WireframeKind.Badge:
+            <span class="df-badge">@Element.DisplayText</span>
+            break;
+
+        case WireframeKind.Avatar:
+            <span class="df-avatar">@Element.DisplayText</span>
+            break;
+
+        case WireframeKind.Calendar:
+            <span class="df-calendar__title">@Element.DisplayText</span>
+            <span class="df-calendar__grid">
+                @for (var day = 1; day <= 28; day++)
+                {
+                    <span class="df-calendar__day">@day</span>
+                }
+            </span>
+            break;
+
+        case WireframeKind.Map:
+            <span class="df-map__road df-map__road--one"></span>
+            <span class="df-map__road df-map__road--two"></span>
+            <span class="df-map__pin"></span>
+            break;
+
+        case WireframeKind.Video:
+            <span class="df-video__play">▶</span>
+            break;
+
+        case WireframeKind.Breadcrumbs:
+            @foreach (var (label, _) in Rows)
+            {
+                <span class="df-crumbs__item">@label</span>
+            }
+            break;
+
+        case WireframeKind.StatusBar:
+            @foreach (var (label, _) in Rows)
+            {
+                <span class="df-status__item">@label</span>
+            }
+            break;
     }
 </div>
 
@@ -112,6 +214,33 @@
 
     /// <summary>The class of a value: a hint is drawn lighter than something someone actually typed.</summary>
     private string ValueClass => Element.ShowsHint ? "df-field__value df-field__value--hint" : "df-field__value";
+
+    /// <summary>
+    /// The share of its range a bar or a slider shows, as a percentage between 0 and 100. An empty or
+    /// unreadable value means the middle of the range, which is what the block lands with.
+    /// </summary>
+    private string PercentText
+    {
+        get
+        {
+            var percent = 60d;
+
+            if (double.TryParse(
+                    Element.Value,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var parsed))
+            {
+                percent = Math.Clamp(parsed, 0, 100);
+            }
+
+            return percent.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+
+    private string FillStyle => "width:" + PercentText + "%;";
+
+    private string HandleStyle => "left:" + PercentText + "%;";
 
     private string Style
     {

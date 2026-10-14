@@ -208,6 +208,241 @@ public static class SvgExporter
             case WireframeKind.Divider:
                 Line(svg, x, centerY, right, centerY, 1);
                 break;
+
+            case WireframeKind.DataGrid:
+            {
+                Box(svg, x, y, element.Width, element.Height, Paper);
+
+                var columns = element.Columns.Count;
+                var columnWidth = element.Width / Math.Max(1, columns);
+                var headerHeight = 24d;
+                var dataRowHeight = element.Rows.Count > 0
+                    ? Math.Max(14, (element.Height - headerHeight) / element.Rows.Count)
+                    : 0d;
+
+                for (var column = 0; column < columns; column++)
+                {
+                    Text(svg, x + (columnWidth * column) + 6, y + 16, element.Columns[column], size, "700", 1);
+
+                    if (column > 0)
+                    {
+                        Line(svg, x + (columnWidth * column), y, x + (columnWidth * column), bottom, 0.5);
+                    }
+                }
+
+                Line(svg, x, y + headerHeight, right, y + headerHeight, 1);
+
+                for (var rowIndex = 0; rowIndex < element.Rows.Count; rowIndex++)
+                {
+                    var rowTop = y + headerHeight + (dataRowHeight * rowIndex);
+
+                    for (var column = 0; column < element.Rows[rowIndex].Count; column++)
+                    {
+                        Text(svg, x + (columnWidth * column) + 6, rowTop + (dataRowHeight / 2) + 4,
+                            element.Rows[rowIndex][column], size, "400", 1);
+                    }
+
+                    if (rowIndex > 0)
+                    {
+                        Line(svg, x, rowTop, right, rowTop, 0.5);
+                    }
+                }
+
+                break;
+            }
+
+            case WireframeKind.Tabs:
+            {
+                var tabs = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
+                var tabWidth = element.Width / Math.Max(1, tabs.Count);
+
+                for (var tabIndex = 0; tabIndex < tabs.Count; tabIndex++)
+                {
+                    var tabLeft = x + (tabWidth * tabIndex);
+                    var (label, _) = ElementDefaults.SplitOption(tabs[tabIndex]);
+
+                    Text(svg, tabLeft + (tabWidth / 2), centerY + (size / 3), label, size,
+                        tabIndex == 0 ? "700" : "400", tabIndex == 0 ? 1 : 0.7, "middle");
+                    Line(svg, tabLeft, y, tabLeft, bottom, 1);
+                }
+
+                Line(svg, x, bottom, right, bottom, 1);
+                break;
+            }
+
+            case WireframeKind.MenuBar:
+            {
+                var menuItems = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
+                var menuLeft = x + 8;
+
+                foreach (var item in menuItems)
+                {
+                    var (label, _) = ElementDefaults.SplitOption(item);
+                    Text(svg, menuLeft, centerY + (size / 3), label, size, "400", 1);
+                    menuLeft += (label.Length * size * 0.62) + 18;
+                }
+
+                break;
+            }
+
+            case WireframeKind.Accordion:
+            {
+                var sections = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
+                var sectionHeight = element.Height / Math.Max(1, sections.Count);
+
+                for (var sectionIndex = 0; sectionIndex < sections.Count; sectionIndex++)
+                {
+                    var sectionTop = y + (sectionHeight * sectionIndex);
+                    var (label, _) = ElementDefaults.SplitOption(sections[sectionIndex]);
+
+                    Text(svg, x + 8, sectionTop + (sectionHeight / 2) + 4, label, size,
+                        sectionIndex == 0 ? "700" : "400", 1);
+                    Text(svg, right - 16, sectionTop + (sectionHeight / 2) + 4, sectionIndex == 0 ? "−" : "+", size, "400", 0.8);
+
+                    if (sectionIndex > 0)
+                    {
+                        Line(svg, x, sectionTop, right, sectionTop, 1);
+                    }
+                }
+
+                Box(svg, x, y, element.Width, element.Height, "none");
+                break;
+            }
+
+            case WireframeKind.Tree:
+            {
+                var nodes = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
+
+                for (var nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+                {
+                    var (label, _) = ElementDefaults.SplitOption(nodes[nodeIndex]);
+                    var itemTop = y + (size * 1.5 * nodeIndex) + size;
+
+                    // The first row is the parent and the rest hang under it: a tree in a wireframe is
+                    // about showing that something nests, not about drawing branches.
+                    if (nodeIndex == 0)
+                    {
+                        Text(svg, x + 4, itemTop, "▾", size, "400", 0.8);
+                    }
+
+                    Text(svg, x + (nodeIndex == 0 ? 4 : 24), itemTop, label, size, nodeIndex == 0 ? "700" : "400", 1);
+                }
+
+                break;
+            }
+
+            case WireframeKind.Progress:
+            {
+                Box(svg, x, y, element.Width, element.Height, Paper);
+
+                svg.Append("<rect x=\"").Append(Number(x)).Append("\" y=\"").Append(Number(y))
+                    .Append("\" width=\"").Append(Number(element.Width * PercentOf(element) / 100))
+                    .Append("\" height=\"").Append(Number(element.Height))
+                    .Append("\" fill=\"").Append(Ink).Append("\"/>");
+                break;
+            }
+
+            case WireframeKind.Slider:
+            {
+                var handleX = x + (element.Width * PercentOf(element) / 100);
+
+                Line(svg, x, centerY, right, centerY, 1);
+                Box(svg, handleX - 5, centerY - 8, 10, 16, Paper);
+                break;
+            }
+
+            case WireframeKind.Badge:
+                Box(svg, x, y, element.Width, element.Height, Paper);
+                Text(svg, middle, centerY + (size / 3), text, size, weight, 1, "middle");
+                break;
+
+            case WireframeKind.Avatar:
+                Circle(svg, middle, centerY, Math.Min(element.Width, element.Height) / 2, Paper);
+                Text(svg, middle, centerY + (size / 3), text, size, "700", 1, "middle");
+                break;
+
+            case WireframeKind.Calendar:
+            {
+                var cellWidth = element.Width / 7;
+                var cellHeight = (element.Height - 24) / 4;
+
+                Box(svg, x, y, element.Width, element.Height, "none");
+                Text(svg, x + 6, y + 16, text, size, "700", 1);
+                Line(svg, x, y + 24, right, y + 24, 0.5);
+
+                for (var day = 1; day <= 28; day++)
+                {
+                    var cell = day - 1;
+                    var dayColumn = cell % 7;
+                    var dayRow = cell / 7;
+
+                    Text(
+                        svg,
+                        x + (cellWidth * dayColumn) + (cellWidth / 2),
+                        y + 34 + (cellHeight * dayRow) + (cellHeight / 2),
+                        day.ToString(CultureInfo.InvariantCulture),
+                        10,
+                        "400",
+                        0.8,
+                        "middle");
+
+                    Line(svg, x + (cellWidth * dayColumn), y + 24, x + (cellWidth * dayColumn), bottom, 0.3);
+                }
+
+                break;
+            }
+
+            case WireframeKind.Map:
+                Box(svg, x, y, element.Width, element.Height, Paper);
+                Line(svg, x, bottom, right - 20, y + 20, 0.6);
+                Line(svg, x + 10, y, right, bottom - 24, 0.6);
+                Circle(svg, middle, centerY - 6, 6, Ink);
+                Tri(svg, middle - 7, centerY, middle + 7, centerY, middle, centerY + 14);
+                break;
+
+            case WireframeKind.Video:
+                Box(svg, x, y, element.Width, element.Height, Paper);
+                Tri(svg, middle - 10, centerY - 12, middle - 10, centerY + 12, middle + 12, centerY);
+                break;
+
+            case WireframeKind.Breadcrumbs:
+            {
+                var crumbs = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
+                var crumbLeft = x + 4;
+
+                foreach (var crumb in crumbs)
+                {
+                    var (label, _) = ElementDefaults.SplitOption(crumb);
+
+                    Text(svg, crumbLeft, centerY + (size / 3), label, size, "400", 0.85);
+                    crumbLeft += (label.Length * size * 0.62) + 20;
+                    Text(svg, crumbLeft - 14, centerY + (size / 3), "›", size, "400", 0.5);
+                }
+
+                break;
+            }
+
+            case WireframeKind.StatusBar:
+            {
+                var cells = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
+                var cellWidth = element.Width / Math.Max(1, cells.Count);
+
+                Box(svg, x, y, element.Width, element.Height, Paper);
+
+                for (var cellIndex = 0; cellIndex < cells.Count; cellIndex++)
+                {
+                    var (label, _) = ElementDefaults.SplitOption(cells[cellIndex]);
+
+                    Text(svg, x + (cellWidth * cellIndex) + 8, centerY + (size / 3), label, 10, "400", 0.85);
+
+                    if (cellIndex > 0)
+                    {
+                        Line(svg, x + (cellWidth * cellIndex), y + 3, x + (cellWidth * cellIndex), bottom - 3, 0.4);
+                    }
+                }
+
+                break;
+            }
         }
 
         svg.AppendLine("</g>");
@@ -229,6 +464,19 @@ public static class SvgExporter
             baseline += size * 1.35;
         }
     }
+
+    /// <summary>
+    /// The share of its range a bar or a slider shows, as a percentage between 0 and 100. An empty or
+    /// unreadable value means the middle of the range, which is where the block lands.
+    /// </summary>
+    private static double PercentOf(WireframeElement element) =>
+        double.TryParse(
+            element.Value,
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out var parsed)
+            ? Math.Clamp(parsed, 0, 100)
+            : 60;
 
     private static void Box(StringBuilder svg, double x, double y, double width, double height, string fill) =>
         svg.Append("<rect x=\"").Append(Number(x))

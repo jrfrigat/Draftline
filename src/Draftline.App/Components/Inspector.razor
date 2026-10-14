@@ -83,6 +83,17 @@ else
                            ValueChanged="@((string? value) => SetOptions(element, value))" />
         }
 
+        @if (element.Kind == WireframeKind.DataGrid)
+        {
+            <FlareTextArea Label="Колонки, по одной в строке" Size="FieldSize.Xs"
+                           Value="@ColumnsText(element)"
+                           ValueChanged="@((string? value) => SetColumns(element, value))" />
+
+            <FlareTextArea Label="Строки: ячейки через |" Size="FieldSize.Xs"
+                           Value="@RowsText(element)"
+                           ValueChanged="@((string? value) => SetRows(element, value))" />
+        }
+
         <p class="df-side__hint">Выравнивание</p>
         <FlareStack Row="true" Gap="FlareSpacing.XSmall" Wrap="true">
             @foreach (var (alignment, caption) in Alignments)
@@ -127,6 +138,67 @@ else
 
     /// <summary>The rows of a list or a dropdown, one per line - the way a person writes a list.</summary>
     private static string OptionsText(WireframeElement element) => string.Join('\n', element.Options);
+
+    /// <summary>The columns of a table, one per line.</summary>
+    private static string ColumnsText(WireframeElement element) => string.Join('\n', element.Columns);
+
+    /// <summary>The rows of a table, one per line, with the cells separated by a bar.</summary>
+    private static string RowsText(WireframeElement element) =>
+        string.Join('\n', element.Rows.Select(row => string.Join(" | ", row)));
+
+    /// <summary>One entry per line, with the empty lines dropped.</summary>
+    private static List<string> LinesOf(string? value) =>
+        (value ?? string.Empty)
+            .Split('\n')
+            .Select(line => line.Trim())
+            .Where(line => line.Length > 0)
+            .ToList();
+
+    private void SetColumns(WireframeElement element, string? value)
+    {
+        var columns = LinesOf(value);
+        if (columns.SequenceEqual(element.Columns))
+        {
+            return;
+        }
+
+        Apply(element, "Колонки изменены", target => target.Columns = columns);
+    }
+
+    private void SetRows(WireframeElement element, string? value)
+    {
+        var rows = LinesOf(value)
+            .Select(line => line.Split('|').Select(cell => cell.Trim()).ToList())
+            .ToList();
+
+        // The table is kept a rectangle right here as well as on read: a row with fewer cells than the
+        // header is padded and a longer one is cut, which is the same rule the document applies when a
+        // file is opened.
+        var columns = element.Columns.Count;
+        if (columns > 0)
+        {
+            foreach (var row in rows)
+            {
+                while (row.Count < columns)
+                {
+                    row.Add(string.Empty);
+                }
+
+                while (row.Count > columns)
+                {
+                    row.RemoveAt(row.Count - 1);
+                }
+            }
+        }
+
+        if (rows.Count == element.Rows.Count
+            && rows.Zip(element.Rows).All(pair => pair.First.SequenceEqual(pair.Second)))
+        {
+            return;
+        }
+
+        Apply(element, "Строки таблицы изменены", target => target.Rows = rows);
+    }
 
     private void SetX(WireframeElement element, double? value)
     {

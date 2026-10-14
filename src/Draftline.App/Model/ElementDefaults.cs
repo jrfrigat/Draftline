@@ -21,12 +21,51 @@ public static class ElementDefaults
     /// <summary>Rows a list or a dropdown lands with.</summary>
     public static IReadOnlyList<string> DefaultOptions { get; } = new[] { "Первый пункт", "Второй пункт", "Третий пункт" };
 
-    /// <summary>A fresh block of this kind, with its identity already in place.</summary>
+    /// <summary>Columns a new table lands with.</summary>
+    public static IReadOnlyList<string> DefaultColumns { get; } = new[] { "Колонка", "Колонка", "Колонка" };
+
+    /// <summary>Rows a new table lands with, one cell per column.</summary>
+    public static IReadOnlyList<IReadOnlyList<string>> DefaultRows { get; } = new[]
+    {
+        (IReadOnlyList<string>)new[] { "Значение", "Значение", "Значение" },
+        new[] { "Значение", "Значение", "Значение" },
+        new[] { "Значение", "Значение", "Значение" }
+    };
+
+    /// <summary>
+    /// The palette's sections, in the order they are shown. Twenty-six kinds in one column do not fit
+    /// on a screen, and a shelf nobody can see the end of is a shelf nobody uses.
+    /// </summary>
+    public static IReadOnlyList<(string Title, IReadOnlyList<WireframeKind> Kinds)> Sections { get; } = new[]
+    {
+        ("Основные", (IReadOnlyList<WireframeKind>)new[]
+        {
+            WireframeKind.Panel, WireframeKind.Text, WireframeKind.Heading, WireframeKind.Image,
+            WireframeKind.Divider, WireframeKind.Badge, WireframeKind.Avatar
+        }),
+        ("Формы", new[]
+        {
+            WireframeKind.Button, WireframeKind.TextField, WireframeKind.TextArea, WireframeKind.Checkbox,
+            WireframeKind.Radio, WireframeKind.Select, WireframeKind.Slider, WireframeKind.Calendar
+        }),
+        ("Данные", new[]
+        {
+            WireframeKind.List, WireframeKind.DataGrid, WireframeKind.Tree, WireframeKind.Progress,
+            WireframeKind.Map, WireframeKind.Video
+        }),
+        ("Навигация", new[]
+        {
+            WireframeKind.Tabs, WireframeKind.MenuBar, WireframeKind.Breadcrumbs, WireframeKind.Accordion,
+            WireframeKind.StatusBar
+        })
+    };
+
+    /// <summary>A fresh block of this kind, with its identity in place and its data already started.</summary>
     public static WireframeElement Create(WireframeKind kind)
     {
         var (width, height) = SizeOf(kind);
 
-        return new WireframeElement
+        var element = new WireframeElement
         {
             Id = Guid.NewGuid().ToString("n"),
             Kind = kind,
@@ -35,6 +74,21 @@ public static class ElementDefaults
             FontScale = 1,
             Options = HasRows(kind) ? new List<string>(DefaultOptions) : new List<string>()
         };
+
+        if (kind == WireframeKind.DataGrid)
+        {
+            element.Columns = new List<string>(DefaultColumns);
+            element.Rows = DefaultRows.Select(row => new List<string>(row)).ToList();
+        }
+
+        // A bar and a slider sit somewhere inside their range until somebody says otherwise: an empty
+        // bar says nothing about what the screen is for.
+        if (kind is WireframeKind.Progress or WireframeKind.Slider)
+        {
+            element.Value = "60";
+        }
+
+        return element;
     }
 
     /// <summary>Width and height a new block of this kind lands with.</summary>
@@ -52,6 +106,20 @@ public static class ElementDefaults
         WireframeKind.Image => (200, 140),
         WireframeKind.Divider => (240, 8),
         WireframeKind.Panel => (320, 220),
+        WireframeKind.DataGrid => (360, 168),
+        WireframeKind.Tabs => (320, 32),
+        WireframeKind.MenuBar => (360, 28),
+        WireframeKind.Accordion => (280, 144),
+        WireframeKind.Tree => (240, 160),
+        WireframeKind.Progress => (240, 12),
+        WireframeKind.Slider => (240, 20),
+        WireframeKind.Badge => (72, 24),
+        WireframeKind.Avatar => (40, 40),
+        WireframeKind.Calendar => (224, 184),
+        WireframeKind.Map => (240, 160),
+        WireframeKind.Video => (240, 140),
+        WireframeKind.Breadcrumbs => (280, 24),
+        WireframeKind.StatusBar => (360, 24),
         _ => (DefaultWidth, DefaultHeight)
     };
 
@@ -68,6 +136,9 @@ public static class ElementDefaults
         WireframeKind.Select => "Выбор",
         WireframeKind.List => "Список",
         WireframeKind.Image => "Изображение",
+        WireframeKind.Badge => "Статус",
+        WireframeKind.Avatar => "ИП",
+        WireframeKind.Calendar => "Месяц",
         _ => string.Empty
     };
 
@@ -86,6 +157,20 @@ public static class ElementDefaults
         WireframeKind.List => "Список",
         WireframeKind.Image => "Изображение",
         WireframeKind.Divider => "Разделитель",
+        WireframeKind.DataGrid => "Таблица",
+        WireframeKind.Tabs => "Вкладки",
+        WireframeKind.MenuBar => "Строка меню",
+        WireframeKind.Accordion => "Аккордеон",
+        WireframeKind.Tree => "Дерево",
+        WireframeKind.Progress => "Прогресс",
+        WireframeKind.Slider => "Ползунок",
+        WireframeKind.Badge => "Бейдж",
+        WireframeKind.Avatar => "Аватар",
+        WireframeKind.Calendar => "Календарь",
+        WireframeKind.Map => "Карта",
+        WireframeKind.Video => "Видео",
+        WireframeKind.Breadcrumbs => "Хлебные крошки",
+        WireframeKind.StatusBar => "Статус-бар",
         _ => kind.ToString()
     };
 
@@ -110,8 +195,16 @@ public static class ElementDefaults
         return (option[..separator].Trim(), option[(separator + 1)..].Trim());
     }
 
-    /// <summary>True when the kind carries a list of rows a person can edit.</summary>
-    public static bool HasRows(WireframeKind kind) => kind is WireframeKind.List or WireframeKind.Select;
+    /// <summary>
+    /// True when the kind is built out of a list of labels a person writes: the rows of a list, the
+    /// tabs of a tab bar, the items of a menu, the sections of an accordion. They share one bag of
+    /// options rather than each growing a structure of its own - in a wireframe, every one of them is
+    /// the same kind of list.
+    /// </summary>
+    public static bool HasRows(WireframeKind kind) =>
+        kind is WireframeKind.List or WireframeKind.Select or WireframeKind.Tabs or WireframeKind.MenuBar
+            or WireframeKind.Accordion or WireframeKind.Tree or WireframeKind.Breadcrumbs
+            or WireframeKind.StatusBar;
 
     /// <summary>True when the kind carries a check state.</summary>
     public static bool HasCheck(WireframeKind kind) => kind is WireframeKind.Checkbox or WireframeKind.Radio;
@@ -125,7 +218,11 @@ public static class ElementDefaults
     public static bool AcceptsSecondaryText(WireframeKind kind) =>
         kind is WireframeKind.Text or WireframeKind.Heading or WireframeKind.Panel or WireframeKind.List;
 
-    /// <summary>True when the kind stands for something a person types or chooses, so a value makes sense.</summary>
+    /// <summary>
+    /// True when the kind stands for something a person types, chooses or drags, so a value makes
+    /// sense. A bar and a slider read it as a percentage.
+    /// </summary>
     public static bool AcceptsValue(WireframeKind kind) =>
-        kind is WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Select;
+        kind is WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Select
+            or WireframeKind.Progress or WireframeKind.Slider;
 }

@@ -704,6 +704,284 @@ body {
     right: 6px;
 }
 
+/* --------------------------------------------------------------------- the wider set of blocks */
+
+/* The blocks added in v0.2 draw by the same rules as the first twelve: ruled boxes, straight corners,
+   and a line wherever a real control would have a shadow. None of them is a picture of the Flare
+   component it stands for - they are what a person draws on paper to say "a table goes here". */
+
+.df-palette__section {
+    margin: 0.5rem 0 0.15rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.55;
+}
+
+/* A table: a bold header row and ruled cells, one line per row. */
+.df-el--datagrid {
+    display: block;
+    padding: 0;
+}
+
+.df-table {
+    display: block;
+    width: 100%;
+}
+
+.df-table__row {
+    display: flex;
+    border-top: 1px solid #1b1e24;
+}
+
+.df-table__head {
+    border-top: none;
+    background: #f2f3f6;
+    font-weight: 700;
+}
+
+.df-table__cell {
+    flex: 1 1 0;
+    padding: 5px 6px;
+    border-left: 1px solid #1b1e24;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.df-table__cell:first-child {
+    border-left: none;
+}
+
+/* Tabs: the first one is the screen you are on, so it is the one that is marked. */
+.df-el--tabs {
+    gap: 0;
+    padding: 0;
+}
+
+.df-tabs__tab {
+    flex: 1 1 0;
+    padding: 6px 8px;
+    text-align: center;
+    border-right: 1px solid #1b1e24;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.df-tabs__tab:first-child {
+    font-weight: 700;
+    box-shadow: inset 0 -2px 0 #1b1e24;
+}
+
+.df-tabs__tab:last-child {
+    border-right: none;
+}
+
+.df-el--menubar {
+    gap: 1.1rem;
+    padding: 0 8px;
+}
+
+.df-el--accordion {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+}
+
+.df-accordion__section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 6px 8px;
+    border-top: 1px solid #1b1e24;
+}
+
+.df-accordion__section:first-child {
+    border-top: none;
+}
+
+.df-accordion__mark {
+    opacity: 0.7;
+}
+
+.df-el--tree {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 4px 0;
+}
+
+.df-tree__item {
+    padding: 2px 6px;
+}
+
+.df-tree__item:first-child {
+    font-weight: 700;
+}
+
+.df-tree__item:not(:first-child) {
+    padding-left: 22px;
+}
+
+.df-el--progress {
+    padding: 0;
+}
+
+.df-progress__fill {
+    height: 100%;
+    background: #1b1e24;
+}
+
+.df-el--slider {
+    border: none;
+    background: none;
+}
+
+.df-slider__track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    border-top: 1px solid #1b1e24;
+}
+
+.df-slider__handle {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 16px;
+    margin: -8px 0 0 -5px;
+    background: #ffffff;
+    border: 1px solid #1b1e24;
+}
+
+.df-el--badge {
+    justify-content: center;
+}
+
+.df-badge {
+    padding: 0 8px;
+}
+
+/* An avatar is round because an avatar is round: that is the shape a person draws for "someone's
+   picture", not a corner radius sneaking into the design system. */
+.df-el--avatar {
+    justify-content: center;
+    border: none;
+    background: none;
+}
+
+.df-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    border: 1px solid #1b1e24;
+    border-radius: 50%;
+    font-weight: 700;
+}
+
+.df-el--calendar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+}
+
+.df-calendar__title {
+    padding: 3px 6px;
+    border-bottom: 1px solid #1b1e24;
+    font-weight: 700;
+}
+
+.df-calendar__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    flex: 1 1 auto;
+}
+
+.df-calendar__day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    opacity: 0.8;
+    border-right: 1px solid rgb(27 30 36 / 30%);
+}
+
+.df-el--map {
+    padding: 0;
+}
+
+.df-map__road {
+    position: absolute;
+    background: #1b1e24;
+}
+
+.df-map__road--one {
+    left: -10%;
+    top: 66%;
+    width: 120%;
+    height: 1px;
+    transform: rotate(-18deg);
+}
+
+.df-map__road--two {
+    left: 40%;
+    top: -10%;
+    width: 1px;
+    height: 120%;
+    transform: rotate(12deg);
+}
+
+.df-map__pin {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    background: #1b1e24;
+    border-radius: 50%;
+}
+
+.df-el--video {
+    justify-content: center;
+}
+
+.df-video__play {
+    font-size: 1.5em;
+    opacity: 0.85;
+}
+
+.df-el--breadcrumbs {
+    gap: 0.5rem;
+    padding: 0 6px;
+}
+
+.df-crumbs__item:not(:last-child)::after {
+    content: " ›";
+    opacity: 0.5;
+}
+
+.df-el--statusbar {
+    padding: 0;
+}
+
+.df-status__item {
+    flex: 1 1 0;
+    padding: 4px 8px;
+    border-left: 1px solid #1b1e24;
+    font-size: 0.92em;
+    opacity: 0.85;
+}
+
+.df-status__item:first-child {
+    border-left: none;
+}
+
 @media (max-width: 900px) {
     .df-editor {
         grid-template-columns: 1fr;

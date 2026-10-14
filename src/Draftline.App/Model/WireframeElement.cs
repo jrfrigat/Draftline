@@ -48,6 +48,16 @@ public sealed class WireframeElement
     /// <summary>The second line of a block: a row's detail, a panel's description, a caption.</summary>
     public string SecondaryText { get; set; } = string.Empty;
 
+    /// <summary>Column headers of a table; every other kind ignores them.</summary>
+    public List<string> Columns { get; set; } = new();
+
+    /// <summary>
+    /// The rows of a table, each row holding its cells. A row that is shorter than the header is padded
+    /// and a longer one is cut when the document is read, so a table is always a rectangle by the time
+    /// anything draws it.
+    /// </summary>
+    public List<List<string>> Rows { get; set; } = new();
+
     /// <summary>Whether a checkbox or a radio button is ticked.</summary>
     public bool Checked { get; set; }
 
@@ -99,6 +109,8 @@ public sealed class WireframeElement
         Value = Value,
         Placeholder = Placeholder,
         SecondaryText = SecondaryText,
+        Columns = new List<string>(Columns),
+        Rows = Rows.Select(row => new List<string>(row)).ToList(),
         Checked = Checked,
         FontScale = FontScale,
         Bold = Bold,
