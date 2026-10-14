@@ -1,0 +1,37 @@
+@inject DocumentSession Session
+@if (NavItems.Supports(Element.Kind))
+{
+    <FlareSelect Label="Настроить пункт" Size="FieldSize.Xs" Value="@Path" ValueChanged="@((string? value) => _path = value ?? "0")">
+        @foreach (var row in NavItems.Rows(Element.ChoiceItems)) { <option value="@row.Path">@row.Path — @row.Item.Label</option> }
+    </FlareSelect>
+    @if (NavItems.Find(Element, Path) is { } item)
+    {
+        <FlareCheckbox Value="@item.Disabled" ValueChanged="@((bool value) => Change(i => i.Disabled = value))">Пункт недоступен</FlareCheckbox>
+        <FlareCheckbox Value="@item.Separator" ValueChanged="@((bool value) => Change(i => i.Separator = value))">Разделитель</FlareCheckbox>
+        <FlareSelect Label="Экран для пункта" Size="FieldSize.Xs" Value="@item.TargetLayerId" ValueChanged="@((string? value) => Change(i => { i.TargetLayerId = value ?? ""; i.Url = ""; }))">
+            <option value="">Без перехода</option>
+            @foreach (var layer in Session.Document.Layers) { <option value="@layer.Id">@layer.Name</option> }
+        </FlareSelect>
+        <FlareCheckbox Value="@item.AsDialog" ValueChanged="@((bool value) => Change(i => i.AsDialog = value))">Открывать как диалог</FlareCheckbox>
+        <FlareTextField Label="Ссылка пункта (https://…)" Size="FieldSize.Xs" Value="@item.Url" ValueChanged="@((string? value) => Change(i => { i.Url = NavItems.SafeUrl(value); if (i.Url.Length > 0) i.TargetLayerId = ""; }))" />
+        @if (Element.Kind == WireframeKind.MenuBar)
+        {
+            <FlareTextArea Label="Подменю: два пробела — уровень; --- — разделитель" Size="FieldSize.Xs" Value="@NavItems.Structure(item.Children)"
+                           ValueChanged="@((string? value) => Change(i => i.Children = NavItems.Parse(value ?? "", i.Children)))" />
+            <FlareCheckbox Value="@item.Expanded" ValueChanged="@((bool value) => Change(i => i.Expanded = value))">Подменю раскрыто</FlareCheckbox>
+        }
+    }
+    @if (Element.Kind is WireframeKind.Select or WireframeKind.List or WireframeKind.MenuBar)
+    {
+        <FlareNumericField Label="Видимых строк (0 — все)" Size="FieldSize.Xs" Min="0" Max="100" Value="@((double)Element.MaxVisibleItems)"
+                           ValueChanged="@((double? value) => Session.Edit("Число строк изменено", _ => Element.MaxVisibleItems = (int)Math.Clamp(value ?? 0, 0, 100)))" />
+    }
+}
+@code {
+    /// <summary>The selected navigation control.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    private string _path = "0", _id = "";
+    private string Path => NavItems.Find(Element, _path) is null ? "0" : _path;
+    protected override void OnParametersSet() { if (_id != Element.Id) { _id = Element.Id; _path = "0"; } }
+    private void Change(Action<NavItem> action) => Session.Edit("Свойства пункта изменены", _ => { if (NavItems.Find(Element, Path) is { } item) action(item); });
+}

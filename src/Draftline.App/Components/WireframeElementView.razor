@@ -95,40 +95,11 @@
             break;
 
         case WireframeKind.Select:
-            @if (Interactive)
-            {
-                <button type="button" class="df-select__head df-state-button" disabled="@Element.Disabled"
-                        aria-label="@(string.IsNullOrWhiteSpace(ElementState.DisplayChoice(Element)) ? "Выпадающий список" : ElementState.DisplayChoice(Element))" aria-expanded="@(ElementState.IsExpanded(Element) ? "true" : "false")"
-                        aria-controls="@("df-options-" + Element.Id)" @onclick="ToggleExpanded">
-                    <span class="@ValueClass">@ElementState.DisplayChoice(Element)</span>
-                    <span class="df-select__arrow" aria-hidden="true">@(ElementState.IsExpanded(Element) ? "▴" : "▾")</span>
-                </button>
-            }
-            else
-            {
-            <span class="df-select__head">
-            <span class="@ValueClass">@ElementState.DisplayChoice(Element)</span>
-            <span class="df-select__arrow">@(ElementState.IsExpanded(Element) ? "▴" : "▾")</span>
-            </span>
-            }
-            @if (ElementState.IsExpanded(Element))
-            {
-                <span class="df-select__options" id="@("df-options-" + Element.Id)">
-                    @for (var index = 0; index < ElementState.Items(Element).Count; index++)
-                    {
-                        var row = ElementDefaults.SplitOption(ElementState.Items(Element)[index]);
-                        @Choice(index, "df-select__option", row.Label + (string.IsNullOrEmpty(row.Value) ? "" : " · " + row.Value))
-                    }
-                </span>
-            }
-            break;
-
         case WireframeKind.List:
-            @for (var index = 0; index < ElementState.Items(Element).Count; index++)
-            {
-                var (label, value) = ElementDefaults.SplitOption(ElementState.Items(Element)[index]);
-                @Choice(index, "df-list__row", label + (string.IsNullOrEmpty(value) ? "" : " · " + value))
-            }
+        case WireframeKind.MenuBar:
+        case WireframeKind.Breadcrumbs:
+        case WireframeKind.StatusBar:
+            <ChoiceElement Element="Element" Interactive="Interactive" Authoring="Authoring" Edited="Edited" StateChanged="StateChanged" ItemActivated="ItemActivated" />
             break;
 
         case WireframeKind.Image:
@@ -186,13 +157,6 @@
                  aria-labelledby="@($"df-tab-{Element.Id}-{ElementState.Index(Element)}")">@TabPanels.Content(Element)</div>
             break;
 
-        case WireframeKind.MenuBar:
-            @for (var index = 0; index < ElementState.Items(Element).Count; index++)
-            {
-                @Choice(index, "df-menu__item", ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label)
-            }
-            break;
-
         case WireframeKind.Accordion:
             @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
@@ -246,19 +210,6 @@
             <span class="df-video__play">▶</span>
             break;
 
-        case WireframeKind.Breadcrumbs:
-            @foreach (var (label, _) in Rows)
-            {
-                <span class="df-crumbs__item">@label</span>
-            }
-            break;
-
-        case WireframeKind.StatusBar:
-            @foreach (var (label, _) in Rows)
-            {
-                <span class="df-status__item">@label</span>
-            }
-            break;
     }
     @if (FormState.HasFeedback(Element.Kind) && !string.IsNullOrEmpty(Element.FeedbackText))
     {
@@ -311,6 +262,8 @@
     [Parameter] public EventCallback StateChanged { get; set; }
     /// <summary>Delegates a preview check to the screen so named radio groups can exclude each other.</summary>
     [Parameter] public EventCallback<WireframeElement> CheckedChanged { get; set; }
+    [Parameter] public EventCallback<Action<WireframeElement>> Edited { get; set; }
+    [Parameter] public EventCallback<NavItem> ItemActivated { get; set; }
 
     private string CheckClass => "df-check" + (Element.Indeterminate ? " df-check--mixed" : Element.Checked ? " df-check--on" : "");
     private async Task SetPreviewValue(ChangeEventArgs args)
@@ -379,7 +332,7 @@
             var css = "df-el df-el--" + Element.Kind.ToString().ToLowerInvariant();
             if (Element.Disabled) css += " df-el--disabled";
             if (FormState.HasVisualState(Element.Kind)) css += " df-el--" + Element.VisualState.ToString().ToLowerInvariant();
-            if (Element.Kind == WireframeKind.Select && ElementState.IsExpanded(Element)) css += " df-el--open";
+            if ((Element.Kind is WireframeKind.Select or WireframeKind.MenuBar) && ElementState.IsExpanded(Element)) css += " df-el--open";
             return Element.Bold ? css + " df-el--bold" : css;
         }
     }
@@ -429,7 +382,7 @@
                 $"top:{Element.Y.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
                 $"width:{Element.Width.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
                 $"height:{Element.Height.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
-                $"z-index:{(Element.Kind == WireframeKind.Select && ElementState.IsExpanded(Element) ? 10000 : 0) + (DrawingOrder ?? Element.ZIndex)};";
+                $"z-index:{((Element.Kind is WireframeKind.Select or WireframeKind.MenuBar) && ElementState.IsExpanded(Element) ? 10000 : 0) + (DrawingOrder ?? Element.ZIndex)};";
 
             if (Math.Abs(Element.FontScale - 1) > 0.001)
             {

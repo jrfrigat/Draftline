@@ -89,6 +89,7 @@ public static class ElementDefaults
         }
 
         TreeState.Normalize(element);
+        NavItems.Normalize(element);
         return element;
     }
 

@@ -33,6 +33,12 @@ public sealed class WireframeElement
 
     /// <summary>Rows of a list or a dropdown; every other kind ignores it.</summary>
     public List<string> Options { get; set; } = new();
+    /// <summary>Metadata and submenus aligned with Options.</summary>
+    public List<NavItem> ChoiceItems { get; set; } = new();
+    /// <summary>Selected item path within a submenu.</summary>
+    public string SelectedPath { get; set; } = string.Empty;
+    /// <summary>Visible rows before scrolling; zero shows all rows.</summary>
+    public int MaxVisibleItems { get; set; }
 
     /// <summary>
     /// What stands in the block, as opposed to what it is called: the text someone typed into a field,
@@ -147,6 +153,9 @@ public sealed class WireframeElement
         Height = Height,
         Text = Text,
         Options = new List<string>(Options),
+        ChoiceItems = ChoiceItems.Select(item => item.Clone()).ToList(),
+        SelectedPath = SelectedPath,
+        MaxVisibleItems = MaxVisibleItems,
         Value = Value,
         Placeholder = Placeholder,
         SecondaryText = SecondaryText,

@@ -44,7 +44,7 @@
                     var item = element;
                     <WireframeElementView Element="@PreviewElement(shown, item)" Interactive="@(!item.HasTransition)"
                                           DrawingOrder="@(drawOrder++)" StateChanged="StateHasChanged"
-                                          CheckedChanged="@(state => ChangeCheck(shown, state))" />
+                                          CheckedChanged="@(state => ChangeCheck(shown, state))" ItemActivated="FollowItem" />
 
                     @if (item.HasTransition && !item.Disabled)
                     {
@@ -78,6 +78,12 @@
         FormState.Check(layer.Elements.Select(authored => PreviewElement(layer, authored)), element,
             element.Kind == WireframeKind.Radio || element.Indeterminate || !element.Checked);
         StateHasChanged();
+    }
+
+    private void FollowItem(NavItem item)
+    {
+        if (item.Disabled || item.Separator || item.TargetLayerId.Length == 0) return;
+        Session.FollowTransition(new WireframeElement { TargetLayerId = item.TargetLayerId, Transition = item.AsDialog ? TransitionKind.OpenDialog : TransitionKind.Navigate });
     }
 
     private string SheetClass =>

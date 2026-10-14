@@ -1,0 +1,89 @@
+@if (Element.Kind == WireframeKind.Select)
+{
+    <button type="button" class="df-select__head df-state-button" disabled="@(!Interactive || Element.Disabled)" aria-expanded="@ElementState.IsExpanded(Element)" @onclick="Toggle">
+        <span>@ElementState.DisplayChoice(Element)</span><span>▾</span>
+    </button>
+    @if (ElementState.IsExpanded(Element))
+    {
+        <div class="df-choice-popup" style="@PopupStyle">
+            @foreach (var row in NavItems.Rows(Element.ChoiceItems)) { @Item(row) }
+        </div>
+    }
+}
+else if (Element.Kind == WireframeKind.List)
+{
+    <div class="df-choice-list" style="@ListStyle">
+        @foreach (var row in NavItems.Rows(Element.ChoiceItems)) { @Item(row) }
+    </div>
+}
+else
+{
+    <div class="df-choice-bar">
+        @foreach (var row in NavItems.Rows(Element.ChoiceItems).Where(row => row.Depth == 0)) { @Item(row) }
+    </div>
+    @if (Element.Kind == WireframeKind.MenuBar && ElementState.IsExpanded(Element) && NavItems.MenuRows(Element).Count > 0)
+    {
+        <div class="df-choice-popup" style="@PopupStyle">
+            @foreach (var row in NavItems.MenuRows(Element)) { @Item(row) }
+        </div>
+    }
+}
+@code {
+    /// <summary>The authored control or preview copy.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    /// <summary>Allows temporary prototype interactions.</summary>
+    [Parameter] public bool Interactive { get; set; }
+    /// <summary>Allows opening menus on the canvas.</summary>
+    [Parameter] public bool Authoring { get; set; }
+    /// <summary>Records an authoring change in history.</summary>
+    [Parameter] public EventCallback<Action<WireframeElement>> Edited { get; set; }
+    /// <summary>Notifies the preview of a temporary change.</summary>
+    [Parameter] public EventCallback StateChanged { get; set; }
+    /// <summary>Follows a screen action in preview.</summary>
+    [Parameter] public EventCallback<NavItem> ItemActivated { get; set; }
+    private bool CanAct => Interactive || (Authoring && Element.Kind == WireframeKind.MenuBar);
+    private string ListStyle => Element.MaxVisibleItems > 0 ? $"max-height:{Element.MaxVisibleItems * 24}px" : "";
+    private string PopupStyle => Element.Kind == WireframeKind.Select ? $"left:0;width:100%;{ListStyle}" :
+        $"left:{N(NavItems.MenuBounds(Element).X - Element.X)}px;width:{N(NavItems.MenuBounds(Element).Width)}px;{ListStyle}";
+    private static string N(double value) => value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    private bool Selected(NavRow row) => Element.SelectedPath.Length > 0 ? Element.SelectedPath == row.Path : row.Path == ElementState.Index(Element).ToString();
+    private RenderFragment Item(NavRow row) => @<text>
+        @if (row.Item.Separator) { <span class="df-choice-separator" role="separator"></span> }
+        else if (Interactive && !Element.Disabled && !row.Item.Disabled && row.Item.Children.Count == 0 && NavItems.SafeUrl(row.Item.Url).Length > 0)
+        {
+            <a class="df-choice-row @(Selected(row) ? "df-item--selected" : "")" style="@Indent(row)" href="@NavItems.SafeUrl(row.Item.Url)" target="_blank" rel="noopener noreferrer" @onclick="() => Choose(row)">@Label(row)<span>@row.Item.Value</span></a>
+        }
+        else if (CanAct)
+        {
+            <button type="button" class="df-choice-row df-state-button @(Selected(row) ? "df-item--selected" : "")" style="@Indent(row)"
+                    disabled="@(Element.Disabled || row.Item.Disabled)" aria-expanded="@(row.Item.Children.Count > 0 ? (Element.Kind == WireframeKind.MenuBar && row.Depth == 0 ? ElementState.IsExpanded(Element) && ElementState.Index(Element).ToString() == row.Path : row.Item.Expanded).ToString().ToLowerInvariant() : null)" @onclick="() => Choose(row)">
+                @Label(row)<span>@row.Item.Value</span>
+            </button>
+        }
+        else { <span class="df-choice-row @(Selected(row) ? "df-item--selected" : "") @(row.Item.Disabled ? "df-choice-disabled" : "")" style="@Indent(row)">@Label(row)<span>@row.Item.Value</span></span> }
+    </text>;
+    private static string Indent(NavRow row) => $"padding-left:{8 + row.Depth * 16}px";
+    private static string Label(NavRow row) => row.Item.Label + (row.Item.Children.Count > 0 ? row.Item.Expanded ? " ▾" : " ▸" : "");
+    private async Task Change(Action<WireframeElement> action)
+    {
+        if (Authoring && !Interactive) await Edited.InvokeAsync(action);
+        else { action(Element); await StateChanged.InvokeAsync(); }
+    }
+    private Task Toggle() => Change(e => e.Expanded = !ElementState.IsExpanded(e));
+    private async Task Choose(NavRow row)
+    {
+        if (!CanAct || Element.Disabled || row.Item.Disabled || row.Item.Separator) return;
+        await Change(e =>
+        {
+            var item = NavItems.Find(e, row.Path);
+            if (item is null) return;
+            var root = int.Parse(row.Path.Split('/')[0]);
+            if (e.Kind == WireframeKind.MenuBar && !row.Path.Contains('/'))
+                e.Expanded = e.SelectedIndex != root || !ElementState.IsExpanded(e);
+            else if (item.Children.Count > 0) item.Expanded = !item.Expanded;
+            else if (e.Kind is WireframeKind.MenuBar or WireframeKind.Select) e.Expanded = false;
+            e.SelectedIndex = root; e.SelectedPath = row.Path;
+        });
+        if (Interactive && row.Item.Children.Count == 0) await ItemActivated.InvokeAsync(row.Item);
+    }
+}

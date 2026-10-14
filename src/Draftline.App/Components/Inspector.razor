@@ -18,6 +18,7 @@ else
         <TabPanelInspector Element="element" />
         <TreeInspector Element="element" />
         <FormInspector Element="element" />
+        <NavInspector Element="element" />
 
         @if (ElementState.HasAvailability(element.Kind))
         {
@@ -360,6 +361,8 @@ else
         {
             target.Options = options;
             ElementState.Normalize(target);
+            target.SelectedPath = "";
+            NavItems.Normalize(target);
             TabPanels.Normalize(Session.CurrentLayer);
         });
     }
@@ -375,6 +378,7 @@ else
         Apply(element, "Выбор изменён", target =>
         {
             target.SelectedIndex = index;
+            target.SelectedPath = "";
             ElementState.Normalize(target);
             if (target.Kind == WireframeKind.Tree) TreeState.Reveal(target, target.SelectedIndex);
         });

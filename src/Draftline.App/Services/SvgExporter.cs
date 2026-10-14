@@ -15,7 +15,7 @@ namespace Draftline.App.Services;
 /// The drawing is honest about its colours, too: a wireframe is black on white wherever it is opened,
 /// because the sheet is the document's paper and not a part of anybody's theme.
 /// </summary>
-public static class SvgExporter
+public static partial class SvgExporter
 {
     private const string Ink = "#1b1e24";
     private const string Paper = "#ffffff";
@@ -32,7 +32,7 @@ public static class SvgExporter
 
         Start(svg, width, height);
         foreach (var element in TabPanels.Visible(layer).OrderBy(element =>
-                     element.Kind == WireframeKind.Select && ElementState.IsExpanded(element) ? 1 : 0))
+                     (element.Kind is WireframeKind.Select or WireframeKind.MenuBar) && ElementState.IsExpanded(element) ? 1 : 0))
         {
             WriteElement(svg, element);
         }
@@ -174,58 +174,11 @@ public static class SvgExporter
                 break;
 
             case WireframeKind.Select:
-                Box(svg, x, y, element.Width, element.Height, Paper);
-                Text(svg, x + 6, centerY + (size / 3), ElementState.DisplayChoice(element), size, "400",
-                    element.ShowsHint && ElementState.Index(element) < 0 ? 0.55 : 1);
-                Tri(svg, right - 20, centerY - 3, right - 8, centerY - 3, right - 14, centerY + 4);
-                if (ElementState.IsExpanded(element))
-                {
-                    var choices = ElementState.Items(element);
-                    Box(svg, x, bottom, element.Width, choices.Count * ElementState.DropdownRowHeight, Paper);
-                    for (var choiceIndex = 0; choiceIndex < choices.Count; choiceIndex++)
-                    {
-                        var choiceTop = bottom + choiceIndex * ElementState.DropdownRowHeight;
-                        if (choiceIndex == ElementState.Index(element))
-                            Box(svg, x, choiceTop, element.Width, ElementState.DropdownRowHeight, "#e5e7eb");
-                        var choice = ElementDefaults.SplitOption(choices[choiceIndex]);
-                        Text(svg, x + 8, choiceTop + 16, choice.Label, size, "400", 1);
-                        if (!string.IsNullOrEmpty(choice.Value))
-                            Text(svg, right - 8, choiceTop + 16, choice.Value, size, "400", 0.7, "end");
-                    }
-                }
-                break;
-
             case WireframeKind.List:
-                Box(svg, x, y, element.Width, element.Height, Paper);
-
-                var rows = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
-                var rowHeight = element.Height / Math.Max(1, rows.Count);
-                var index = 0;
-
-                foreach (var row in rows)
-                {
-                    var rowTop = y + (rowHeight * index);
-                    var (label, value) = ElementDefaults.SplitOption(row);
-
-                    if (index == ElementState.Index(element))
-                        Box(svg, x, rowTop, element.Width, rowHeight, "#e5e7eb");
-
-                    Text(svg, x + 8, rowTop + (rowHeight / 2) + 4, label, size, weight, 1);
-
-                    // A row may carry a value, and in a list the value belongs on the right: the eye
-                    // reads a column of numbers down the edge, not scattered through the sentences.
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        Text(svg, right - 8, rowTop + (rowHeight / 2) + 4, value, size, "400", 0.7, "end");
-                    }
-
-                    index++;
-                    if (index < rows.Count)
-                    {
-                        Line(svg, x, rowTop + rowHeight, right, rowTop + rowHeight, 1);
-                    }
-                }
-
+            case WireframeKind.MenuBar:
+            case WireframeKind.Breadcrumbs:
+            case WireframeKind.StatusBar:
+                WriteChoices(svg, element, x, y, size);
                 break;
 
             case WireframeKind.Image:
@@ -307,24 +260,6 @@ public static class SvgExporter
                 Line(svg, x, y + tabHeight, right, y + tabHeight, 1);
                 WriteLines(svg, TabPanels.Content(element), x + 8, y + tabHeight + size + 8, size,
                     bottom - 8);
-                break;
-            }
-
-            case WireframeKind.MenuBar:
-            {
-                var menuItems = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
-                var menuLeft = x + 8;
-                var menuIndex = 0;
-
-                foreach (var item in menuItems)
-                {
-                    var (label, _) = ElementDefaults.SplitOption(item);
-                    Text(svg, menuLeft, centerY + (size / 3), label, size,
-                        menuIndex == ElementState.Index(element) ? "700" : "400", 1);
-                    menuLeft += (label.Length * size * 0.62) + 18;
-                    menuIndex++;
-                }
-
                 break;
             }
 
@@ -451,44 +386,7 @@ public static class SvgExporter
                 Tri(svg, middle - 10, centerY - 12, middle - 10, centerY + 12, middle + 12, centerY);
                 break;
 
-            case WireframeKind.Breadcrumbs:
-            {
-                var crumbs = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
-                var crumbLeft = x + 4;
 
-                foreach (var crumb in crumbs)
-                {
-                    var (label, _) = ElementDefaults.SplitOption(crumb);
-
-                    Text(svg, crumbLeft, centerY + (size / 3), label, size, "400", 0.85);
-                    crumbLeft += (label.Length * size * 0.62) + 20;
-                    Text(svg, crumbLeft - 14, centerY + (size / 3), "›", size, "400", 0.5);
-                }
-
-                break;
-            }
-
-            case WireframeKind.StatusBar:
-            {
-                var cells = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
-                var cellWidth = element.Width / Math.Max(1, cells.Count);
-
-                Box(svg, x, y, element.Width, element.Height, Paper);
-
-                for (var cellIndex = 0; cellIndex < cells.Count; cellIndex++)
-                {
-                    var (label, _) = ElementDefaults.SplitOption(cells[cellIndex]);
-
-                    Text(svg, x + (cellWidth * cellIndex) + 8, centerY + (size / 3), label, 10, "400", 0.85);
-
-                    if (cellIndex > 0)
-                    {
-                        Line(svg, x + (cellWidth * cellIndex), y + 3, x + (cellWidth * cellIndex), bottom - 3, 0.4);
-                    }
-                }
-
-                break;
-            }
         }
 
         if (FormState.HasVisualState(element.Kind) && element.VisualState is ControlVisualState.Focused or ControlVisualState.Error)

@@ -13,7 +13,7 @@
         @foreach (var element in TabPanels.Visible(Session.CurrentLayer))
         {
             <WireframeElementView Element="element" DrawingOrder="@(drawOrder++)" Authoring="true" TabSelected="@(index => Session.SelectTab(element.Id, index))"
-                                  TreeSelected="@(index => Session.SelectTreeNode(element.Id, index))" />
+                                  TreeSelected="@(index => Session.SelectTreeNode(element.Id, index))" Edited="@(action => Session.Edit("Меню изменено", _ => action(element)))" />
         }
 
         @if (Session.Selected is { } selected)

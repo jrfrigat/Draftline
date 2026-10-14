@@ -101,6 +101,7 @@ public sealed class DraftLayer
             element.Options ??= new List<string>();
             ElementState.Normalize(element);
             TreeState.Normalize(element);
+            NavItems.Normalize(element);
             element.Columns ??= new List<string>();
             element.Rows ??= new List<List<string>>();
             element.FontScale = element.FontScale > 0 ? element.FontScale : 1;

@@ -17,7 +17,7 @@ public static class ElementState
 
     /// <summary>Whether the kind can reveal more content.</summary>
     public static bool HasDisclosure(WireframeKind kind) => kind is
-        WireframeKind.Select or WireframeKind.Accordion;
+        WireframeKind.Select or WireframeKind.Accordion or WireframeKind.MenuBar;
 
     /// <summary>Whether availability is meaningful for this control.</summary>
     public static bool HasAvailability(WireframeKind kind) => HasChoice(kind) || kind is
@@ -40,7 +40,7 @@ public static class ElementState
     /// <summary>Whole drawing height, including the menu outside a dropdown's control rectangle.</summary>
     public static double DrawingHeight(WireframeElement element) => element.Height +
         (element.Kind == WireframeKind.Select && IsExpanded(element)
-            ? Items(element).Count * DropdownRowHeight : 0);
+            ? NavItems.VisibleCount(element, Items(element).Count) * DropdownRowHeight : element.Kind == WireframeKind.MenuBar && IsExpanded(element) ? NavItems.MenuBounds(element).Height : 0);
 
     /// <summary>Keeps choice indices valid when importing or changing the list of items.</summary>
     public static void Normalize(WireframeElement element)
