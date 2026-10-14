@@ -649,6 +649,18 @@ body {
     font-style: italic;
 }
 
+.df-inline-editor {
+    position: absolute;
+    z-index: 20000;
+    min-width: 220px;
+    height: auto !important;
+    padding: 6px;
+    background: var(--flare-color-surface, #fff);
+    border: 1px solid var(--flare-color-outline, #555);
+}
+
+.df-el--select .df-field__value { margin-right: auto; }
+
 .df-area__value {
     position: absolute;
     left: 6px;

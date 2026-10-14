@@ -2,7 +2,7 @@
    be a finished design. Every kind is a few spans; the classes live in draftline.css, so the low-fi
    look (straight corners, no gradients, no shadows, hatching instead of a picture) is in one place
    and the same for the canvas, a future preview and the SVG export's reference. *@
-<div class="@CssClass" style="@Style">
+<div class="@CssClass" style="@Style" data-element-id="@Element.Id">
     @switch (Element.Kind)
     {
         case WireframeKind.Panel:
@@ -85,9 +85,8 @@
             @if (Interactive)
             {
                 <button type="button" class="df-select__head df-state-button" disabled="@Element.Disabled"
-                        aria-label="@Element.DisplayText" aria-expanded="@(ElementState.IsExpanded(Element) ? "true" : "false")"
+                        aria-label="@(string.IsNullOrWhiteSpace(ElementState.DisplayChoice(Element)) ? "Выпадающий список" : ElementState.DisplayChoice(Element))" aria-expanded="@(ElementState.IsExpanded(Element) ? "true" : "false")"
                         aria-controls="@("df-options-" + Element.Id)" @onclick="ToggleExpanded">
-                    <span class="df-field__label">@Element.DisplayText</span>
                     <span class="@ValueClass">@ElementState.DisplayChoice(Element)</span>
                     <span class="df-select__arrow" aria-hidden="true">@(ElementState.IsExpanded(Element) ? "▴" : "▾")</span>
                 </button>
@@ -95,7 +94,6 @@
             else
             {
             <span class="df-select__head">
-            <span class="df-field__label">@Element.DisplayText</span>
             <span class="@ValueClass">@ElementState.DisplayChoice(Element)</span>
             <span class="df-select__arrow">@(ElementState.IsExpanded(Element) ? "▴" : "▾")</span>
             </span>

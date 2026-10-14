@@ -29,6 +29,14 @@
         {
             <div class="df-marquee" style="@RectStyle(frame)"></div>
         }
+        @if (_editingId is { } editingId && Session.CurrentLayer.Find(editingId) is { } editing)
+        {
+            <div class="df-inline-editor" style="@RectStyle(editing.Bounds)">
+                <TextEditorField @key="editingId" Label="Изменить текст" AutoFocus="true"
+                                 Value="@editing.DisplayText" ValueChanged="@(value => CommitText(editingId, value))"
+                                 Completed="CloseTextEditor" />
+            </div>
+        }
     </div>
 
     @if (Session.CurrentLayer.Elements.Count == 0)
@@ -54,6 +62,27 @@
     private Rect? _marquee;
     private string _cursor = "default";
     private int _cascade;
+    private string? _editingId;
+
+    /// <summary>Opens direct text editing for the block under the double click.</summary>
+    [JSInvokable]
+    public void OnEditText(double x, double y)
+    {
+        if (Session.CurrentLayer.HitTest(x, y) is { } element && ElementDefaults.IsTextual(element.Kind))
+        {
+            Session.Select(element.Id);
+            _editingId = element.Id;
+            StateHasChanged();
+        }
+    }
+
+    private void CommitText(string id, string value)
+    {
+        if (Session.CurrentLayer.Find(id) is not { } element || value == element.DisplayText) return;
+        Session.Edit("Текст изменён", _ => element.Text = value);
+    }
+
+    private void CloseTextEditor() => _editingId = null;
 
     /// <summary>
     /// Puts a block on the sheet when the palette was clicked rather than dragged. The blocks land in
@@ -302,6 +331,11 @@
 
         switch (key)
         {
+            case "EditText":
+                if (Session.Selected is not { } textual || !ElementDefaults.IsTextual(textual.Kind)) return false;
+                _editingId = textual.Id;
+                StateHasChanged();
+                return true;
             case "Delete":
                 return Session.RemoveSelected();
 

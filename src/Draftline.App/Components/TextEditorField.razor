@@ -1,0 +1,61 @@
+<FlareTextField @ref="_field" Label="@Label" Size="FieldSize.Xs" Value="@_draft"
+                Immediate="true" ValueChanged="DraftChanged" OnFocus="BeginEditing"
+                OnBlur="HandleBlur" OnKeyDown="OnKeyDown" />
+
+@code {
+    /// <summary>The committed text, kept separate from the field's draft.</summary>
+    [Parameter] public string Value { get; set; } = string.Empty;
+    /// <summary>Receives one committed edit, never individual keystrokes.</summary>
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    /// <summary>Visible and accessible field label.</summary>
+    [Parameter] public string Label { get; set; } = "Текст";
+    /// <summary>Focuses and selects the text when an inline editor opens.</summary>
+    [Parameter] public bool AutoFocus { get; set; }
+    /// <summary>Closes an inline editor after commit or cancellation.</summary>
+    [Parameter] public EventCallback Completed { get; set; }
+
+    private FlareTextField? _field;
+    private string _draft = string.Empty;
+    private bool _editing;
+    private bool _closed;
+
+    protected override void OnParametersSet()
+    {
+        if (!_editing) _draft = Value;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && AutoFocus && _field is not null)
+        {
+            await _field.FocusAsync();
+            await _field.SelectAsync();
+        }
+    }
+
+    private void BeginEditing(FocusEventArgs _) => _editing = true;
+    private void DraftChanged(string? value) => _draft = value ?? string.Empty;
+    private Task HandleBlur(FocusEventArgs _) => Commit();
+
+    private async Task Commit()
+    {
+        if (_closed) return;
+        if (Completed.HasDelegate) _closed = true;
+        var text = _draft;
+        _editing = false;
+        if (text != Value) await ValueChanged.InvokeAsync(text);
+        await Completed.InvokeAsync();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter") await Commit();
+        else if (args.Key == "Escape")
+        {
+            _draft = Value;
+            _editing = false;
+            if (Completed.HasDelegate) _closed = true;
+            await Completed.InvokeAsync();
+        }
+    }
+}

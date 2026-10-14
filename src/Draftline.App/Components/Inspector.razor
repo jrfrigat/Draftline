@@ -66,9 +66,9 @@ else
 
         @if (ElementDefaults.IsTextual(element.Kind))
         {
-            <FlareTextField Label="Текст" Size="FieldSize.Xs"
-                            Value="@element.Text"
-                            ValueChanged="@((string? value) => SetText(element, value))" />
+            <TextEditorField @key="element.Id" Label="@(element.Kind == WireframeKind.Button ? "Подпись кнопки" : "Текст")"
+                             Value="@element.DisplayText" ValueChanged="@(value => SetText(element, value))" />
+            <p class="df-hint">Двойной щелчок по блоку или F2 — изменить текст. Enter — применить.</p>
 
             <div class="df-inspector__pair">
                 <FlareNumericField Label="Масштаб текста" Size="FieldSize.Xs" Min="0.5" Max="4" Step="0.5"

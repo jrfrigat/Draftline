@@ -27,6 +27,7 @@ export function attach(element, reference) {
     canvas.addEventListener('pointercancel', onPointerUp);
     canvas.addEventListener('dragover', onDragOver);
     canvas.addEventListener('drop', onDrop);
+    canvas.addEventListener('dblclick', onDoubleClick);
     document.addEventListener('keydown', onKeyDown);
 }
 
@@ -40,6 +41,7 @@ export function detach() {
         canvas.removeEventListener('pointercancel', onPointerUp);
         canvas.removeEventListener('dragover', onDragOver);
         canvas.removeEventListener('drop', onDrop);
+        canvas.removeEventListener('dblclick', onDoubleClick);
     }
 
     document.removeEventListener('keydown', onKeyDown);
@@ -65,6 +67,7 @@ function onPointerDown(event) {
     if (event.pointerType === 'mouse' && event.button !== 0) {
         return;
     }
+    if (event.target.closest('input, textarea, .df-inline-editor')) return;
 
     // Capture keeps the events coming while the pointer is outside the sheet - dragging a block off
     // the edge is exactly the moment a drag used to be lost.
@@ -77,6 +80,12 @@ function onPointerDown(event) {
 
     const point = pointOf(event);
     dotNet.invokeMethodAsync('OnPointerDown', point.x, point.y, event.ctrlKey || event.metaKey);
+}
+
+function onDoubleClick(event) {
+    if (!canvas || !dotNet || event.target.closest('input, textarea, .df-inline-editor')) return;
+    const point = pointOf(event);
+    dotNet.invokeMethodAsync('OnEditText', point.x, point.y);
 }
 
 function onPointerMove(event) {
@@ -162,6 +171,8 @@ function onKeyDown(event) {
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
         key = 'Delete';
+    } else if (event.key === 'F2') {
+        key = 'EditText';
     } else if (event.key === 'Escape') {
         key = 'Escape';
     } else if (ctrl && (event.key === 'd' || event.key === 'D')) {

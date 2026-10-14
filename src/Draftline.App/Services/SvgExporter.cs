@@ -168,9 +168,8 @@ public static class SvgExporter
 
             case WireframeKind.Select:
                 Box(svg, x, y, element.Width, element.Height, Paper);
-                Text(svg, x + 6, centerY + (size / 3), text, size, weight, 1);
-                Text(svg, right - 22, centerY + (size / 3), ElementState.DisplayChoice(element), size, "400",
-                    element.ShowsHint && ElementState.Index(element) < 0 ? 0.55 : 1, "end");
+                Text(svg, x + 6, centerY + (size / 3), ElementState.DisplayChoice(element), size, "400",
+                    element.ShowsHint && ElementState.Index(element) < 0 ? 0.55 : 1);
                 Tri(svg, right - 20, centerY - 3, right - 8, centerY - 3, right - 14, centerY + 4);
                 if (ElementState.IsExpanded(element))
                 {
