@@ -16,6 +16,11 @@
 [Tt]estResults/
 *.user
 
+# A tests folder that keeps being created in this checkout is not part of the project: the first
+# version ships without a test project (the person's call of 14.10.2026), and the logic those tests
+# would cover is already exercised by a throwaway runner that lives outside the repository.
+/tests/
+
 
 # Agent scaffolding, for the same reason .claude/ and .cline/ are ignored: Aiko writes it.
 /.cursor/
