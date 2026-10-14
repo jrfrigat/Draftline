@@ -1,8 +1,20 @@
 @if (Element.Kind == WireframeKind.Select)
 {
-    <button type="button" class="df-select__head df-state-button" disabled="@(!Interactive || Element.Disabled)" aria-expanded="@ElementState.IsExpanded(Element)" @onclick="Toggle">
-        <span>@ElementState.DisplayChoice(Element)</span><span>▾</span>
-    </button>
+    @if (Interactive)
+    {
+        <button type="button" class="df-select__head df-state-button" disabled="@Element.Disabled"
+                aria-label="@(string.IsNullOrWhiteSpace(ElementState.DisplayChoice(Element)) ? "Выпадающий список" : ElementState.DisplayChoice(Element))"
+                aria-expanded="@(ElementState.IsExpanded(Element) ? "true" : "false")" @onclick="Toggle">
+            <span>@ElementState.DisplayChoice(Element)</span><span aria-hidden="true">▾</span>
+        </button>
+    }
+    else
+    {
+        @* Static drawing lets the sheet receive pointer events across the whole empty header. *@
+        <span class="df-select__head">
+            <span>@ElementState.DisplayChoice(Element)</span><span aria-hidden="true">▾</span>
+        </span>
+    }
     @if (ElementState.IsExpanded(Element))
     {
         <div class="df-choice-popup" style="@PopupStyle">
