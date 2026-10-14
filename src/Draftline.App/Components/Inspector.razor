@@ -16,6 +16,36 @@ else
     <div class="df-inspector">
         <p class="df-inspector__kind">@ElementDefaults.NameOf(element.Kind)</p>
 
+        @if (ElementState.HasAvailability(element.Kind))
+        {
+            <p class="df-hint">Состояние</p>
+            @if (ElementState.HasChoice(element.Kind))
+            {
+                <FlareSelect Label="@(element.Kind == WireframeKind.Tabs ? "Активная вкладка" : "Выбранный пункт")"
+                             Size="FieldSize.Xs" Value="@ElementState.Index(element).ToString()"
+                             ValueChanged="@((string? value) => SetSelectedIndex(element, value))">
+                    @if (element.Kind != WireframeKind.Tabs)
+                    {
+                        <option value="-1">Не выбран</option>
+                    }
+                    @for (var index = 0; index < ElementState.Items(element).Count; index++)
+                    {
+                        <option value="@index">@(index + 1). @ElementDefaults.SplitOption(ElementState.Items(element)[index]).Label</option>
+                    }
+                </FlareSelect>
+            }
+            @if (ElementState.HasDisclosure(element.Kind))
+            {
+                <FlareCheckbox Value="@ElementState.IsExpanded(element)"
+                               ValueChanged="@((bool value) => SetExpanded(element, value))">Раскрыт</FlareCheckbox>
+            }
+            <FlareCheckbox Value="@element.Disabled"
+                           ValueChanged="@((bool value) => Apply(element, "Доступность изменена", target => target.Disabled = value))">
+                Недоступен
+            </FlareCheckbox>
+            <FlareDivider />
+        }
+
         <div class="df-inspector__pair">
             <FlareNumericField Label="X" Size="FieldSize.Xs" Min="0"
                                Value="@element.X"
@@ -66,6 +96,13 @@ else
             <FlareTextField Label="Вторая строка" Size="FieldSize.Xs"
                             Value="@element.SecondaryText"
                             ValueChanged="@((string? value) => SetSecondaryText(element, value))" />
+        }
+
+        @if (element.Kind == WireframeKind.Accordion)
+        {
+            <FlareTextArea Label="Содержимое раскрытого раздела" Size="FieldSize.Xs"
+                           Value="@element.SecondaryText"
+                           ValueChanged="@((string? value) => SetSecondaryText(element, value))" />
         }
 
         @if (ElementDefaults.HasCheck(element.Kind))
@@ -323,8 +360,30 @@ else
             return;
         }
 
-        Apply(element, "Пункты изменены", target => target.Options = options);
+        Apply(element, "Пункты изменены", target =>
+        {
+            target.Options = options;
+            ElementState.Normalize(target);
+        });
     }
+
+    private void SetSelectedIndex(WireframeElement element, string? value)
+    {
+        if (!int.TryParse(value, out var index)) return;
+        Apply(element, "Выбор изменён", target =>
+        {
+            target.SelectedIndex = index;
+            ElementState.Normalize(target);
+        });
+    }
+
+    private void SetExpanded(WireframeElement element, bool expanded) =>
+        Apply(element, "Раскрытие изменено", target =>
+        {
+            target.Expanded = expanded;
+            if (expanded && target.Kind == WireframeKind.Accordion && target.SelectedIndex < 0)
+                target.SelectedIndex = 0;
+        });
 
 
     /// <summary>Changes the block inside the document, through the one door it has.</summary>

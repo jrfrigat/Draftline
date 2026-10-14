@@ -31,7 +31,8 @@ public static class SvgExporter
         var svg = new StringBuilder();
 
         Start(svg, width, height);
-        foreach (var element in layer.InDrawOrder())
+        foreach (var element in layer.InDrawOrder().OrderBy(element =>
+                     element.Kind == WireframeKind.Select && ElementState.IsExpanded(element) ? 1 : 0))
         {
             WriteElement(svg, element);
         }
@@ -56,7 +57,7 @@ public static class SvgExporter
         ArgumentNullException.ThrowIfNull(element);
 
         var width = Math.Max(1, element.Width);
-        var height = Math.Max(1, element.Height);
+        var height = Math.Max(1, ElementState.DrawingHeight(element));
         var svg = new StringBuilder();
 
         Start(svg, width, height);
@@ -82,7 +83,7 @@ public static class SvgExporter
 
         // One group per block: the drawing stays readable in a vector editor, and anything reading the
         // file afterwards - a check, a diff, a person - gets the block as one thing.
-        svg.Append("<g>");
+        svg.Append(element.Disabled ? "<g opacity=\"0.45\">" : "<g>");
 
         switch (element.Kind)
         {
@@ -168,9 +169,24 @@ public static class SvgExporter
             case WireframeKind.Select:
                 Box(svg, x, y, element.Width, element.Height, Paper);
                 Text(svg, x + 6, centerY + (size / 3), text, size, weight, 1);
-                Text(svg, right - 22, centerY + (size / 3), element.DisplayValue, size, "400",
-                    element.ShowsHint ? 0.55 : 1, "end");
+                Text(svg, right - 22, centerY + (size / 3), ElementState.DisplayChoice(element), size, "400",
+                    element.ShowsHint && ElementState.Index(element) < 0 ? 0.55 : 1, "end");
                 Tri(svg, right - 20, centerY - 3, right - 8, centerY - 3, right - 14, centerY + 4);
+                if (ElementState.IsExpanded(element))
+                {
+                    var choices = ElementState.Items(element);
+                    Box(svg, x, bottom, element.Width, choices.Count * ElementState.DropdownRowHeight, Paper);
+                    for (var choiceIndex = 0; choiceIndex < choices.Count; choiceIndex++)
+                    {
+                        var choiceTop = bottom + choiceIndex * ElementState.DropdownRowHeight;
+                        if (choiceIndex == ElementState.Index(element))
+                            Box(svg, x, choiceTop, element.Width, ElementState.DropdownRowHeight, "#e5e7eb");
+                        var choice = ElementDefaults.SplitOption(choices[choiceIndex]);
+                        Text(svg, x + 8, choiceTop + 16, choice.Label, size, "400", 1);
+                        if (!string.IsNullOrEmpty(choice.Value))
+                            Text(svg, right - 8, choiceTop + 16, choice.Value, size, "400", 0.7, "end");
+                    }
+                }
                 break;
 
             case WireframeKind.List:
@@ -184,6 +200,9 @@ public static class SvgExporter
                 {
                     var rowTop = y + (rowHeight * index);
                     var (label, value) = ElementDefaults.SplitOption(row);
+
+                    if (index == ElementState.Index(element))
+                        Box(svg, x, rowTop, element.Width, rowHeight, "#e5e7eb");
 
                     Text(svg, x + 8, rowTop + (rowHeight / 2) + 4, label, size, weight, 1);
 
@@ -271,7 +290,9 @@ public static class SvgExporter
                     var (label, _) = ElementDefaults.SplitOption(tabs[tabIndex]);
 
                     Text(svg, tabLeft + (tabWidth / 2), centerY + (size / 3), label, size,
-                        tabIndex == 0 ? "700" : "400", tabIndex == 0 ? 1 : 0.7, "middle");
+                        tabIndex == ElementState.Index(element) ? "700" : "400", tabIndex == ElementState.Index(element) ? 1 : 0.7, "middle");
+                    if (tabIndex == ElementState.Index(element))
+                        Line(svg, tabLeft, bottom - 2, tabLeft + tabWidth, bottom - 2, 2);
                     Line(svg, tabLeft, y, tabLeft, bottom, 1);
                 }
 
@@ -283,12 +304,15 @@ public static class SvgExporter
             {
                 var menuItems = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
                 var menuLeft = x + 8;
+                var menuIndex = 0;
 
                 foreach (var item in menuItems)
                 {
                     var (label, _) = ElementDefaults.SplitOption(item);
-                    Text(svg, menuLeft, centerY + (size / 3), label, size, "400", 1);
+                    Text(svg, menuLeft, centerY + (size / 3), label, size,
+                        menuIndex == ElementState.Index(element) ? "700" : "400", 1);
                     menuLeft += (label.Length * size * 0.62) + 18;
+                    menuIndex++;
                 }
 
                 break;
@@ -297,20 +321,29 @@ public static class SvgExporter
             case WireframeKind.Accordion:
             {
                 var sections = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
-                var sectionHeight = element.Height / Math.Max(1, sections.Count);
+                var sectionHeight = element.Height / Math.Max(1, sections.Count + (ElementState.IsExpanded(element) ? 1 : 0));
+                var sectionTop = y;
 
                 for (var sectionIndex = 0; sectionIndex < sections.Count; sectionIndex++)
                 {
-                    var sectionTop = y + (sectionHeight * sectionIndex);
                     var (label, _) = ElementDefaults.SplitOption(sections[sectionIndex]);
+                    var openSection = ElementState.IsExpanded(element) && sectionIndex == Math.Max(0, ElementState.Index(element));
 
                     Text(svg, x + 8, sectionTop + (sectionHeight / 2) + 4, label, size,
-                        sectionIndex == 0 ? "700" : "400", 1);
-                    Text(svg, right - 16, sectionTop + (sectionHeight / 2) + 4, sectionIndex == 0 ? "−" : "+", size, "400", 0.8);
+                        openSection ? "700" : "400", 1);
+                    Text(svg, right - 16, sectionTop + (sectionHeight / 2) + 4, openSection ? "−" : "+", size, "400", 0.8);
 
                     if (sectionIndex > 0)
                     {
                         Line(svg, x, sectionTop, right, sectionTop, 1);
+                    }
+                    sectionTop += sectionHeight;
+                    if (openSection)
+                    {
+                        Text(svg, x + 8, sectionTop + (sectionHeight / 2) + 4,
+                            string.IsNullOrWhiteSpace(element.SecondaryText) ? "Содержимое раздела" : element.SecondaryText,
+                            size, "400", 1);
+                        sectionTop += sectionHeight;
                     }
                 }
 
@@ -324,6 +357,7 @@ public static class SvgExporter
 
                 for (var nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
                 {
+                    if (nodeIndex > 0 && !ElementState.IsExpanded(element)) break;
                     var (label, _) = ElementDefaults.SplitOption(nodes[nodeIndex]);
                     var itemTop = y + (size * 1.5 * nodeIndex) + size;
 
@@ -331,10 +365,12 @@ public static class SvgExporter
                     // about showing that something nests, not about drawing branches.
                     if (nodeIndex == 0)
                     {
-                        Text(svg, x + 4, itemTop, "▾", size, "400", 0.8);
+                        Text(svg, x + 4, itemTop, ElementState.IsExpanded(element) ? "▾" : "▸", size, "400", 0.8);
                     }
-
-                    Text(svg, x + (nodeIndex == 0 ? 4 : 24), itemTop, label, size, nodeIndex == 0 ? "700" : "400", 1);
+                    if (nodeIndex == ElementState.Index(element))
+                        Box(svg, x, itemTop - size, element.Width, size * 1.5, "#e5e7eb");
+                    Text(svg, x + (nodeIndex == 0 ? 18 : 24), itemTop, label, size,
+                        nodeIndex == ElementState.Index(element) || nodeIndex == 0 ? "700" : "400", 1);
                 }
 
                 break;

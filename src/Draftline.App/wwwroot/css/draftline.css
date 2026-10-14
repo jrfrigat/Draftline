@@ -760,7 +760,7 @@ body {
     text-overflow: ellipsis;
 }
 
-.df-tabs__tab:first-child {
+.df-tabs__tab.df-item--selected {
     font-weight: 700;
     box-shadow: inset 0 -2px 0 #1b1e24;
 }
@@ -1159,3 +1159,16 @@ body {
     .draftline-splash-mark i { animation: none; }
     #flare-splash { transition: none; }
 }
+
+/* Authored control state: monochrome marks belong to the wireframe, independent of the app theme. */
+.df-el--disabled { opacity: 0.45; }
+.df-el--select.df-el--open { overflow: visible; }
+.df-select__head { display: flex; align-items: center; gap: 0.4rem; width: 100%; height: 100%; }
+.df-select__options {
+    position: absolute; top: 100%; left: -1px; width: calc(100% + 2px);
+    box-sizing: border-box; display: flex; flex-direction: column;
+    background: #fff; border: 1px solid #1b1e24; color: #1b1e24;
+}
+.df-select__option { display: block; box-sizing: border-box; height: 24px; padding: 3px 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.df-item--selected { background: #e5e7eb; font-weight: 700; }
+.df-accordion__body { padding: 8px; border-top: 1px solid #1b1e24; white-space: pre-wrap; overflow: auto; }

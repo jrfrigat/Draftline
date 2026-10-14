@@ -60,15 +60,28 @@
             break;
 
         case WireframeKind.Select:
+            <span class="df-select__head">
             <span class="df-field__label">@Element.DisplayText</span>
-            <span class="@ValueClass">@Element.DisplayValue</span>
-            <span class="df-select__arrow">▾</span>
+            <span class="@ValueClass">@ElementState.DisplayChoice(Element)</span>
+            <span class="df-select__arrow">@(ElementState.IsExpanded(Element) ? "▴" : "▾")</span>
+            </span>
+            @if (ElementState.IsExpanded(Element))
+            {
+                <span class="df-select__options">
+                    @for (var index = 0; index < ElementState.Items(Element).Count; index++)
+                    {
+                        var row = ElementDefaults.SplitOption(ElementState.Items(Element)[index]);
+                        <span class="df-select__option @SelectedClass(index)">@row.Label @row.Value</span>
+                    }
+                </span>
+            }
             break;
 
         case WireframeKind.List:
-            @foreach (var (label, value) in Rows)
+            @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
-                <span class="df-list__row">
+                var (label, value) = ElementDefaults.SplitOption(ElementState.Items(Element)[index]);
+                <span class="df-list__row @SelectedClass(index)">
                     <span class="df-list__label">@label</span>
                     @if (!string.IsNullOrEmpty(value))
                     {
@@ -110,33 +123,39 @@
             break;
 
         case WireframeKind.Tabs:
-            @foreach (var (label, _) in Rows)
+            @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
-                <span class="df-tabs__tab">@label</span>
+                <span class="df-tabs__tab @SelectedClass(index)">@ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label</span>
             }
             break;
 
         case WireframeKind.MenuBar:
-            @foreach (var (label, _) in Rows)
+            @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
-                <span class="df-menu__item">@label</span>
+                <span class="df-menu__item @SelectedClass(index)">@ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label</span>
             }
             break;
 
         case WireframeKind.Accordion:
-            @foreach (var (label, _) in Rows)
+            @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
+                var opened = ElementState.IsExpanded(Element) && index == Math.Max(0, ElementState.Index(Element));
                 <span class="df-accordion__section">
-                    <span class="df-accordion__title">@label</span>
-                    <span class="df-accordion__mark">+</span>
+                    <span class="df-accordion__title">@ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label</span>
+                    <span class="df-accordion__mark">@(opened ? "−" : "+")</span>
                 </span>
+                @if (opened)
+                {
+                    <span class="df-accordion__body">@(string.IsNullOrWhiteSpace(Element.SecondaryText) ? "Содержимое раздела" : Element.SecondaryText)</span>
+                }
             }
             break;
 
         case WireframeKind.Tree:
-            @foreach (var (label, _) in Rows)
+            @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
-                <span class="df-tree__item">@label</span>
+                if (index > 0 && !ElementState.IsExpanded(Element)) break;
+                <span class="df-tree__item @SelectedClass(index)">@(index == 0 ? (ElementState.IsExpanded(Element) ? "▾ " : "▸ ") : "")@ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label</span>
             }
             break;
 
@@ -204,6 +223,8 @@
         get
         {
             var css = "df-el df-el--" + Element.Kind.ToString().ToLowerInvariant();
+            if (Element.Disabled) css += " df-el--disabled";
+            if (Element.Kind == WireframeKind.Select && ElementState.IsExpanded(Element)) css += " df-el--open";
             return Element.Bold ? css + " df-el--bold" : css;
         }
     }
@@ -213,7 +234,9 @@
         .Select(ElementDefaults.SplitOption);
 
     /// <summary>The class of a value: a hint is drawn lighter than something someone actually typed.</summary>
-    private string ValueClass => Element.ShowsHint ? "df-field__value df-field__value--hint" : "df-field__value";
+    private string ValueClass => Element.ShowsHint && ElementState.Index(Element) < 0 ? "df-field__value df-field__value--hint" : "df-field__value";
+
+    private string SelectedClass(int index) => ElementState.Index(Element) == index ? "df-item--selected" : string.Empty;
 
     /// <summary>
     /// The share of its range a bar or a slider shows, as a percentage between 0 and 100. An empty or
@@ -251,7 +274,7 @@
                 $"top:{Element.Y.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
                 $"width:{Element.Width.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
                 $"height:{Element.Height.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
-                $"z-index:{Element.ZIndex};";
+                $"z-index:{(Element.Kind == WireframeKind.Select && ElementState.IsExpanded(Element) ? 10000 + Element.ZIndex : Element.ZIndex)};";
 
             if (Math.Abs(Element.FontScale - 1) > 0.001)
             {
