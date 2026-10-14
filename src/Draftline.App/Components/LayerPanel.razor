@@ -1,11 +1,12 @@
 @inject DocumentSession Session
+@implements IDisposable
 
 @* The screens of the wireframe. A wireframe of anything real is several pictures, and this is the
    shelf they stand on: which one is open, which one a preview starts from, and which of them lead
    somewhere. The blocks themselves live on the sheet; this is only the list. *@
 <div class="df-layers">
     <div class="df-layers__head">
-        <FlareButton Variant="ButtonVariant.Text" OnClick="@(() => Session.AddLayer())">Экран</FlareButton>
+        <FlareButton Variant="ButtonVariant.Text" OnClick="@(() => Session.AddLayer())">Добавить экран</FlareButton>
     </div>
 
     @foreach (var layer in Session.Document.Layers)
@@ -21,7 +22,9 @@
             }
             else
             {
-                <button type="button" class="df-layers__name" @onclick="() => Session.SelectLayer(item.Id)">
+                <button type="button" class="df-layers__name" title="@item.Name"
+                        aria-current="@(item.Id == Session.CurrentLayerId ? "true" : null)"
+                        @onclick="() => Session.SelectLayer(item.Id)">
                     @item.Name
                 </button>
 
@@ -34,6 +37,7 @@
                 else
                 {
                     <button type="button" class="df-layers__action" title="Начинать просмотр с этого экрана"
+                            aria-label="@($"Начинать просмотр с экрана {item.Name}")"
                             @onclick="() => Session.SetStartLayer(item.Id)">вход</button>
                 }
 
@@ -44,13 +48,19 @@
                     </span>
                 }
 
-                <button type="button" class="df-layers__action" title="Переименовать"
-                        @onclick="() => _renamingId = item.Id">✎</button>
+                <button type="button" class="df-layers__action" title="Переименовать экран"
+                        aria-label="@($"Переименовать экран {item.Name}")"
+                        @onclick="() => _renamingId = item.Id">
+                    <FlareIconView Value="FlareIcons.Edit" Size="1rem" />
+                </button>
 
                 @if (Session.Document.Layers.Count > 1)
                 {
                     <button type="button" class="df-layers__action" title="Удалить экран"
-                            @onclick="() => Session.RemoveLayer(item.Id)">×</button>
+                            aria-label="@($"Удалить экран {item.Name}")"
+                            @onclick="() => Session.RemoveLayer(item.Id)">
+                        <FlareIconView Value="FlareIcons.Delete" Size="1rem" />
+                    </button>
                 }
             }
         </div>
@@ -59,6 +69,10 @@
 
 @code {
     private string? _renamingId;
+
+    protected override void OnInitialized() => Session.Changed += OnChanged;
+    public void Dispose() => Session.Changed -= OnChanged;
+    private void OnChanged() => InvokeAsync(StateHasChanged);
 
     /// <summary>The class of a row: the open screen is marked, the rest are not.</summary>
     private string RowClass(DraftLayer layer) =>

@@ -99,6 +99,12 @@
             <span class="df-status__name">@Session.Document.Name</span>
             <span>@Session.CurrentLayer.Name</span>
             <span>@Session.Document.TotalElements блоков · @Session.Document.Layers.Count экранов</span>
+            @if (Session.Selection.Count > 0)
+            {
+                <span title="Стрелки — сдвиг, Ctrl+D — копия, Delete — удалить">
+                    Выбрано: @Session.Selection.Count · Стрелки / Ctrl+D / Delete
+                </span>
+            }
             <span class="df-status__note" role="status">@(_notice ?? Autosave.Message)</span>
             @if (Storage.IsVolatile)
             {

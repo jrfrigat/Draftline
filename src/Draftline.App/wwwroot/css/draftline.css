@@ -981,8 +981,8 @@ body {
 }
 
 .df-layers__row--current {
-    border-left-color: #1b1e24;
-    background: rgb(27 30 36 / 6%);
+    border-left-color: var(--flare-color-primary);
+    background: var(--flare-color-surface-container);
 }
 
 .df-layers__name {
@@ -998,6 +998,7 @@ body {
     white-space: nowrap;
     text-overflow: ellipsis;
     cursor: pointer;
+    min-height: 24px;
 }
 
 .df-layers__name:hover {
@@ -1012,7 +1013,7 @@ body {
 .df-layers__mark {
     flex: 0 0 auto;
     font-size: 0.75rem;
-    opacity: 0.6;
+    color: var(--flare-color-on-surface-variant);
 }
 
 .df-layers__mark {
@@ -1029,12 +1030,22 @@ body {
     color: inherit;
     font: inherit;
     font-size: 0.8rem;
-    opacity: 0.55;
+    min-width: 24px;
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
 }
 
 .df-layers__action:hover {
-    opacity: 1;
+    background: var(--flare-color-surface-container);
+}
+
+.df-layers button:focus-visible,
+.df-projects__open:focus-visible {
+    outline: 2px solid var(--flare-color-primary);
+    outline-offset: 2px;
 }
 
 /* --------------------------------------------------------------------- the preview */
