@@ -1,6 +1,8 @@
 @page "/"
 @implements IDisposable
 @inject DocumentSession Session
+@inject AutosaveService Autosave
+@inject FallbackBrowserStorage Storage
 
 <PageTitle>@Session.Document.Name — Draftline</PageTitle>
 
@@ -27,7 +29,7 @@
         <FlareRibbon Class="df-ribbon">
             <FlareRibbonTab Title="Макет">
                 <FlareRibbonGroup Label="Документ">
-                    <ProjectMenu />
+                    <ProjectMenu Ready="_ready" />
                 </FlareRibbonGroup>
                 <FlareRibbonGroup Label="Правка">
                     <FlareRibbonButton Label="Отменить" Tooltip="Шаг назад"
@@ -97,7 +99,11 @@
             <span class="df-status__name">@Session.Document.Name</span>
             <span>@Session.CurrentLayer.Name</span>
             <span>@Session.Document.TotalElements блоков · @Session.Document.Layers.Count экранов</span>
-            <span class="df-status__note">@_notice</span>
+            <span class="df-status__note" role="status">@(_notice ?? Autosave.Message)</span>
+            @if (Storage.IsVolatile)
+            {
+                <span role="status">Временное хранилище: выгрузите JSON до закрытия вкладки</span>
+            }
         </div>
     </StatusBar>
 </FlareIdeLayout>
@@ -111,6 +117,8 @@
 
     private CanvasView? _canvas;
     private string? _notice;
+    private bool _ready;
+    private bool _initializing;
 
     /// <summary>Whether the block shelf is folded to its rail.</summary>
     private bool _blocksFolded;
@@ -123,10 +131,52 @@
     private bool _layersExpanded = true;
 
     /// <inheritdoc />
-    protected override void OnInitialized() => Session.Changed += OnSessionChanged;
+    protected override void OnInitialized()
+    {
+        Session.Changed += OnSessionChanged;
+        Autosave.Changed += OnSaveChanged;
+    }
 
     /// <inheritdoc />
-    public void Dispose() => Session.Changed -= OnSessionChanged;
+    public void Dispose()
+    {
+        Session.Changed -= OnSessionChanged;
+        Autosave.Changed -= OnSaveChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_initializing) return;
+        _initializing = true;
+
+        try
+        {
+            await Storage.ProbeAsync();
+            var lastId = await Catalog.LastOpenIdAsync();
+            var result = string.IsNullOrWhiteSpace(lastId) ? null : await Catalog.LoadAsync(lastId);
+            if (result?.Document is { } document)
+            {
+                Session.Open(document);
+            }
+            else
+            {
+                _notice = result?.Error;
+                var fresh = DraftDocument.CreateNew(await Catalog.SuggestNameAsync());
+                Session.Open(fresh);
+                await Catalog.SaveAsync(fresh);
+                await Catalog.RememberLastAsync(fresh.Id);
+            }
+        }
+        catch (BrowserStorageException exception)
+        {
+            _notice = "Не удалось открыть сохранённый макет: " + exception.Message;
+        }
+
+        _ready = true;
+        StateHasChanged();
+    }
+
+    private void OnSaveChanged() => InvokeAsync(StateHasChanged);
 
     /// <summary>A block asked for from the palette lands in a cascade, not on top of the last one.</summary>
     private void AddBlock(WireframeKind kind) => _canvas?.AddCascade(kind);

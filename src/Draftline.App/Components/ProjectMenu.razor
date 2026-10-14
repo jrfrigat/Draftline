@@ -1,15 +1,12 @@
 @implements IDisposable
 @inject ProjectCatalog Catalog
 @inject DocumentSession Session
-@inject AutosaveService Autosave
-@inject FallbackBrowserStorage Storage
 @inject IDialogService Dialog
 
 @* The project's own strip: the name of what is open, the list of what this browser holds, and the one
    word the storage has to say about the last change.
    
-   It also decides what the editor opens on: the wireframe that was open last, or the first one. A tool
-   that opens on an empty shell and waits to be told what to do is a tool nobody starts. *@
+   The page owns startup; changing ribbon tabs must never reopen the document or clear its history. *@
 <div class="df-projects">
     <FlareTextField Class="df-projects__name"
                     Size="FieldSize.Xs"
@@ -61,14 +58,6 @@
         </ChildContent>
     </FlarePopover>
 
-    <span class="df-projects__save df-projects__save--@SaveStateClass">@Autosave.Message</span>
-
-    @if (Storage.IsVolatile)
-    {
-        <span class="df-projects__warning">
-            Браузер не даёт сохранять: работа не переживёт перезагрузку
-        </span>
-    }
 </div>
 
 @code {
@@ -82,35 +71,41 @@
     protected override void OnInitialized()
     {
         Session.Changed += OnStateChanged;
-        Autosave.Changed += OnStateChanged;
+
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
         Session.Changed -= OnStateChanged;
-        Autosave.Changed -= OnStateChanged;
+
     }
 
     /// <inheritdoc />
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    [Parameter] public bool Ready { get; set; }
+
+    private string? _shownName;
+
+    protected override async Task OnParametersSetAsync()
     {
-        // The first render is the earliest moment the browser can be asked anything, and the editor has
-        // to open on a wireframe rather than on an empty shell.
-        if (_started)
-        {
-            return;
-        }
-
+        SyncName();
+        if (!Ready || _started) return;
         _started = true;
-
-        await Storage.ProbeAsync();
-        await StartAsync();
+        _projects = await Catalog.ListAsync();
     }
 
-    private string SaveStateClass => Autosave.State.ToString().ToLowerInvariant();
+    private void SyncName()
+    {
+        if (_shownName == Session.Document.Name) return;
+        _shownName = Session.Document.Name;
+        _nameDraft = _shownName;
+    }
 
-    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    private void OnStateChanged()
+    {
+        SyncName();
+        InvokeAsync(StateHasChanged);
+    }
 
     private void OnNameTyped(string value) => _nameDraft = value;
 
@@ -127,29 +122,6 @@
         }
 
         StateHasChanged();
-    }
-
-    /// <summary>Opens what the browser held last, or makes the first wireframe.</summary>
-    private async Task StartAsync()
-    {
-        var lastId = await Catalog.LastOpenIdAsync();
-
-        if (!string.IsNullOrWhiteSpace(lastId))
-        {
-            var result = await Catalog.LoadAsync(lastId);
-
-            if (result.Document is not null)
-            {
-                Show(result.Document);
-                return;
-            }
-
-            // What was stored is damaged or was never a wireframe: say so, and give the person a clean
-            // sheet instead of an editor that opens on nothing.
-            _notice = result.Error;
-        }
-
-        await NewProjectAsync();
     }
 
     private async Task NewProjectAsync()
