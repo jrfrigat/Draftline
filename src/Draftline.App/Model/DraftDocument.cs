@@ -21,7 +21,7 @@ public sealed class DraftDocument
     /// 4 - a wireframe carries screens, and a block may point at another one.
     /// </summary>
     /// 5 - authored component states. 6 - tab panel content and block membership.
-    public const int CurrentSchemaVersion = 6;
+    public const int CurrentSchemaVersion = 7;
 
     /// <summary>A sheet in pixels, as a new screen starts.</summary>
     public const double DefaultCanvasWidth = 960;

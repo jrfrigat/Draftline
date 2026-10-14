@@ -6,28 +6,41 @@ public static class TabPanels
     /// <summary>Height of the header strip on a tab group.</summary>
     public const double HeaderHeight = 32;
 
+    /// <summary>Whether this kind owns independently visible panels.</summary>
+    public static bool IsContainer(WireframeKind kind) => kind is WireframeKind.Tabs or WireframeKind.Accordion;
+
+    /// <summary>Effective panel index, including a closed accordion's editable first section.</summary>
+    public static int Index(WireframeElement element) => Math.Max(0, ElementState.Index(element));
+
+    /// <summary>Absolute panel rectangle, shared by palette placement and export.</summary>
+    public static Rect PanelBounds(WireframeElement element) => element.Kind == WireframeKind.Accordion
+        ? new(element.X, element.Y + (Index(element) + 1) * 28, element.Width,
+            Math.Max(0, element.Height - ElementState.Items(element).Count * 28))
+        : new(element.X, element.Y + HeaderHeight, element.Width, Math.Max(0, element.Height - HeaderHeight));
+
     /// <summary>The text of the active panel, empty when no text was authored.</summary>
     public static string Content(WireframeElement tabs) =>
-        tabs.TabContents.ElementAtOrDefault(ElementState.Index(tabs)) ?? string.Empty;
+        tabs.TabContents.ElementAtOrDefault(Index(tabs)) ?? string.Empty;
 
     /// <summary>Stores content without discarding panels temporarily removed from the tab list.</summary>
     public static void SetContent(WireframeElement tabs, string text)
     {
-        var index = ElementState.Index(tabs);
+        var index = Index(tabs);
         while (tabs.TabContents.Count <= index) tabs.TabContents.Add(string.Empty);
         tabs.TabContents[index] = text;
     }
 
     /// <summary>A valid parent group on the same sheet; nested tab groups are deliberately excluded.</summary>
     public static WireframeElement? Parent(DraftLayer layer, WireframeElement element) =>
-        element.Kind != WireframeKind.Tabs && layer.Find(element.ParentTabsId) is { Kind: WireframeKind.Tabs } parent
+        !IsContainer(element.Kind) && layer.Find(element.ParentTabsId) is { } parent && IsContainer(parent.Kind)
             ? parent : null;
 
     /// <summary>Whether the element belongs to the selected panel. Preview supplies its own state copies.</summary>
     public static bool IsVisible(DraftLayer layer, WireframeElement element,
         Func<WireframeElement, WireframeElement>? state = null) =>
         Parent(layer, element) is not { } parent ||
-        element.ParentTabIndex == ElementState.Index(state?.Invoke(parent) ?? parent);
+        (element.ParentTabIndex == Index(state?.Invoke(parent) ?? parent) &&
+         (parent.Kind != WireframeKind.Accordion || ElementState.IsExpanded(state?.Invoke(parent) ?? parent)));
 
     /// <summary>Visible elements, keeping each panel behind its children regardless of local order.</summary>
     public static IEnumerable<WireframeElement> Visible(DraftLayer layer,
@@ -61,6 +74,8 @@ public static class TabPanels
         foreach (var element in layer.Elements)
         {
             element.TabContents ??= new();
+            if (element.Kind == WireframeKind.Accordion && element.TabContents.Count == 0 && !string.IsNullOrEmpty(element.SecondaryText))
+                element.TabContents = Enumerable.Repeat(element.SecondaryText, ElementState.Items(element).Count).ToList();
             for (var i = 0; i < element.TabContents.Count; i++) element.TabContents[i] ??= string.Empty;
             element.ParentTabsId ??= string.Empty;
             if (Parent(layer, element) is { } parent)

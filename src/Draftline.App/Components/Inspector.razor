@@ -99,13 +99,6 @@ else
                             ValueChanged="@((string? value) => SetSecondaryText(element, value))" />
         }
 
-        @if (element.Kind == WireframeKind.Accordion)
-        {
-            <FlareTextArea Label="Содержимое раскрытого раздела" Size="FieldSize.Xs"
-                           Value="@element.SecondaryText"
-                           ValueChanged="@((string? value) => SetSecondaryText(element, value))" />
-        }
-
         @if (ElementDefaults.HasCheck(element.Kind))
         {
             <FlareCheckbox Value="@element.Checked" ValueChanged="@((bool value) => SetChecked(element, value))">

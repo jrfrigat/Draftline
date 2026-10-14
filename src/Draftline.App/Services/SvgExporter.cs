@@ -62,7 +62,7 @@ public static class SvgExporter
 
         Start(svg, width, height);
         WriteElement(svg, element, offsetX: -element.X, offsetY: -element.Y);
-        if (layer is not null && element.Kind == WireframeKind.Tabs)
+        if (layer is not null && TabPanels.IsContainer(element.Kind))
         {
             foreach (var child in TabPanels.Visible(layer).Where(child => child.ParentTabsId == element.Id))
                 WriteElement(svg, child, offsetX: -element.X, offsetY: -element.Y);
@@ -329,7 +329,7 @@ public static class SvgExporter
             case WireframeKind.Accordion:
             {
                 var sections = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
-                var sectionHeight = element.Height / Math.Max(1, sections.Count + (ElementState.IsExpanded(element) ? 1 : 0));
+                var sectionHeight = 28d;
                 var sectionTop = y;
 
                 for (var sectionIndex = 0; sectionIndex < sections.Count; sectionIndex++)
@@ -348,10 +348,10 @@ public static class SvgExporter
                     sectionTop += sectionHeight;
                     if (openSection)
                     {
-                        Text(svg, x + 8, sectionTop + (sectionHeight / 2) + 4,
-                            string.IsNullOrWhiteSpace(element.SecondaryText) ? "Содержимое раздела" : element.SecondaryText,
-                            size, "400", 1);
-                        sectionTop += sectionHeight;
+                        var bodyHeight = TabPanels.PanelBounds(element).Height;
+                        WriteLines(svg, TabPanels.Content(element), x + 8, sectionTop + size + 8,
+                            size, sectionTop + bodyHeight - 4);
+                        sectionTop += bodyHeight;
                     }
                 }
 

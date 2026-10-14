@@ -7,9 +7,15 @@ public sealed partial class DocumentSession
     /// <summary>Switches the authored panel, keeping hidden blocks out of the selection.</summary>
     public void SelectTab(string id, int index)
     {
-        if (CurrentLayer.Find(id) is not { Kind: WireframeKind.Tabs } tabs) return;
+        if (CurrentLayer.Find(id) is not { } tabs || !TabPanels.IsContainer(tabs.Kind)) return;
         index = Math.Clamp(index, 0, ElementState.Items(tabs).Count - 1);
-        if (index != ElementState.Index(tabs))
+        if (tabs.Kind == WireframeKind.Accordion)
+            Edit("Раздел аккордеона изменён", _ =>
+            {
+                tabs.Expanded = index != TabPanels.Index(tabs) || !ElementState.IsExpanded(tabs);
+                tabs.SelectedIndex = index;
+            });
+        else if (index != ElementState.Index(tabs))
             Edit("Активная вкладка изменена", _ => tabs.SelectedIndex = index);
         Select(id);
     }
@@ -17,9 +23,9 @@ public sealed partial class DocumentSession
     /// <summary>Attaches a block to a panel or returns it to the sheet.</summary>
     public void AssignToTab(string id, string? parentId, int index)
     {
-        if (CurrentLayer.Find(id) is not { } element || element.Kind == WireframeKind.Tabs) return;
+        if (CurrentLayer.Find(id) is not { } element || TabPanels.IsContainer(element.Kind)) return;
         var parent = CurrentLayer.Find(parentId);
-        if (parent?.Kind != WireframeKind.Tabs) parent = null;
+        if (parent is not null && !TabPanels.IsContainer(parent.Kind)) parent = null;
         index = parent is null ? 0 : Math.Clamp(index, 0, ElementState.Items(parent).Count - 1);
         var nextId = parent?.Id ?? string.Empty;
         if (element.ParentTabsId == nextId && element.ParentTabIndex == index) return;
@@ -27,7 +33,7 @@ public sealed partial class DocumentSession
         {
             element.ParentTabsId = nextId;
             element.ParentTabIndex = index;
-            if (parent is not null) parent.SelectedIndex = index;
+            if (parent is not null) { parent.SelectedIndex = index; if (parent.Kind == WireframeKind.Accordion) parent.Expanded = true; }
         });
     }
 

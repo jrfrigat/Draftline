@@ -347,15 +347,15 @@ public sealed partial class DocumentSession
     /// <summary>Adds a block at a point, snaps it to the grid, selects it and returns it.</summary>
     public WireframeElement Add(WireframeKind kind, double x, double y, string? parentTabsId = null)
     {
-        var parent = kind == WireframeKind.Tabs ? null :
-            CurrentLayer.Find(parentTabsId) is { Kind: WireframeKind.Tabs } selectedParent ? selectedParent : TabPanels.Visible(CurrentLayer)
-            .LastOrDefault(candidate => candidate.Kind == WireframeKind.Tabs &&
-                candidate.Contains(x, y) && y >= candidate.Y + TabPanels.HeaderHeight);
+        var parent = TabPanels.IsContainer(kind) ? null :
+            CurrentLayer.Find(parentTabsId) is { } selectedParent && TabPanels.IsContainer(selectedParent.Kind) ? selectedParent : TabPanels.Visible(CurrentLayer)
+            .LastOrDefault(candidate => TabPanels.IsContainer(candidate.Kind) && TabPanels.PanelBounds(candidate).Contains(x, y) &&
+                (candidate.Kind != WireframeKind.Accordion || ElementState.IsExpanded(candidate)));
         var element = ElementDefaults.Create(kind);
         if (parent is not null)
         {
             element.ParentTabsId = parent.Id;
-            element.ParentTabIndex = ElementState.Index(parent);
+            element.ParentTabIndex = TabPanels.Index(parent);
         }
         var bounds = CanvasGeometry.Clamp(
             new Rect(
@@ -374,6 +374,11 @@ public sealed partial class DocumentSession
         Edit("Добавлен блок: " + ElementDefaults.NameOf(kind), document =>
         {
             var layer = LayerIn(document);
+            if (parent?.Kind == WireframeKind.Accordion)
+            {
+                parent.Expanded = true;
+                parent.SelectedIndex = TabPanels.Index(parent);
+            }
             element.ZIndex = layer.NextZIndex();
             layer.Elements.Add(element);
         });

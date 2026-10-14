@@ -187,7 +187,7 @@
                 @Choice(index, "df-accordion__section", (opened ? "− " : "+ ") + ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label)
                 @if (opened)
                 {
-                    <span class="df-accordion__body">@(string.IsNullOrWhiteSpace(Element.SecondaryText) ? "Содержимое раздела" : Element.SecondaryText)</span>
+                    <span class="df-accordion__body" style="@($"height:{TabPanels.PanelBounds(Element).Height.ToString(System.Globalization.CultureInfo.InvariantCulture)}px")">@TabPanels.Content(Element)</span>
                 }
             }
             break;
@@ -296,12 +296,12 @@
     [Parameter] public EventCallback StateChanged { get; set; }
 
     private RenderFragment Choice(int index, string css, string label) => @<text>
-        @if (Interactive)
+        @if (Interactive || (Authoring && Element.Kind == WireframeKind.Accordion))
         {
-            <button type="button" class="@css @SelectedClass(index) df-state-button" disabled="@Element.Disabled"
+            <button type="button" class="@css @SelectedClass(index) df-state-button" disabled="@(Interactive && Element.Disabled)"
                     aria-pressed="@(ElementState.Index(Element) == index ? "true" : "false")"
                     aria-expanded="@DisclosureState(index)"
-                    @onclick="() => Choose(index)">@label</button>
+                    @onclick="() => (Authoring && Element.Kind == WireframeKind.Accordion ? TabSelected.InvokeAsync(index) : Choose(index))">@label</button>
         }
         else
         {

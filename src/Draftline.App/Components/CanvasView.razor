@@ -93,19 +93,19 @@
     public void AddCascade(WireframeKind kind)
     {
         var selected = Session.Selected;
-        var parent = selected?.Kind == WireframeKind.Tabs ? selected :
+        var parent = selected is not null && TabPanels.IsContainer(selected.Kind) ? selected :
             selected is null ? null : TabPanels.Parent(Session.CurrentLayer, selected);
-        if (kind != WireframeKind.Tabs && parent is not null)
+        if (!TabPanels.IsContainer(kind) && parent is not null)
         {
+            var panel = TabPanels.PanelBounds(parent);
             var textHeight = string.IsNullOrWhiteSpace(TabPanels.Content(parent)) ? 0 :
                 TabPanels.Content(parent).Split('\n').Length * 18 + 8;
             var siblings = Session.CurrentLayer.Elements.Where(element => element.ParentTabsId == parent.Id &&
-                element.ParentTabIndex == ElementState.Index(parent)).ToList();
-            var nextY = siblings.Count == 0 ? parent.Y + TabPanels.HeaderHeight + 12 + textHeight :
+                element.ParentTabIndex == TabPanels.Index(parent)).ToList();
+            var nextY = siblings.Count == 0 ? panel.Y + 12 + textHeight :
                 siblings.Max(element => element.Bounds.Bottom) + 8;
             var (_, blockHeight) = ElementDefaults.SizeOf(kind);
-            nextY = Math.Min(nextY, Math.Max(parent.Y + TabPanels.HeaderHeight + 12,
-                parent.Bounds.Bottom - blockHeight - 12));
+            nextY = Math.Min(nextY, Math.Max(panel.Y + 12, panel.Bottom - blockHeight - 12));
             Session.Add(kind, parent.X + 12, nextY, parent.Id);
             return;
         }
