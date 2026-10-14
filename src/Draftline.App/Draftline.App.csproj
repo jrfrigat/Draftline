@@ -10,6 +10,10 @@
          browser and the app shell is cached by wwwroot/service-worker.published.js. -->
     <InvariantGlobalization>true</InvariantGlobalization>
     <BlazorWebAssemblyLoadAllGlobalizationData>false</BlazorWebAssemblyLoadAllGlobalizationData>
+    <!-- The published worker is only substituted for the development one when the SDK has an assets
+         manifest to rewrite - the manifest is also the file the worker reads to know what the build
+         actually contains, so a first visit can fill the offline cache in one go. -->
+    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
   </PropertyGroup>
 
   <ItemGroup>
