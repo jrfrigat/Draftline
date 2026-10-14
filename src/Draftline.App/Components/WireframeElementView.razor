@@ -50,28 +50,63 @@
             break;
 
         case WireframeKind.Checkbox:
+            @if (Interactive)
+            {
+                <button type="button" class="df-check-control df-state-button" role="checkbox"
+                        aria-checked="@(Element.Checked ? "true" : "false")" disabled="@Element.Disabled" @onclick="ToggleChecked">
+                    <span class="df-check@(Element.Checked ? " df-check--on" : string.Empty)" aria-hidden="true"></span>
+                    @Element.DisplayText
+                </button>
+            }
+            else
+            {
             <span class="df-check@(Element.Checked ? " df-check--on" : string.Empty)"></span>
             <span class="df-check__label">@Element.DisplayText</span>
+            }
             break;
 
         case WireframeKind.Radio:
+            @if (Interactive)
+            {
+                <button type="button" class="df-check-control df-state-button" role="radio"
+                        aria-checked="@(Element.Checked ? "true" : "false")" disabled="@Element.Disabled" @onclick="ToggleChecked">
+                    <span class="df-radio@(Element.Checked ? " df-radio--on" : string.Empty)" aria-hidden="true"></span>
+                    @Element.DisplayText
+                </button>
+            }
+            else
+            {
             <span class="df-radio@(Element.Checked ? " df-radio--on" : string.Empty)"></span>
             <span class="df-check__label">@Element.DisplayText</span>
+            }
             break;
 
         case WireframeKind.Select:
+            @if (Interactive)
+            {
+                <button type="button" class="df-select__head df-state-button" disabled="@Element.Disabled"
+                        aria-label="@Element.DisplayText" aria-expanded="@(ElementState.IsExpanded(Element) ? "true" : "false")"
+                        aria-controls="@("df-options-" + Element.Id)" @onclick="ToggleExpanded">
+                    <span class="df-field__label">@Element.DisplayText</span>
+                    <span class="@ValueClass">@ElementState.DisplayChoice(Element)</span>
+                    <span class="df-select__arrow" aria-hidden="true">@(ElementState.IsExpanded(Element) ? "▴" : "▾")</span>
+                </button>
+            }
+            else
+            {
             <span class="df-select__head">
             <span class="df-field__label">@Element.DisplayText</span>
             <span class="@ValueClass">@ElementState.DisplayChoice(Element)</span>
             <span class="df-select__arrow">@(ElementState.IsExpanded(Element) ? "▴" : "▾")</span>
             </span>
+            }
             @if (ElementState.IsExpanded(Element))
             {
-                <span class="df-select__options">
+                <span class="df-select__options" id="@("df-options-" + Element.Id)">
                     @for (var index = 0; index < ElementState.Items(Element).Count; index++)
                     {
                         var row = ElementDefaults.SplitOption(ElementState.Items(Element)[index]);
-                        <span class="df-select__option @SelectedClass(index)">@row.Label @row.Value</span>
+                        @Choice(index, "df-select__option", row.Label + (string.IsNullOrEmpty(row.Value) ? "" : " · " + row.Value))
                     }
                 </span>
             }
@@ -81,13 +116,7 @@
             @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
                 var (label, value) = ElementDefaults.SplitOption(ElementState.Items(Element)[index]);
-                <span class="df-list__row @SelectedClass(index)">
-                    <span class="df-list__label">@label</span>
-                    @if (!string.IsNullOrEmpty(value))
-                    {
-                        <span class="df-list__value">@value</span>
-                    }
-                </span>
+                @Choice(index, "df-list__row", label + (string.IsNullOrEmpty(value) ? "" : " · " + value))
             }
             break;
 
@@ -125,14 +154,14 @@
         case WireframeKind.Tabs:
             @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
-                <span class="df-tabs__tab @SelectedClass(index)">@ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label</span>
+                @Choice(index, "df-tabs__tab", ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label)
             }
             break;
 
         case WireframeKind.MenuBar:
             @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
-                <span class="df-menu__item @SelectedClass(index)">@ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label</span>
+                @Choice(index, "df-menu__item", ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label)
             }
             break;
 
@@ -140,10 +169,7 @@
             @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
                 var opened = ElementState.IsExpanded(Element) && index == Math.Max(0, ElementState.Index(Element));
-                <span class="df-accordion__section">
-                    <span class="df-accordion__title">@ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label</span>
-                    <span class="df-accordion__mark">@(opened ? "−" : "+")</span>
-                </span>
+                @Choice(index, "df-accordion__section", (opened ? "− " : "+ ") + ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label)
                 @if (opened)
                 {
                     <span class="df-accordion__body">@(string.IsNullOrWhiteSpace(Element.SecondaryText) ? "Содержимое раздела" : Element.SecondaryText)</span>
@@ -155,7 +181,7 @@
             @for (var index = 0; index < ElementState.Items(Element).Count; index++)
             {
                 if (index > 0 && !ElementState.IsExpanded(Element)) break;
-                <span class="df-tree__item @SelectedClass(index)">@(index == 0 ? (ElementState.IsExpanded(Element) ? "▾ " : "▸ ") : "")@ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label</span>
+                @Choice(index, "df-tree__item", (index == 0 ? (ElementState.IsExpanded(Element) ? "▾ " : "▸ ") : "") + ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label)
             }
             break;
 
@@ -216,6 +242,59 @@
     /// <summary>The block this view draws.</summary>
     [Parameter, EditorRequired]
     public WireframeElement Element { get; set; } = null!;
+
+    /// <summary>Enables interaction with a preview-owned copy; the authoring canvas remains a drawing.</summary>
+    [Parameter] public bool Interactive { get; set; }
+
+    /// <summary>Notifies the preview after a temporary state change.</summary>
+    [Parameter] public EventCallback StateChanged { get; set; }
+
+    private RenderFragment Choice(int index, string css, string label) => @<text>
+        @if (Interactive)
+        {
+            <button type="button" class="@css @SelectedClass(index) df-state-button" disabled="@Element.Disabled"
+                    aria-pressed="@(ElementState.Index(Element) == index ? "true" : "false")"
+                    aria-expanded="@DisclosureState(index)"
+                    @onclick="() => Choose(index)">@label</button>
+        }
+        else
+        {
+            <span class="@css @SelectedClass(index)">@label</span>
+        }
+    </text>;
+
+    private string? DisclosureState(int index) => Element.Kind switch
+    {
+        WireframeKind.Accordion => ElementState.IsExpanded(Element) && index == Math.Max(0, ElementState.Index(Element)) ? "true" : "false",
+        WireframeKind.Tree when index == 0 => ElementState.IsExpanded(Element) ? "true" : "false",
+        _ => null
+    };
+
+    private async Task Choose(int index)
+    {
+        if (!Interactive || Element.Disabled) return;
+        if (Element.Kind == WireframeKind.Accordion)
+            Element.Expanded = Element.SelectedIndex != index || !ElementState.IsExpanded(Element);
+        if (Element.Kind == WireframeKind.Tree && index == 0)
+            Element.Expanded = !ElementState.IsExpanded(Element);
+        Element.SelectedIndex = index;
+        if (Element.Kind == WireframeKind.Select) Element.Expanded = false;
+        await StateChanged.InvokeAsync();
+    }
+
+    private async Task ToggleExpanded()
+    {
+        if (!Interactive || Element.Disabled) return;
+        Element.Expanded = !ElementState.IsExpanded(Element);
+        await StateChanged.InvokeAsync();
+    }
+
+    private async Task ToggleChecked()
+    {
+        if (!Interactive || Element.Disabled) return;
+        Element.Checked = Element.Kind == WireframeKind.Radio || !Element.Checked;
+        await StateChanged.InvokeAsync();
+    }
 
     /// <summary>The classes that say which block this is and how its text is set.</summary>
     private string CssClass

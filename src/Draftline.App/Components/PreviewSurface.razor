@@ -31,7 +31,7 @@
                      style="width:@Number(host.CanvasWidth)px;height:@Number(host.CanvasHeight)px;">
                     @foreach (var behind in host.InDrawOrder())
                     {
-                        <WireframeElementView Element="behind" />
+                        <WireframeElementView Element="@PreviewElement(host, behind)" />
                     }
                 </div>
             }
@@ -40,14 +40,16 @@
                 @foreach (var element in shown.InDrawOrder())
                 {
                     var item = element;
-                    <WireframeElementView Element="item" />
+                    <WireframeElementView Element="@PreviewElement(shown, item)" Interactive="@(!item.HasTransition)"
+                                          StateChanged="StateHasChanged" />
 
-                    @if (item.HasTransition)
+                    @if (item.HasTransition && !item.Disabled)
                     {
                         <button type="button"
                                 class="df-preview__hotspot"
                                 style="@HotspotStyle(item)"
                                 title="@LeadsTo(item)"
+                                aria-label="@LeadsTo(item)"
                                 @onclick="() => Session.FollowTransition(item)"></button>
                     }
                 }
@@ -57,6 +59,17 @@
 </div>
 
 @code {
+    // These copies live only while the preview is mounted. No Session.Edit or autosave sees them.
+    private readonly Dictionary<string, WireframeElement> _states = new();
+
+    private WireframeElement PreviewElement(DraftLayer layer, WireframeElement authored)
+    {
+        var key = layer.Id + "/" + authored.Id;
+        if (!_states.TryGetValue(key, out var state))
+            _states[key] = state = authored.Clone();
+        return state;
+    }
+
     private string SheetClass =>
         Session.IsDialogOpen ? "df-preview__sheet df-preview__sheet--dialog" : "df-preview__sheet";
 
