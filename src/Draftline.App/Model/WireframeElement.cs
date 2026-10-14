@@ -73,6 +73,15 @@ public sealed class WireframeElement
     /// <summary>Selected row, tab or section; -1 means no explicit selection.</summary>
     public int SelectedIndex { get; set; } = -1;
 
+    /// <summary>Text in each tab panel, indexed like Options; removed panels retain their text.</summary>
+    public List<string> TabContents { get; set; } = new();
+
+    /// <summary>Identity of the tab group this block belongs to, or empty for a sheet-level block.</summary>
+    public string ParentTabsId { get; set; } = string.Empty;
+
+    /// <summary>The panel within ParentTabsId. Coordinates remain relative to the sheet.</summary>
+    public int ParentTabIndex { get; set; }
+
     /// <summary>Authored disclosure state; null uses the kind's default (trees open, other kinds closed).</summary>
     public bool? Expanded { get; set; }
 
@@ -133,6 +142,9 @@ public sealed class WireframeElement
         TargetLayerId = TargetLayerId,
         Checked = Checked,
         SelectedIndex = SelectedIndex,
+        TabContents = new List<string>(TabContents),
+        ParentTabsId = ParentTabsId,
+        ParentTabIndex = ParentTabIndex,
         Expanded = Expanded,
         Disabled = Disabled,
         FontScale = FontScale,

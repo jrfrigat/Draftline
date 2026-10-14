@@ -9,9 +9,10 @@
    why this component is the only place that knows the canvas has gestures at all. *@
 <div class="df-canvas-host">
     <div class="df-sheet" @ref="_sheet" tabindex="0" style="@SheetStyle">
-        @foreach (var element in Session.CurrentLayer.InDrawOrder())
+        @{ var drawOrder = 0; }
+        @foreach (var element in TabPanels.Visible(Session.CurrentLayer))
         {
-            <WireframeElementView Element="element" />
+            <WireframeElementView Element="element" DrawingOrder="@(drawOrder++)" Authoring="true" TabSelected="@(index => Session.SelectTab(element.Id, index))" />
         }
 
         @if (Session.Selected is { } selected)
@@ -91,6 +92,23 @@
     /// </summary>
     public void AddCascade(WireframeKind kind)
     {
+        var selected = Session.Selected;
+        var parent = selected?.Kind == WireframeKind.Tabs ? selected :
+            selected is null ? null : TabPanels.Parent(Session.CurrentLayer, selected);
+        if (kind != WireframeKind.Tabs && parent is not null)
+        {
+            var textHeight = string.IsNullOrWhiteSpace(TabPanels.Content(parent)) ? 0 :
+                TabPanels.Content(parent).Split('\n').Length * 18 + 8;
+            var siblings = Session.CurrentLayer.Elements.Where(element => element.ParentTabsId == parent.Id &&
+                element.ParentTabIndex == ElementState.Index(parent)).ToList();
+            var nextY = siblings.Count == 0 ? parent.Y + TabPanels.HeaderHeight + 12 + textHeight :
+                siblings.Max(element => element.Bounds.Bottom) + 8;
+            var (_, blockHeight) = ElementDefaults.SizeOf(kind);
+            nextY = Math.Min(nextY, Math.Max(parent.Y + TabPanels.HeaderHeight + 12,
+                parent.Bounds.Bottom - blockHeight - 12));
+            Session.Add(kind, parent.X + 12, nextY, parent.Id);
+            return;
+        }
         var (width, height) = ElementDefaults.SizeOf(kind);
         var step = Session.Document.GridSize > 1 ? Session.Document.GridSize * 3 : 24;
         var offset = _cascade * step;
@@ -206,10 +224,8 @@
         _startX = x;
         _startY = y;
         _cursor = "grabbing";
-        _dragOrigins = Session.Selection
-            .Select(id => Session.CurrentLayer.Find(id))
-            .Where(element => element is not null)
-            .ToDictionary(element => element!.Id, element => element!.Bounds);
+        _dragOrigins = TabPanels.WithChildren(Session.CurrentLayer, Session.Selection)
+            .ToDictionary(element => element.Id, element => element.Bounds);
 
         Session.BeginGesture(Session.Selection.Count > 1 ? "Блоки перемещены" : "Блок перемещён");
         StateHasChanged();
@@ -230,6 +246,8 @@
         switch (_gesture)
         {
             case CanvasGesture.Move:
+                (deltaX, deltaY) = TabPanels.ClampTranslation(_dragOrigins.Values, deltaX, deltaY,
+                    Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
                 Session.Preview(document =>
                 {
                     foreach (var (id, origin) in _dragOrigins)
@@ -281,7 +299,7 @@
             case CanvasGesture.Marquee:
                 if (_marquee is { } frame)
                 {
-                    var caught = Session.CurrentLayer.Elements
+                    var caught = TabPanels.Visible(Session.CurrentLayer)
                         .Where(element => CanvasInteraction.Intersects(frame, element.Bounds))
                         .OrderBy(element => element.ZIndex)
                         .Select(element => element.Id)
@@ -380,7 +398,7 @@
 
     private bool Nudge(double deltaX, double deltaY)
     {
-        var ids = Session.Selection.ToList();
+        var ids = TabPanels.WithChildren(Session.CurrentLayer, Session.Selection).Select(e => e.Id).ToList();
         if (ids.Count == 0)
         {
             return false;
@@ -388,6 +406,8 @@
 
         Session.Edit(ids.Count > 1 ? "Блоки сдвинуты" : "Блок сдвинут", document =>
         {
+            (deltaX, deltaY) = TabPanels.ClampTranslation(ids.Select(id => Session.CurrentLayer.Find(id)!.Bounds),
+                deltaX, deltaY, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
             foreach (var id in ids)
             {
                 if (Session.CurrentLayer.Find(id) is not { } element)

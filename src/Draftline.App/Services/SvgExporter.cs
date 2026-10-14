@@ -31,7 +31,7 @@ public static class SvgExporter
         var svg = new StringBuilder();
 
         Start(svg, width, height);
-        foreach (var element in layer.InDrawOrder().OrderBy(element =>
+        foreach (var element in TabPanels.Visible(layer).OrderBy(element =>
                      element.Kind == WireframeKind.Select && ElementState.IsExpanded(element) ? 1 : 0))
         {
             WriteElement(svg, element);
@@ -52,7 +52,7 @@ public static class SvgExporter
     }
 
     /// <summary>One block on a sheet of its own - what a person wants when they export a single control.</summary>
-    public static string ExportElement(WireframeElement element)
+    public static string ExportElement(WireframeElement element, DraftLayer? layer = null)
     {
         ArgumentNullException.ThrowIfNull(element);
 
@@ -62,6 +62,11 @@ public static class SvgExporter
 
         Start(svg, width, height);
         WriteElement(svg, element, offsetX: -element.X, offsetY: -element.Y);
+        if (layer is not null && element.Kind == WireframeKind.Tabs)
+        {
+            foreach (var child in TabPanels.Visible(layer).Where(child => child.ParentTabsId == element.Id))
+                WriteElement(svg, child, offsetX: -element.X, offsetY: -element.Y);
+        }
         End(svg);
 
         return svg.ToString();
@@ -282,20 +287,24 @@ public static class SvgExporter
             {
                 var tabs = element.Options.Count > 0 ? element.Options : ElementDefaults.DefaultOptions;
                 var tabWidth = element.Width / Math.Max(1, tabs.Count);
+                var tabHeight = Math.Min(TabPanels.HeaderHeight, element.Height);
+                Box(svg, x, y, element.Width, element.Height, Paper);
 
                 for (var tabIndex = 0; tabIndex < tabs.Count; tabIndex++)
                 {
                     var tabLeft = x + (tabWidth * tabIndex);
                     var (label, _) = ElementDefaults.SplitOption(tabs[tabIndex]);
 
-                    Text(svg, tabLeft + (tabWidth / 2), centerY + (size / 3), label, size,
+                    Text(svg, tabLeft + (tabWidth / 2), y + tabHeight / 2 + (size / 3), label, size,
                         tabIndex == ElementState.Index(element) ? "700" : "400", tabIndex == ElementState.Index(element) ? 1 : 0.7, "middle");
                     if (tabIndex == ElementState.Index(element))
-                        Line(svg, tabLeft, bottom - 2, tabLeft + tabWidth, bottom - 2, 2);
-                    Line(svg, tabLeft, y, tabLeft, bottom, 1);
+                        Line(svg, tabLeft, y + tabHeight - 2, tabLeft + tabWidth, y + tabHeight - 2, 2);
+                    Line(svg, tabLeft, y, tabLeft, y + tabHeight, 1);
                 }
 
-                Line(svg, x, bottom, right, bottom, 1);
+                Line(svg, x, y + tabHeight, right, y + tabHeight, 1);
+                WriteLines(svg, TabPanels.Content(element), x + 8, y + tabHeight + size + 8, size,
+                    bottom - 8);
                 break;
             }
 

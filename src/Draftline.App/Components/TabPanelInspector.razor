@@ -1,0 +1,56 @@
+@inject DocumentSession Session
+
+@if (Element.Kind == WireframeKind.Tabs)
+{
+    <FlareTextField Label="Название группы вкладок" Size="FieldSize.Xs" Value="@Element.Text"
+                    ValueChanged="Rename" />
+    <FlareTextArea @key="@(Element.Id + "/" + ElementState.Index(Element))"
+                   Label="@($"Содержимое вкладки «{ElementDefaults.SplitOption(ElementState.Items(Element)[ElementState.Index(Element)]).Label}»")"
+                   Size="FieldSize.Xs" Value="@TabPanels.Content(Element)" ValueChanged="SetContent" />
+    <p class="df-hint">Выберите заголовок на холсте. Блок из палитры добавится в открытую вкладку.
+        У существующего блока можно выбрать группу и вкладку в свойствах.</p>
+}
+else if (Session.CurrentLayer.Elements.Any(e => e.Kind == WireframeKind.Tabs))
+{
+    <FlareSelect Label="Группа вкладок" Size="FieldSize.Xs" Value="@Element.ParentTabsId" ValueChanged="@((string? value) => SetParent(value))">
+        <option value="">На холсте</option>
+        @foreach (var tabs in Session.CurrentLayer.Elements.Where(e => e.Kind == WireframeKind.Tabs))
+        {
+            <option value="@tabs.Id">@(string.IsNullOrWhiteSpace(tabs.Text) ? "Вкладки " + (Session.CurrentLayer.Elements.Where(e => e.Kind == WireframeKind.Tabs).ToList().IndexOf(tabs) + 1) : tabs.Text)</option>
+        }
+    </FlareSelect>
+    @if (TabPanels.Parent(Session.CurrentLayer, Element) is { } parent)
+    {
+        <FlareSelect Label="Вкладка блока" Size="FieldSize.Xs" Value="@Element.ParentTabIndex.ToString()" ValueChanged="@((string? value) => SetIndex(value))">
+            @for (var i = 0; i < ElementState.Items(parent).Count; i++)
+            {
+                <option value="@i">@(i + 1). @ElementDefaults.SplitOption(ElementState.Items(parent)[i]).Label</option>
+            }
+        </FlareSelect>
+    }
+}
+
+@code {
+    /// <summary>The block whose panel content or membership is being edited.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+
+    private void Rename(string? value)
+    {
+        if (Element.Text == (value ?? string.Empty)) return;
+        Session.Edit("Группа вкладок переименована", _ => Element.Text = value ?? string.Empty);
+    }
+
+    private void SetContent(string? value)
+    {
+        if (TabPanels.Content(Element) == (value ?? string.Empty)) return;
+        Session.Edit("Содержимое вкладки изменено", _ => TabPanels.SetContent(Element, value ?? string.Empty));
+    }
+
+    private void SetParent(string? id) => Session.AssignToTab(Element.Id, id,
+        Session.CurrentLayer.Find(id) is { } parent ? ElementState.Index(parent) : 0);
+
+    private void SetIndex(string? value)
+    {
+        if (int.TryParse(value, out var index)) Session.AssignToTab(Element.Id, Element.ParentTabsId, index);
+    }
+}

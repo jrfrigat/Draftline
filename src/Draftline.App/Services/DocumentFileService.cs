@@ -47,7 +47,7 @@ public sealed class DocumentFileService : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(layer);
 
-        var drawing = element is null ? SvgExporter.Export(layer) : SvgExporter.ExportElement(element);
+        var drawing = element is null ? SvgExporter.Export(layer) : SvgExporter.ExportElement(element, layer);
         var suffix = element is null ? string.Empty : "-" + element.Kind.ToString().ToLowerInvariant();
 
         var module = await ModuleAsync(cancellationToken).ConfigureAwait(false);

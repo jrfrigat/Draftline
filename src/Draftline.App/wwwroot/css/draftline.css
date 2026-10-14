@@ -760,6 +760,24 @@ body {
 .df-el--tabs {
     gap: 0;
     padding: 0;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.df-tabs__headers {
+    display: flex;
+    flex: 0 0 32px;
+    min-height: 0;
+    max-height: 100%;
+    border-bottom: 1px solid #1b1e24;
+}
+
+.df-tabs__panel {
+    flex: 1;
+    min-height: 0;
+    padding: 8px;
+    overflow: hidden;
+    white-space: pre-wrap;
 }
 
 .df-tabs__tab {

@@ -10,7 +10,7 @@ namespace Draftline.App.Services;
 /// listens to it - because there is no second path by which the document could change. A change that
 /// did not go through here would be a change nobody could undo and nobody would save.
 /// </summary>
-public sealed class DocumentSession
+public sealed partial class DocumentSession
 {
     private readonly DocumentHistory _history;
     private readonly List<string> _selection = new();
@@ -334,6 +334,7 @@ public sealed class DocumentSession
 
         var before = Document.Clone();
         change(Document);
+        PruneSelection();
         Document.Touch();
         _history.Record(before, label);
 
@@ -344,9 +345,18 @@ public sealed class DocumentSession
     }
 
     /// <summary>Adds a block at a point, snaps it to the grid, selects it and returns it.</summary>
-    public WireframeElement Add(WireframeKind kind, double x, double y)
+    public WireframeElement Add(WireframeKind kind, double x, double y, string? parentTabsId = null)
     {
+        var parent = kind == WireframeKind.Tabs ? null :
+            CurrentLayer.Find(parentTabsId) is { Kind: WireframeKind.Tabs } selectedParent ? selectedParent : TabPanels.Visible(CurrentLayer)
+            .LastOrDefault(candidate => candidate.Kind == WireframeKind.Tabs &&
+                candidate.Contains(x, y) && y >= candidate.Y + TabPanels.HeaderHeight);
         var element = ElementDefaults.Create(kind);
+        if (parent is not null)
+        {
+            element.ParentTabsId = parent.Id;
+            element.ParentTabIndex = ElementState.Index(parent);
+        }
         var bounds = CanvasGeometry.Clamp(
             new Rect(
                 CanvasGeometry.Snap(x, Document.GridSize),
@@ -381,7 +391,7 @@ public sealed class DocumentSession
     {
         ArgumentNullException.ThrowIfNull(ids);
 
-        var next = ids.Where(id => CurrentLayer.Find(id) is not null).ToList();
+        var next = ids.Where(id => CurrentLayer.Find(id) is { } element && TabPanels.IsVisible(CurrentLayer, element)).Distinct().ToList();
         if (next.SequenceEqual(_selection))
         {
             return;
@@ -399,7 +409,7 @@ public sealed class DocumentSession
     /// <summary>Deletes the selected blocks. False when there was nothing to delete.</summary>
     public bool RemoveSelected()
     {
-        var ids = _selection.Where(id => CurrentLayer.Find(id) is not null).ToList();
+        var ids = TabPanels.WithChildren(CurrentLayer, _selection).Select(element => element.Id).ToList();
         if (ids.Count == 0)
         {
             return false;
@@ -423,19 +433,26 @@ public sealed class DocumentSession
 
         var copy = source.Clone(keepId: false);
         var offset = Document.GridSize > 1 ? Document.GridSize : 8;
-        var bounds = CanvasGeometry.Clamp(
-            source.Bounds.With(x: source.X + offset, y: source.Y + offset),
-            CurrentLayer.CanvasWidth,
-            CurrentLayer.CanvasHeight);
-
-        copy.X = bounds.X;
-        copy.Y = bounds.Y;
+        var members = TabPanels.WithChildren(CurrentLayer, new[] { source.Id }).ToList();
+        var delta = TabPanels.ClampTranslation(members.Select(e => e.Bounds), offset, offset,
+            CurrentLayer.CanvasWidth, CurrentLayer.CanvasHeight);
+        copy.X += delta.X;
+        copy.Y += delta.Y;
 
         Edit("Блок скопирован", document =>
         {
             var layer = LayerIn(document);
             copy.ZIndex = layer.NextZIndex();
             layer.Elements.Add(copy);
+            foreach (var child in members.Where(e => e.Id != source.Id))
+            {
+                var childCopy = child.Clone(keepId: false);
+                childCopy.ParentTabsId = copy.Id;
+                childCopy.X += delta.X;
+                childCopy.Y += delta.Y;
+                childCopy.ZIndex = layer.NextZIndex();
+                layer.Elements.Add(childCopy);
+            }
         });
 
         Select(copy.Id);
@@ -580,7 +597,7 @@ public sealed class DocumentSession
     public bool IsGestureRunning => _gestureBefore is not null;
 
     private void PruneSelection() =>
-        _selection.RemoveAll(id => Document.AllElements.All(element => element.Id != id));
+        _selection.RemoveAll(id => CurrentLayer.Find(id) is not { } element || !TabPanels.IsVisible(CurrentLayer, element));
 
     /// <summary>
     /// The current screen of a document. A step through the history hands back a copy of the document,

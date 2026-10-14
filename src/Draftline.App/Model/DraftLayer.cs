@@ -34,8 +34,7 @@ public sealed class DraftLayer
 
     /// <summary>The topmost block under a point, or null when the point is on the sheet itself.</summary>
     public WireframeElement? HitTest(double x, double y) =>
-        Elements.Where(element => element.Contains(x, y))
-            .OrderByDescending(element => element.ZIndex)
+        TabPanels.Visible(this).Reverse().Where(element => element.Contains(x, y))
             .FirstOrDefault();
 
     /// <summary>The block with this identity, or null.</summary>
@@ -118,6 +117,7 @@ public sealed class DraftLayer
 
             element.ZIndex = order++;
         }
+        TabPanels.Normalize(this);
     }
 
     private static void NormalizeRows(WireframeElement element)

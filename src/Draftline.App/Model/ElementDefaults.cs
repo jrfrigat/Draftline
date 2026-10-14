@@ -107,7 +107,7 @@ public static class ElementDefaults
         WireframeKind.Divider => (240, 8),
         WireframeKind.Panel => (320, 220),
         WireframeKind.DataGrid => (360, 168),
-        WireframeKind.Tabs => (320, 32),
+        WireframeKind.Tabs => (320, 220),
         WireframeKind.MenuBar => (360, 28),
         WireframeKind.Accordion => (280, 144),
         WireframeKind.Tree => (240, 160),

@@ -65,8 +65,13 @@
             if (Session.CurrentLayer.Find(element.Id) is not { } target) return;
             var bounds = CanvasGeometry.Align(target.Bounds, alignment, Session.Document.GridSize,
                 Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
+            var children = TabPanels.WithChildren(Session.CurrentLayer, new[] { target.Id })
+                .Where(child => child.Id != target.Id).ToList();
+            var delta = TabPanels.ClampTranslation(children.Select(child => child.Bounds).Append(bounds.With(x: target.X, y: target.Y)),
+                bounds.X - target.X, bounds.Y - target.Y, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
+            foreach (var child in children) { child.X += delta.X; child.Y += delta.Y; }
             (target.X, target.Y, target.Width, target.Height) =
-                (bounds.X, bounds.Y, bounds.Width, bounds.Height);
+                (target.X + delta.X, target.Y + delta.Y, bounds.Width, bounds.Height);
         });
     }
 }

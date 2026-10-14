@@ -15,6 +15,7 @@ else
 {
     <div class="df-inspector">
         <p class="df-inspector__kind">@ElementDefaults.NameOf(element.Kind)</p>
+        <TabPanelInspector Element="element" />
 
         @if (ElementState.HasAvailability(element.Kind))
         {
@@ -236,7 +237,7 @@ else
             return;
         }
 
-        Apply(element, "Положение изменено", target => target.X = x);
+        Session.MoveElement(element.Id, x, element.Y);
     }
 
     private void SetY(WireframeElement element, double? value)
@@ -246,7 +247,7 @@ else
             return;
         }
 
-        Apply(element, "Положение изменено", target => target.Y = y);
+        Session.MoveElement(element.Id, element.X, y);
     }
 
     private void SetWidth(WireframeElement element, double? value)
@@ -364,12 +365,18 @@ else
         {
             target.Options = options;
             ElementState.Normalize(target);
+            TabPanels.Normalize(Session.CurrentLayer);
         });
     }
 
     private void SetSelectedIndex(WireframeElement element, string? value)
     {
         if (!int.TryParse(value, out var index)) return;
+        if (element.Kind == WireframeKind.Tabs)
+        {
+            Session.SelectTab(element.Id, index);
+            return;
+        }
         Apply(element, "Выбор изменён", target =>
         {
             target.SelectedIndex = index;

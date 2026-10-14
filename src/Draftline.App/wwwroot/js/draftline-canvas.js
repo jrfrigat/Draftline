@@ -67,7 +67,7 @@ function onPointerDown(event) {
     if (event.pointerType === 'mouse' && event.button !== 0) {
         return;
     }
-    if (event.target.closest('input, textarea, .df-inline-editor')) return;
+    if (event.target.closest('input, textarea, button, .df-inline-editor')) return;
 
     // Capture keeps the events coming while the pointer is outside the sheet - dragging a block off
     // the edge is exactly the moment a drag used to be lost.
@@ -163,6 +163,10 @@ function isTyping(target) {
 
 function onKeyDown(event) {
     if (!dotNet || isTyping(event.target)) {
+        return;
+    }
+    if (event.target.closest('[role="tab"]')) {
+        if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) event.preventDefault();
         return;
     }
 

@@ -150,10 +150,27 @@
             break;
 
         case WireframeKind.Tabs:
-            @for (var index = 0; index < ElementState.Items(Element).Count; index++)
-            {
-                @Choice(index, "df-tabs__tab", ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label)
-            }
+            <div class="df-tabs__headers" role="tablist" aria-label="@(string.IsNullOrWhiteSpace(Element.Text) ? "Вкладки" : Element.Text)">
+                @for (var index = 0; index < ElementState.Items(Element).Count; index++)
+                {
+                    var tabIndex = index;
+                    var label = ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label;
+                    @if (Interactive || Authoring)
+                    {
+                        <button type="button" role="tab" class="df-tabs__tab @SelectedClass(index) df-state-button"
+                                @ref="_tabHeaders[tabIndex]" tabindex="@(ElementState.Index(Element) == index ? 0 : -1)"
+                                id="@($"df-tab-{Element.Id}-{index}")" aria-selected="@(ElementState.Index(Element) == index ? "true" : "false")"
+                                aria-controls="@("df-panel-" + Element.Id)" disabled="@(Interactive && Element.Disabled)"
+                                @onclick="() => ChooseTab(tabIndex)" @onkeydown="args => OnTabKey(args, tabIndex)">@label</button>
+                    }
+                    else
+                    {
+                        <span class="df-tabs__tab @SelectedClass(index)">@label</span>
+                    }
+                }
+            </div>
+            <div class="df-tabs__panel" role="tabpanel" id="@("df-panel-" + Element.Id)"
+                 aria-labelledby="@($"df-tab-{Element.Id}-{ElementState.Index(Element)}")">@TabPanels.Content(Element)</div>
             break;
 
         case WireframeKind.MenuBar:
@@ -244,6 +261,37 @@
     /// <summary>Enables interaction with a preview-owned copy; the authoring canvas remains a drawing.</summary>
     [Parameter] public bool Interactive { get; set; }
 
+    /// <summary>Allows choosing an authored tab from its header on the editing canvas.</summary>
+    [Parameter] public bool Authoring { get; set; }
+    /// <summary>Receives a tab choice to record through DocumentSession.</summary>
+    [Parameter] public EventCallback<int> TabSelected { get; set; }
+    /// <summary>The resolved drawing order, keeping group backgrounds behind their children.</summary>
+    [Parameter] public int? DrawingOrder { get; set; }
+
+    private ElementReference[] _tabHeaders = Array.Empty<ElementReference>();
+
+    protected override void OnParametersSet()
+    {
+        if (Element.Kind == WireframeKind.Tabs && _tabHeaders.Length != ElementState.Items(Element).Count)
+            _tabHeaders = new ElementReference[ElementState.Items(Element).Count];
+    }
+
+    private async Task OnTabKey(KeyboardEventArgs args, int current)
+    {
+        var count = ElementState.Items(Element).Count;
+        var next = args.Key switch
+        {
+            "ArrowRight" => (current + 1) % count,
+            "ArrowLeft" => (current + count - 1) % count,
+            "Home" => 0,
+            "End" => count - 1,
+            _ => -1
+        };
+        if (next < 0 || (Interactive && Element.Disabled)) return;
+        await ChooseTab(next);
+        await _tabHeaders[next].FocusAsync(preventScroll: true);
+    }
+
     /// <summary>Notifies the preview after a temporary state change.</summary>
     [Parameter] public EventCallback StateChanged { get; set; }
 
@@ -279,6 +327,8 @@
         if (Element.Kind == WireframeKind.Select) Element.Expanded = false;
         await StateChanged.InvokeAsync();
     }
+
+    private Task ChooseTab(int index) => Authoring ? TabSelected.InvokeAsync(index) : Choose(index);
 
     private async Task ToggleExpanded()
     {
@@ -351,7 +401,7 @@
                 $"top:{Element.Y.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
                 $"width:{Element.Width.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
                 $"height:{Element.Height.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;" +
-                $"z-index:{(Element.Kind == WireframeKind.Select && ElementState.IsExpanded(Element) ? 10000 + Element.ZIndex : Element.ZIndex)};";
+                $"z-index:{(Element.Kind == WireframeKind.Select && ElementState.IsExpanded(Element) ? 10000 : 0) + (DrawingOrder ?? Element.ZIndex)};";
 
             if (Math.Abs(Element.FontScale - 1) > 0.001)
             {

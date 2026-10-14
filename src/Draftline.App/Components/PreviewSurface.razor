@@ -29,19 +29,21 @@
 
                 <div class="df-preview__sheet df-preview__sheet--behind"
                      style="width:@Number(host.CanvasWidth)px;height:@Number(host.CanvasHeight)px;">
-                    @foreach (var behind in host.InDrawOrder())
+                    @{ var behindOrder = 0; }
+                    @foreach (var behind in TabPanels.Visible(host, element => PreviewElement(host, element)))
                     {
-                        <WireframeElementView Element="@PreviewElement(host, behind)" />
+                        <WireframeElementView Element="@PreviewElement(host, behind)" DrawingOrder="@(behindOrder++)" />
                     }
                 </div>
             }
 
             <div class="@SheetClass" style="width:@Number(shown.CanvasWidth)px;height:@Number(shown.CanvasHeight)px;">
-                @foreach (var element in shown.InDrawOrder())
+                @{ var drawOrder = 0; }
+                @foreach (var element in TabPanels.Visible(shown, element => PreviewElement(shown, element)))
                 {
                     var item = element;
                     <WireframeElementView Element="@PreviewElement(shown, item)" Interactive="@(!item.HasTransition)"
-                                          StateChanged="StateHasChanged" />
+                                          DrawingOrder="@(drawOrder++)" StateChanged="StateHasChanged" />
 
                     @if (item.HasTransition && !item.Disabled)
                     {
