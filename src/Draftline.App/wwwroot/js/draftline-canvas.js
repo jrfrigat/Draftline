@@ -9,6 +9,11 @@ let canvas = null;
 let dotNet = null;
 let activePointer = null;
 
+// Initial editor layout only; the person's panel choices take over after startup.
+export function isCompactViewport() {
+    return window.matchMedia('(max-width: 900px)').matches;
+}
+
 // Attaches to a sheet. Called once, when the canvas first renders.
 export function attach(element, reference) {
     detach();

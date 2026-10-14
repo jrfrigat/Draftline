@@ -106,6 +106,22 @@ body {
     min-height: 2rem;
 }
 
+.df-ribbon > .flare-ribbon__commands {
+    overflow-x: auto;
+}
+
+.df-ribbon .flare-ribbon__tabpanel {
+    flex: 0 0 auto;
+    min-width: 100%;
+}
+
+.df-ribbon .flare-ribbon__group-content {
+    display: grid;
+    grid-template-rows: repeat(2, auto);
+    grid-auto-flow: column;
+    align-content: center;
+}
+
 /* --------------------------------------------------------------------- the editor's stage */
 
 /* What the IDE shell leaves for the sheet: the middle of the window between the two panel regions. It
@@ -139,6 +155,8 @@ body {
     gap: 1rem;
     width: 100%;
     font-size: 0.78rem;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
 }
 
 .df-status__name {
@@ -1127,5 +1145,17 @@ body {
     outline-offset: 1px;
 }
 
-/* No narrow-screen rules of our own: the IDE shell's own CSS decides how its regions behave when the
-   window is small, and the sheet keeps scrolling inside whatever room it is given. */
+@media (max-width: 900px) {
+    #df-editor .flare-ide-layout__panel:not(.flare-ide-layout__panel--collapsed) {
+        max-width: calc(100vw - 6rem);
+    }
+
+    .df-projects {
+        min-width: 16rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .draftline-splash-mark i { animation: none; }
+    #flare-splash { transition: none; }
+}

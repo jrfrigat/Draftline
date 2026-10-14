@@ -1,8 +1,9 @@
 @page "/"
-@implements IDisposable
+@implements IAsyncDisposable
 @inject DocumentSession Session
 @inject AutosaveService Autosave
 @inject FallbackBrowserStorage Storage
+@inject IJSRuntime Js
 
 <PageTitle>@Session.Document.Name — Draftline</PageTitle>
 
@@ -14,12 +15,12 @@
    While the wireframe is being previewed both panel regions fold to their rails: the same "the
    constructor is off" the preview promises, done by the frame's own means, and the view comes back on
    the way out. *@
-<FlareIdeLayout LeftPanelWidth="14rem"
+<FlareIdeLayout id="df-editor" LeftPanelWidth="14rem"
                 RightPanelWidth="18rem"
                 LeftCollapsed="_blocksFolded"
-                LeftCollapsedChanged="@((bool folded) => _blocksFolded = folded)"
+                LeftCollapsedChanged="SetBlocksFolded"
                 RightCollapsed="_sidesFolded"
-                RightCollapsedChanged="@((bool folded) => _sidesFolded = folded)">
+                RightCollapsedChanged="SetSidesFolded">
     <Ribbon>
         <div class="df-ribbon-shell">
             <div class="df-ribbon-brand">
@@ -56,6 +57,12 @@
                     <FlareRibbonButton Label="@(Session.IsPreviewing ? "К редактору" : "Просмотр")"
                                        Tooltip="Показать макет так, как его увидит человек"
                                        OnClick="TogglePreview" />
+                </FlareRibbonGroup>
+                <FlareRibbonGroup Label="Панели">
+                    <FlareRibbonButton Label="@(_blocksFolded ? "Показать блоки" : "Скрыть блоки")"
+                                       Disabled="Session.IsPreviewing" OnClick="@(() => SetBlocksFolded(!_blocksFolded))" />
+                    <FlareRibbonButton Label="@(_sidesFolded ? "Показать свойства и экраны" : "Скрыть свойства и экраны")"
+                                       Disabled="Session.IsPreviewing" OnClick="@(() => SetSidesFolded(!_sidesFolded))" />
                 </FlareRibbonGroup>
             </FlareRibbonTab>
         </FlareRibbon>
@@ -125,6 +132,10 @@
     private string? _notice;
     private bool _ready;
     private bool _initializing;
+    private bool _compact;
+    private bool _wasPreviewing;
+    private (bool Blocks, bool Sides) _beforePreview;
+    private IJSObjectReference? _viewportModule;
 
     /// <summary>Whether the block shelf is folded to its rail.</summary>
     private bool _blocksFolded;
@@ -144,10 +155,11 @@
     }
 
     /// <inheritdoc />
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         Session.Changed -= OnSessionChanged;
         Autosave.Changed -= OnSaveChanged;
+        if (_viewportModule is not null) await _viewportModule.DisposeAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -157,6 +169,9 @@
 
         try
         {
+            _viewportModule = await Js.InvokeAsync<IJSObjectReference>("import", "./js/draftline-canvas.js");
+            _compact = await _viewportModule.InvokeAsync<bool>("isCompactViewport");
+            (_blocksFolded, _sidesFolded) = (_compact, _compact);
             await Storage.ProbeAsync();
             var lastId = await Catalog.LastOpenIdAsync();
             var result = string.IsNullOrWhiteSpace(lastId) ? null : await Catalog.LoadAsync(lastId);
@@ -183,6 +198,18 @@
     }
 
     private void OnSaveChanged() => InvokeAsync(StateHasChanged);
+
+    private void SetBlocksFolded(bool folded)
+    {
+        _blocksFolded = folded;
+        if (_compact && !folded) _sidesFolded = true;
+    }
+
+    private void SetSidesFolded(bool folded)
+    {
+        _sidesFolded = folded;
+        if (_compact && !folded) _blocksFolded = true;
+    }
 
     /// <summary>A block asked for from the palette lands in a cascade, not on top of the last one.</summary>
     private void AddBlock(WireframeKind kind) => _canvas?.AddCascade(kind);
@@ -246,11 +273,19 @@
 
     private void OnSessionChanged()
     {
-        // The panels fold while the wireframe is being previewed and unfold on the way back: a preview is
-        // the wireframe as an application, and an application has no block shelf beside it. A panel the
-        // person folded by hand before previewing comes back unfolded - the price of not keeping a second
-        // copy of a state the frame already owns, and one word of the rail away from being put back.
-        (_blocksFolded, _sidesFolded) = Session.IsPreviewing ? (true, true) : (false, false);
+        if (Session.IsPreviewing != _wasPreviewing)
+        {
+            if (Session.IsPreviewing)
+            {
+                _beforePreview = (_blocksFolded, _sidesFolded);
+                (_blocksFolded, _sidesFolded) = (true, true);
+            }
+            else
+            {
+                (_blocksFolded, _sidesFolded) = _beforePreview;
+            }
+            _wasPreviewing = Session.IsPreviewing;
+        }
 
         InvokeAsync(StateHasChanged);
     }
