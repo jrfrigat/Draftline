@@ -73,13 +73,16 @@
     </ChildContent>
 
     <RightToolPanel>
-        <FlareToolPanel Title="Свойства" Position="ToolPanelPosition.Right">
-            <Inspector />
-        </FlareToolPanel>
-
-        <FlareToolPanel Title="Экраны" Position="ToolPanelPosition.Right">
-            <LayerPanel />
-        </FlareToolPanel>
+        @* These panels own their expanded state independently. Registering both as the IDE layout's
+           right tool panel makes their different titles continuously invalidate the same region. *@
+        <FlareAccordion AllowMultiple="true">
+            <FlareAccordionPanel Header="Свойства" @bind-Expanded="_propertiesExpanded">
+                <Inspector />
+            </FlareAccordionPanel>
+            <FlareAccordionPanel Header="Экраны" @bind-Expanded="_layersExpanded">
+                <LayerPanel />
+            </FlareAccordionPanel>
+        </FlareAccordion>
     </RightToolPanel>
 
     <StatusBar>
@@ -107,6 +110,10 @@
 
     /// <summary>Whether the properties and screens are folded to their rail.</summary>
     private bool _sidesFolded;
+
+    // Keep each panel's choice when preview temporarily unmounts the right region.
+    private bool _propertiesExpanded = true;
+    private bool _layersExpanded = true;
 
     /// <inheritdoc />
     protected override void OnInitialized() => Session.Changed += OnSessionChanged;

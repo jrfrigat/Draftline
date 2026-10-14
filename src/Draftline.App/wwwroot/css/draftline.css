@@ -1,3 +1,5 @@
+@import url('../_content/Flare.Components.IDE/css/flare-ide.css');
+
 /*
   Draftline's own chrome. Everything a theme can express stays a Flare token - colours, type, spacing
   and motion all come from the design system this file does not restate. What lives here is only what
@@ -13,6 +15,11 @@ body {
 
 #app {
     height: 100%;
+}
+
+/* Blazor sets display:block only when startup or an event fails. */
+#blazor-error-ui {
+    display: none;
 }
 
 /* --------------------------------------------------------------------- the first frame */
