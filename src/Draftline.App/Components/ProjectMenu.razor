@@ -1,0 +1,221 @@
+@implements IDisposable
+@inject ProjectCatalog Catalog
+@inject DocumentSession Session
+@inject AutosaveService Autosave
+@inject FallbackBrowserStorage Storage
+@inject IDialogService Dialog
+
+@* The project's own strip: the name of what is open, the list of what this browser holds, and the one
+   word the storage has to say about the last change.
+   
+   It also decides what the editor opens on: the wireframe that was open last, or the first one. A tool
+   that opens on an empty shell and waits to be told what to do is a tool nobody starts. *@
+<div class="df-projects">
+    <FlareTextField Class="df-projects__name"
+                    Size="FieldSize.Xs"
+                    Label="Макет"
+                    Value="@_nameDraft"
+                    ValueChanged="OnNameTyped" />
+    <FlareButton Variant="ButtonVariant.Text"
+                 Disabled="@(string.IsNullOrWhiteSpace(_nameDraft))"
+                 OnClick="Rename">
+        Переименовать
+    </FlareButton>
+
+    <FlarePopover Open="@_menuOpen"
+                  OpenChanged="SetMenuOpen"
+                  Placement="Placement.BottomStart"
+                  MinWidth="18rem"
+                  MaxHeight="22rem">
+        <AnchorContent>
+            <FlareButton Variant="ButtonVariant.Outlined" OnClick="() => SetMenuOpen(true)">
+                Проекты (@_projects.Count)
+            </FlareButton>
+        </AnchorContent>
+        <ChildContent>
+            <div class="df-projects__list">
+                <FlareButton Variant="ButtonVariant.Filled" OnClick="NewProjectAsync">Новый макет</FlareButton>
+
+                @if (_notice is not null)
+                {
+                    <p class="df-projects__notice">@_notice</p>
+                }
+
+                @foreach (var project in _projects)
+                {
+                    var item = project;
+                    <div class="df-projects__row">
+                        <button type="button" class="df-projects__open" @onclick="() => OpenProject(item.Id)">
+                            <span class="df-projects__row-name">@item.Name</span>
+                            <span class="df-projects__row-meta">
+                                @item.ElementCount блоков · @item.UpdatedAt.ToLocalTime().ToString("dd.MM HH:mm")
+                            </span>
+                        </button>
+                        <FlareButton Variant="ButtonVariant.Text"
+                                     OnClick="() => DeleteProject(item.Id, item.Name)">
+                            Удалить
+                        </FlareButton>
+                    </div>
+                }
+            </div>
+        </ChildContent>
+    </FlarePopover>
+
+    <span class="df-projects__save df-projects__save--@SaveStateClass">@Autosave.Message</span>
+
+    @if (Storage.IsVolatile)
+    {
+        <span class="df-projects__warning">
+            Браузер не даёт сохранять: работа не переживёт перезагрузку
+        </span>
+    }
+</div>
+
+@code {
+    private string _nameDraft = string.Empty;
+    private bool _menuOpen;
+    private bool _started;
+    private string? _notice;
+    private IReadOnlyList<ProjectSummary> _projects = Array.Empty<ProjectSummary>();
+
+    /// <inheritdoc />
+    protected override void OnInitialized()
+    {
+        Session.Changed += OnStateChanged;
+        Autosave.Changed += OnStateChanged;
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Session.Changed -= OnStateChanged;
+        Autosave.Changed -= OnStateChanged;
+    }
+
+    /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // The first render is the earliest moment the browser can be asked anything, and the editor has
+        // to open on a wireframe rather than on an empty shell.
+        if (_started)
+        {
+            return;
+        }
+
+        _started = true;
+
+        await Storage.ProbeAsync();
+        await StartAsync();
+    }
+
+    private string SaveStateClass => Autosave.State.ToString().ToLowerInvariant();
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnNameTyped(string value) => _nameDraft = value;
+
+    private void Rename() => Session.Rename(_nameDraft);
+
+    private async Task SetMenuOpen(bool open)
+    {
+        _menuOpen = open;
+
+        if (open)
+        {
+            _notice = null;
+            _projects = await Catalog.ListAsync();
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>Opens what the browser held last, or makes the first wireframe.</summary>
+    private async Task StartAsync()
+    {
+        var lastId = await Catalog.LastOpenIdAsync();
+
+        if (!string.IsNullOrWhiteSpace(lastId))
+        {
+            var result = await Catalog.LoadAsync(lastId);
+
+            if (result.Document is not null)
+            {
+                Show(result.Document);
+                return;
+            }
+
+            // What was stored is damaged or was never a wireframe: say so, and give the person a clean
+            // sheet instead of an editor that opens on nothing.
+            _notice = result.Error;
+        }
+
+        await NewProjectAsync();
+    }
+
+    private async Task NewProjectAsync()
+    {
+        var document = DraftDocument.CreateNew(await Catalog.SuggestNameAsync());
+
+        Show(document);
+        await Catalog.SaveAsync(document);
+        await Catalog.RememberLastAsync(document.Id);
+        Session.MarkSaved("Сохранено в браузере в " + DateTimeOffset.Now.ToString("HH:mm:ss"));
+
+        _projects = await Catalog.ListAsync();
+        _menuOpen = false;
+        StateHasChanged();
+    }
+
+    private async Task OpenProject(string id)
+    {
+        var result = await Catalog.LoadAsync(id);
+
+        if (result.Document is null)
+        {
+            _notice = result.Error;
+            return;
+        }
+
+        Show(result.Document);
+        await Catalog.RememberLastAsync(id);
+        _menuOpen = false;
+        _notice = null;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Forgets a wireframe, after asking. Deleting is the one change undo cannot reach, which is the
+    /// only reason this component ever stops to ask a question.
+    /// </summary>
+    private async Task DeleteProject(string id, string name)
+    {
+        var confirmed = await Dialog.ConfirmAsync(
+            "Удалить макет?",
+            $"«{name}» исчезнет из хранилища браузера. Это действие нельзя отменить.",
+            "Удалить",
+            "Оставить");
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        await Catalog.DeleteAsync(id);
+        _projects = await Catalog.ListAsync();
+
+        if (Session.Document.Id == id)
+        {
+            await NewProjectAsync();
+            return;
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>Puts a document in front of the person and keeps the name field in step with it.</summary>
+    private void Show(DraftDocument document)
+    {
+        Session.Open(document);
+        _nameDraft = document.Name;
+    }
+}

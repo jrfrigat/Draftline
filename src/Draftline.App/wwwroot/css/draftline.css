@@ -538,6 +538,82 @@ body {
     border-top: 1px solid #1b1e24;
 }
 
+/* --------------------------------------------------------------------- the project strip */
+
+/* The bar above the sheet lives on: what is open, what this browser holds, and what happened to the
+   last change. The autosave's own word is the only status the editor needs to show. */
+.df-projects {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.df-projects__name {
+    min-width: 12rem;
+}
+
+.df-projects__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 16rem;
+}
+
+.df-projects__notice {
+    margin: 0;
+    font-size: 0.78rem;
+    opacity: 0.75;
+}
+
+.df-projects__row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-top: 1px solid var(--flare-color-outline-variant, #c9ccd4);
+}
+
+.df-projects__open {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1 1 auto;
+    padding: 0.3rem 0.2rem;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.df-projects__row-name {
+    font-size: 0.85rem;
+}
+
+.df-projects__row-meta {
+    font-size: 0.72rem;
+    opacity: 0.6;
+}
+
+.df-projects__save {
+    font-size: 0.78rem;
+    opacity: 0.65;
+}
+
+/* A refused write is the one status that has to be impossible to miss: it is the difference between
+   work that survives the tab closing and work that does not. */
+.df-projects__save--failed {
+    opacity: 1;
+    font-weight: 600;
+    color: var(--flare-color-error, #b3261e);
+}
+
+.df-projects__warning {
+    font-size: 0.78rem;
+    color: var(--flare-color-error, #b3261e);
+}
+
 @media (max-width: 900px) {
     .df-editor {
         grid-template-columns: 1fr;

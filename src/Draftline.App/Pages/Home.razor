@@ -15,8 +15,7 @@
 
     <section class="df-main" aria-label="Холст макета">
         <div class="df-toolbar">
-            <span class="df-toolbar__name">@Session.Document.Name</span>
-            <span class="df-toolbar__status">@Session.Status</span>
+            <ProjectMenu />
             <span class="df-toolbar__spacer"></span>
             <FlareButton Variant="ButtonVariant.Text" Disabled="@(!Session.CanUndo)" OnClick="Undo">
                 Отменить

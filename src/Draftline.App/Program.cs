@@ -6,6 +6,7 @@ using Flare.Theme.MaterialDesign3.Tokens;
 using Flare.Theme.MaterialDesign3Expressive;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.JSInterop;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -29,5 +30,17 @@ builder.Services.AddScoped<DocumentSession>();
 
 // What the palette is carrying while a block is dragged from it onto the sheet.
 builder.Services.AddScoped<PaletteDrag>();
+
+// Where the wireframes are kept. The browser's own storage when it has one, the page's memory when it
+// has not - a private window should cost the person the writing, not the editor. Registered as both
+// its own type and the interface, because the shell has to be able to ask which of the two it got.
+builder.Services.AddSingleton(sp => new FallbackBrowserStorage(
+    new LocalStorageBrowserStorage(sp.GetRequiredService<IJSRuntime>())));
+builder.Services.AddSingleton<IBrowserStorage>(sp => sp.GetRequiredService<FallbackBrowserStorage>());
+builder.Services.AddSingleton<ProjectCatalog>();
+
+// Writing the open wireframe back after every change: one per session, because it listens to the
+// session it belongs to.
+builder.Services.AddScoped<AutosaveService>();
 
 await builder.Build().RunAsync();
