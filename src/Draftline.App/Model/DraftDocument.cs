@@ -20,7 +20,7 @@ public sealed class DraftDocument
     /// 3 - a table carries columns and rows.
     /// 4 - a wireframe carries screens, and a block may point at another one.
     /// </summary>
-    public const int CurrentSchemaVersion = 4;
+    public const int CurrentSchemaVersion = 5;
 
     /// <summary>A sheet in pixels, as a new screen starts.</summary>
     public const double DefaultCanvasWidth = 960;

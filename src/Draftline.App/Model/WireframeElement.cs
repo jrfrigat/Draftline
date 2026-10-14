@@ -70,6 +70,15 @@ public sealed class WireframeElement
     /// <summary>Whether a checkbox or a radio button is ticked.</summary>
     public bool Checked { get; set; }
 
+    /// <summary>Selected row, tab or section; -1 means no explicit selection.</summary>
+    public int SelectedIndex { get; set; } = -1;
+
+    /// <summary>Authored disclosure state; null uses the kind's default (trees open, other kinds closed).</summary>
+    public bool? Expanded { get; set; }
+
+    /// <summary>Whether the control is shown as unavailable and ignores preview interactions.</summary>
+    public bool Disabled { get; set; }
+
     /// <summary>Text scale, 1 being the kind's own size.</summary>
     public double FontScale { get; set; } = 1;
 
@@ -123,6 +132,9 @@ public sealed class WireframeElement
         Transition = Transition,
         TargetLayerId = TargetLayerId,
         Checked = Checked,
+        SelectedIndex = SelectedIndex,
+        Expanded = Expanded,
+        Disabled = Disabled,
         FontScale = FontScale,
         Bold = Bold,
         ZIndex = ZIndex
