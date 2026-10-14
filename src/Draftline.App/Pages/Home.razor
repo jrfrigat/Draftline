@@ -23,18 +23,37 @@
             <FlareButton Variant="ButtonVariant.Text" Disabled="@(!Session.CanRedo)" OnClick="Redo">
                 Повторить
             </FlareButton>
+
+            <FlareButton Variant="ButtonVariant.Text" Disabled="@(Session.Document.Elements.Count == 0)"
+                         OnClick="ExportSvg">
+                Экспорт SVG
+            </FlareButton>
+            <FlareButton Variant="ButtonVariant.Text" OnClick="ExportJson">Выгрузить JSON</FlareButton>
+            <FlareButton Variant="ButtonVariant.Text" OnClick="ImportJson">Загрузить JSON</FlareButton>
+
+            @if (_notice is not null)
+            {
+                <span class="df-toolbar__notice">@_notice</span>
+            }
         </div>
         <CanvasView @ref="_canvas" />
     </section>
 
     <aside class="df-side df-side--inspector" aria-label="Свойства">
         <h2 class="df-side__title">Свойства</h2>
-        <p class="df-side__hint">Инспектор выбранного блока появится в следующей истории.</p>
+        <Inspector />
     </aside>
 </div>
 
 @code {
+    [Inject]
+    private DocumentFileService Files { get; set; } = null!;
+
+    [Inject]
+    private ProjectCatalog Catalog { get; set; } = null!;
+
     private CanvasView? _canvas;
+    private string? _notice;
 
     /// <inheritdoc />
     protected override void OnInitialized() => Session.Changed += OnSessionChanged;
@@ -48,6 +67,40 @@
     private void Undo() => Session.Undo();
 
     private void Redo() => Session.Redo();
+
+    /// <summary>The whole sheet as a drawing. One block on its own is exported from the inspector.</summary>
+    private Task ExportSvg() => Files.DownloadSvgAsync(Session.Document);
+
+    private Task ExportJson() => Files.DownloadJsonAsync(Session.Document);
+
+    /// <summary>
+    /// Takes a wireframe out of a file. A file that is not a wireframe is an ordinary answer to asking
+    /// for one, so its reason is shown beside the buttons rather than thrown at the person.
+    /// </summary>
+    private async Task ImportJson()
+    {
+        var result = await Files.ImportAsync();
+
+        if (result is null)
+        {
+            return;
+        }
+
+        if (result.Document is null)
+        {
+            _notice = result.Error;
+            return;
+        }
+
+        // An imported wireframe is written into this browser straight away: it arrived from a file, and
+        // until it is saved the editor is holding something the project list does not know about.
+        Session.Open(result.Document);
+        await Catalog.SaveAsync(result.Document);
+        await Catalog.RememberLastAsync(result.Document.Id);
+        Session.MarkSaved("Загружено из файла: " + result.Document.Name);
+
+        _notice = null;
+    }
 
     private void OnSessionChanged() => InvokeAsync(StateHasChanged);
 }

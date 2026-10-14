@@ -614,6 +614,34 @@ body {
     color: var(--flare-color-error, #b3261e);
 }
 
+/* --------------------------------------------------------------------- the inspector */
+
+.df-inspector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.df-inspector__kind {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Geometry comes in pairs, because x and y are one thought when you are placing a block. */
+.df-inspector__pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    align-items: end;
+}
+
+/* A notice that came from a file: it belongs beside the buttons that produced it. */
+.df-toolbar__notice {
+    font-size: 0.78rem;
+    color: var(--flare-color-error, #b3261e);
+}
+
 @media (max-width: 900px) {
     .df-editor {
         grid-template-columns: 1fr;

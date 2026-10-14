@@ -43,4 +43,7 @@ builder.Services.AddSingleton<ProjectCatalog>();
 // session it belongs to.
 builder.Services.AddScoped<AutosaveService>();
 
+// Handing a wireframe to the person as a file, and taking one back.
+builder.Services.AddScoped<DocumentFileService>();
+
 await builder.Build().RunAsync();

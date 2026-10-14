@@ -1,0 +1,237 @@
+@implements IDisposable
+@inject DocumentSession Session
+@inject DocumentFileService Files
+
+@* The properties of the selected block.
+   
+   Everything here goes through the session's Edit, so a change made in this panel is a change the
+   history can undo and the autosave will write - this is a form over the document, never a second
+   editor beside it. Fields update when they lose focus rather than on every keystroke: otherwise one
+   word typed into a label would fill the undo history with a dozen steps. *@
+@if (Session.Selected is not { } element)
+{
+    <p class="df-side__hint">Выберите блок на холсте - его свойства появятся здесь.</p>
+}
+else
+{
+    <div class="df-inspector">
+        <p class="df-inspector__kind">@ElementDefaults.NameOf(element.Kind)</p>
+
+        <div class="df-inspector__pair">
+            <FlareNumericField Label="X" Size="FieldSize.Xs" Min="0"
+                               Value="@element.X"
+                               ValueChanged="@((double? value) => SetX(element, value))" />
+            <FlareNumericField Label="Y" Size="FieldSize.Xs" Min="0"
+                               Value="@element.Y"
+                               ValueChanged="@((double? value) => SetY(element, value))" />
+        </div>
+
+        <div class="df-inspector__pair">
+            <FlareNumericField Label="Ширина" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize"
+                               Value="@element.Width"
+                               ValueChanged="@((double? value) => SetWidth(element, value))" />
+            <FlareNumericField Label="Высота" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize"
+                               Value="@element.Height"
+                               ValueChanged="@((double? value) => SetHeight(element, value))" />
+        </div>
+
+        @if (ElementDefaults.IsTextual(element.Kind))
+        {
+            <FlareTextField Label="Текст" Size="FieldSize.Xs"
+                            Value="@element.Text"
+                            ValueChanged="@((string? value) => SetText(element, value))" />
+
+            <div class="df-inspector__pair">
+                <FlareNumericField Label="Масштаб текста" Size="FieldSize.Xs" Min="0.5" Max="4" Step="0.5"
+                                   Value="@element.FontScale"
+                                   ValueChanged="@((double? value) => SetFontScale(element, value))" />
+                <FlareCheckbox Value="@element.Bold" ValueChanged="@((bool value) => SetBold(element, value))">
+                    Жирный
+                </FlareCheckbox>
+            </div>
+        }
+
+        @if (ElementDefaults.HasCheck(element.Kind))
+        {
+            <FlareCheckbox Value="@element.Checked" ValueChanged="@((bool value) => SetChecked(element, value))">
+                Отмечено
+            </FlareCheckbox>
+        }
+
+        @if (ElementDefaults.HasRows(element.Kind))
+        {
+            <FlareTextArea Label="Пункты, по одному в строке" Size="FieldSize.Xs"
+                           Value="@OptionsText(element)"
+                           ValueChanged="@((string? value) => SetOptions(element, value))" />
+        }
+
+        <p class="df-side__hint">Выравнивание</p>
+        <FlareStack Row="true" Gap="FlareSpacing.XSmall" Wrap="true">
+            @foreach (var (alignment, caption) in Alignments)
+            {
+                var target = alignment;
+                <FlareButton Variant="ButtonVariant.Text" OnClick="@(() => Align(element, target))">@caption</FlareButton>
+            }
+        </FlareStack>
+
+        <FlareStack Row="true" Gap="FlareSpacing.XSmall" Wrap="true">
+            <FlareButton Variant="ButtonVariant.Text" OnClick="Session.BringSelectedToFront">Поверх</FlareButton>
+            <FlareButton Variant="ButtonVariant.Text" OnClick="Session.SendSelectedToBack">Вниз</FlareButton>
+        </FlareStack>
+
+        <FlareDivider />
+
+        <FlareButton Variant="ButtonVariant.Outlined"
+                     OnClick="@(() => Files.DownloadSvgAsync(Session.Document, element))">
+            Выгрузить этот блок в SVG
+        </FlareButton>
+    </div>
+}
+
+@code {
+    private static readonly (ElementAlignment Alignment, string Caption)[] Alignments =
+    {
+        (ElementAlignment.Left, "Влево"),
+        (ElementAlignment.CenterHorizontally, "По центру"),
+        (ElementAlignment.Right, "Вправо"),
+        (ElementAlignment.Top, "Вверх"),
+        (ElementAlignment.CenterVertically, "По середине"),
+        (ElementAlignment.Bottom, "Вниз"),
+        (ElementAlignment.MatchWidth, "Во всю ширину"),
+        (ElementAlignment.MatchHeight, "Во всю высоту")
+    };
+
+    /// <inheritdoc />
+    protected override void OnInitialized() => Session.Changed += OnStateChanged;
+
+    /// <inheritdoc />
+    public void Dispose() => Session.Changed -= OnStateChanged;
+
+    /// <summary>The rows of a list or a dropdown, one per line - the way a person writes a list.</summary>
+    private static string OptionsText(WireframeElement element) => string.Join('\n', element.Options);
+
+    private void SetX(WireframeElement element, double? value)
+    {
+        if (value is not { } x || Math.Abs(x - element.X) < 0.001)
+        {
+            return;
+        }
+
+        Apply(element, "Положение изменено", target => target.X = x);
+    }
+
+    private void SetY(WireframeElement element, double? value)
+    {
+        if (value is not { } y || Math.Abs(y - element.Y) < 0.001)
+        {
+            return;
+        }
+
+        Apply(element, "Положение изменено", target => target.Y = y);
+    }
+
+    private void SetWidth(WireframeElement element, double? value)
+    {
+        if (value is not { } width || Math.Abs(width - element.Width) < 0.001)
+        {
+            return;
+        }
+
+        Apply(element, "Размер изменён", target => target.Width = Math.Max(CanvasGeometry.MinimumSize, width));
+    }
+
+    private void SetHeight(WireframeElement element, double? value)
+    {
+        if (value is not { } height || Math.Abs(height - element.Height) < 0.001)
+        {
+            return;
+        }
+
+        Apply(element, "Размер изменён", target => target.Height = Math.Max(CanvasGeometry.MinimumSize, height));
+    }
+
+    private void SetText(WireframeElement element, string? value)
+    {
+        var text = value ?? string.Empty;
+        if (text == element.Text)
+        {
+            return;
+        }
+
+        Apply(element, "Текст изменён", target => target.Text = text);
+    }
+
+    private void SetFontScale(WireframeElement element, double? value)
+    {
+        if (value is not { } scale || Math.Abs(scale - element.FontScale) < 0.001)
+        {
+            return;
+        }
+
+        Apply(element, "Масштаб текста изменён", target => target.FontScale = Math.Clamp(scale, 0.5, 4));
+    }
+
+    private void SetBold(WireframeElement element, bool value)
+    {
+        if (value == element.Bold)
+        {
+            return;
+        }
+
+        Apply(element, "Жирность изменена", target => target.Bold = value);
+    }
+
+    private void SetChecked(WireframeElement element, bool value)
+    {
+        if (value == element.Checked)
+        {
+            return;
+        }
+
+        Apply(element, "Отметка изменена", target => target.Checked = value);
+    }
+
+    private void SetOptions(WireframeElement element, string? value)
+    {
+        var options = (value ?? string.Empty)
+            .Split('\n')
+            .Select(line => line.Trim())
+            .Where(line => line.Length > 0)
+            .ToList();
+
+        if (options.SequenceEqual(element.Options))
+        {
+            return;
+        }
+
+        Apply(element, "Пункты изменены", target => target.Options = options);
+    }
+
+    private void Align(WireframeElement element, ElementAlignment alignment) =>
+        Apply(element, "Выравнивание", target =>
+        {
+            var aligned = CanvasGeometry.Align(
+                target.Bounds,
+                alignment,
+                Session.Document.GridSize,
+                Session.Document.CanvasWidth,
+                Session.Document.CanvasHeight);
+
+            target.X = aligned.X;
+            target.Y = aligned.Y;
+            target.Width = aligned.Width;
+            target.Height = aligned.Height;
+        });
+
+    /// <summary>Changes the block inside the document, through the one door it has.</summary>
+    private void Apply(WireframeElement element, string label, Action<WireframeElement> change) =>
+        Session.Edit(label, document =>
+        {
+            if (document.Find(element.Id) is { } target)
+            {
+                change(target);
+            }
+        });
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+}

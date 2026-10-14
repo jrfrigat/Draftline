@@ -1,5 +1,33 @@
 namespace Draftline.App.Model;
 
+/// <summary>Which way a block is moved when it is aligned on the sheet.</summary>
+public enum ElementAlignment
+{
+    /// <summary>To the left edge of the sheet.</summary>
+    Left,
+
+    /// <summary>To the horizontal middle of the sheet.</summary>
+    CenterHorizontally,
+
+    /// <summary>To the right edge of the sheet.</summary>
+    Right,
+
+    /// <summary>To the top edge of the sheet.</summary>
+    Top,
+
+    /// <summary>To the vertical middle of the sheet.</summary>
+    CenterVertically,
+
+    /// <summary>To the bottom edge of the sheet.</summary>
+    Bottom,
+
+    /// <summary>As wide as the sheet.</summary>
+    MatchWidth,
+
+    /// <summary>As tall as the sheet.</summary>
+    MatchHeight
+}
+
 /// <summary>
 /// The arithmetic of putting a block on a sheet: snapping it to the grid, keeping it at a size a
 /// person can still grab, and stopping it at the canvas edge.
@@ -47,5 +75,34 @@ public static class CanvasGeometry
     {
         ArgumentNullException.ThrowIfNull(element);
         return element.Bounds;
+    }
+
+    /// <summary>
+    /// Where a block sits when it is aligned on the sheet. The result is snapped to the grid and
+    /// clamped to the sheet, so an alignment can never put a block where a hand could not.
+    /// </summary>
+    public static Rect Align(Rect rect, ElementAlignment alignment, int gridSize, double canvasWidth, double canvasHeight)
+    {
+        var aligned = alignment switch
+        {
+            ElementAlignment.Left => rect.With(x: 0),
+            ElementAlignment.CenterHorizontally => rect.With(x: (canvasWidth - rect.Width) / 2),
+            ElementAlignment.Right => rect.With(x: canvasWidth - rect.Width),
+            ElementAlignment.Top => rect.With(y: 0),
+            ElementAlignment.CenterVertically => rect.With(y: (canvasHeight - rect.Height) / 2),
+            ElementAlignment.Bottom => rect.With(y: canvasHeight - rect.Height),
+            ElementAlignment.MatchWidth => rect.With(width: canvasWidth),
+            ElementAlignment.MatchHeight => rect.With(height: canvasHeight),
+            _ => rect
+        };
+
+        return Clamp(
+            new Rect(
+                Snap(aligned.X, gridSize),
+                Snap(aligned.Y, gridSize),
+                Snap(aligned.Width, gridSize),
+                Snap(aligned.Height, gridSize)),
+            canvasWidth,
+            canvasHeight);
     }
 }
