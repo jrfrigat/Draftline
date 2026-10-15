@@ -124,6 +124,7 @@ public sealed class DraftLayer
             element.ZIndex = order++;
         }
         TabPanels.Normalize(this);
+        ElementGroups.Normalize(this);
         FormState.Normalize(this);
     }
 

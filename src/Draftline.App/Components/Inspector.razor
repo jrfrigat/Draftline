@@ -9,7 +9,7 @@
    word typed into a label would fill the undo history with a dozen steps. *@
 @if (Session.Selected is not { } element)
 {
-    <p class="df-hint">Выберите блок на холсте - его свойства появятся здесь.</p>
+    @if (Session.Selection.Count > 1) { <p class="df-hint">Выбрано блоков: @Session.Selection.Count. Двойной щелчок по группе — редактировать её содержимое.</p> } else { <p class="df-hint">Выберите блок на холсте - его свойства появятся здесь.</p> }
 }
 else
 {

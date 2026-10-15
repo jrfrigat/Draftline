@@ -4,18 +4,23 @@
 
 <FlareRibbonGroup Label="Блок">
     <FlareRibbonButton Label="Дублировать" Tooltip="Копия выбранного блока (Ctrl+D)"
-                       Disabled="@SingleDisabled" OnClick="Duplicate" />
+                       Disabled="@SelectionDisabled" OnClick="Duplicate" />
     <FlareRibbonButton Label="Удалить" Tooltip="Удалить выделенные блоки (Delete)"
                        Disabled="@SelectionDisabled" OnClick="Remove" />
-    <FlareRibbonButton Label="SVG блока" Tooltip="Выгрузить выбранный блок в SVG"
-                       Disabled="@SingleDisabled" OnClick="Export" />
+    <FlareRibbonButton Label="SVG блока" Tooltip="Выделенные блоки в SVG"
+                       Disabled="@SelectionDisabled" OnClick="Export" />
+</FlareRibbonGroup>
+<FlareRibbonGroup Label="Группа">
+    <FlareRibbonButton Label="Сгруппировать" Disabled="@(Session.IsPreviewing || Session.Selection.Count < 2)" OnClick="Session.GroupSelected" />
+    <FlareRibbonButton Label="Разгруппировать" Disabled="@(Session.IsPreviewing || Session.SelectedGroupId.Length == 0)" OnClick="Session.UngroupSelected" />
+    <FlareRibbonButton Label="Войти в группу" Disabled="@(Session.IsPreviewing || Session.SelectedGroupId.Length == 0)" OnClick="@(() => Session.EnterGroup())" />
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Выравнивание по холсту">
     @foreach (var (alignment, caption) in Alignments)
     {
         var target = alignment;
         <FlareRibbonButton Label="@caption" Tooltip="@($"{caption} относительно холста")"
-                           Disabled="@SingleDisabled" OnClick="@(() => Align(target))" />
+                           Disabled="@SelectionDisabled" OnClick="@(() => Align(target))" />
     }
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Размер">
@@ -26,9 +31,9 @@
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Порядок">
     <FlareRibbonButton Label="На передний план" Tooltip="Поверх остальных блоков"
-                       Disabled="@SingleDisabled" OnClick="Session.BringSelectedToFront" />
+                       Disabled="@SelectionDisabled" OnClick="Session.BringSelectedToFront" />
     <FlareRibbonButton Label="На задний план" Tooltip="Позади остальных блоков"
-                       Disabled="@SingleDisabled" OnClick="Session.SendSelectedToBack" />
+                       Disabled="@SelectionDisabled" OnClick="Session.SendSelectedToBack" />
 </FlareRibbonGroup>
 
 @code {
@@ -52,13 +57,12 @@
     private void Duplicate() => Session.DuplicateSelected();
     private void Remove() => Session.RemoveSelected();
 
-    private Task Export() => Session.Selected is { } element
-        ? Files.DownloadSvgAsync(Session.Document, Session.CurrentLayer, element)
-        : Task.CompletedTask;
+    private Task Export() => Files.DownloadSelectionSvgAsync(Session.Document, Session.CurrentLayer, Session.Members().Select(e=>e.Id));
 
     private void Align(ElementAlignment alignment)
     {
-        if (SingleDisabled || Session.Selected is not { } element) return;
+        if (SelectionDisabled) return;
+        if (Session.Selected is not { } element) { Session.AlignSelection(alignment); return; }
 
         Session.Edit("Выравнивание", _ =>
         {

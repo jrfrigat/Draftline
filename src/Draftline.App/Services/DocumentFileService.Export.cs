@@ -7,6 +7,13 @@ public sealed partial class DocumentFileService
 {
     private IJSObjectReference? _exportModule;
 
+    /// <summary>Export a group or a multi-selection as one SVG.</summary>
+    public async Task DownloadSelectionSvgAsync(DraftDocument document, DraftLayer layer, IEnumerable<string> ids)
+    {
+        var module=await ModuleAsync(default);
+        await module.InvokeVoidAsync("download",FileNameFor(document,"-selection.svg",layer.Name),"image/svg+xml",SvgExporter.ExportSelection(layer,ids));
+    }
+
     /// <summary>Download one or more screens as PNG files or a linked PDF.</summary>
     public async Task DownloadDrawingAsync(DraftDocument document, IEnumerable<DraftLayer> layers, bool pdf)
     {

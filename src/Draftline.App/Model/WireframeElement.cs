@@ -111,6 +111,9 @@ public sealed class WireframeElement
     /// <summary>Indices of expanded tree branches.</summary>
     public List<int> ExpandedNodes { get; set; } = new();
 
+    /// <summary>Nested group identities, outermost first.</summary>
+    public List<string> GroupPath { get; set; } = new();
+
     /// <summary>Identity of the tab group this block belongs to, or empty for a sheet-level block.</summary>
     public string ParentTabsId { get; set; } = string.Empty;
 
@@ -190,6 +193,7 @@ public sealed class WireframeElement
         TabContents = new List<string>(TabContents),
         TreeDepths = new List<int>(TreeDepths),
         ExpandedNodes = new List<int>(ExpandedNodes),
+        GroupPath = new List<string>(GroupPath),
         ParentTabsId = ParentTabsId,
         ParentTabIndex = ParentTabIndex,
         Expanded = Expanded,

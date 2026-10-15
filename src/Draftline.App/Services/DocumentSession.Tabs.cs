@@ -41,7 +41,7 @@ public sealed partial class DocumentSession
     public void MoveElement(string id, double x, double y)
     {
         if (CurrentLayer.Find(id) is not { } element) return;
-        var members = TabPanels.WithChildren(CurrentLayer, new[] { id }).ToList();
+        var members = Members(new[] { id }).ToList();
         var delta = TabPanels.ClampTranslation(members.Select(e => e.Bounds), x - element.X, y - element.Y,
             CurrentLayer.CanvasWidth, CurrentLayer.CanvasHeight);
         if (delta == (0d, 0d)) return;

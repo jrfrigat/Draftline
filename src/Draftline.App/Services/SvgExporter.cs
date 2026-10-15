@@ -17,6 +17,16 @@ namespace Draftline.App.Services;
 /// </summary>
 public static partial class SvgExporter
 {
+    /// <summary>Selected operation members on their own sheet, including only visible panels.</summary>
+    public static string ExportSelection(DraftLayer layer, IEnumerable<string> ids)
+    {
+        var selected=ids.ToHashSet();
+        var elements=TabPanels.Visible(layer).Where(e=>selected.Contains(e.Id)).ToList();
+        var bounds=ElementGroups.Bounds(elements.Select(e=>new Rect(e.X,e.Y,e.Width,ElementState.DrawingHeight(e))));
+        var svg=new StringBuilder();Start(svg,Math.Max(1,bounds.Width),Math.Max(1,bounds.Height));
+        foreach(var e in elements.OrderBy(e=>(e.Kind is WireframeKind.Select or WireframeKind.MenuBar)&&ElementState.IsExpanded(e)?1:0))WriteElement(svg,e,-bounds.X,-bounds.Y);
+        End(svg);return svg.ToString();
+    }
     private const string Ink = "#1b1e24";
     private const string Paper = "#ffffff";
     private const string Font = "Inter, Segoe UI, system-ui, sans-serif";

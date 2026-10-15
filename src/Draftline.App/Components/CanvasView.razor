@@ -8,6 +8,8 @@
    grabbed, what it does, what gets selected - is made here in C#, where the document lives. That is
    why this component is the only place that knows the canvas has gestures at all. *@
 <div class="df-canvas-host">
+    @if (Session.EditingGroupId.Length > 0)
+    { <div class="df-group-breadcrumb"><span>Редактирование группы</span><button type="button" @onclick="() => Session.LeaveGroup()">Выйти из группы (Esc)</button></div> }
     <div class="df-sheet" @ref="_sheet" tabindex="0" style="@SheetStyle">
         @{ var drawOrder = 0; }
         @foreach (var element in TabPanels.Visible(Session.CurrentLayer))
@@ -16,13 +18,13 @@
                                   TreeSelected="@(index => Session.SelectTreeNode(element.Id, index))" Edited="@(action => Session.Edit("Меню изменено", _ => action(element)))" />
         }
 
-        @if (Session.Selected is { } selected)
+        @if (Session.SelectionBounds is { } selectionBounds)
         {
-            <div class="df-selection" style="@RectStyle(selected.Bounds)">
-                @foreach (var (handle, x, y) in CanvasInteraction.HandlesOf(selected.Bounds))
+            <div class="df-selection @(Session.SelectedGroupId.Length > 0 ? "df-selection--group" : "")" style="@RectStyle(selectionBounds)">
+                @foreach (var (handle, x, y) in CanvasInteraction.HandlesOf(selectionBounds))
                 {
                     <span class="df-handle df-handle--@HandleClass(handle)"
-                          style="@HandleStyle(selected.Bounds, x, y)"></span>
+                          style="@HandleStyle(selectionBounds, x, y)"></span>
                 }
             </div>
         }
@@ -70,7 +72,9 @@
     [JSInvokable]
     public void OnEditText(double x, double y)
     {
-        if (Session.CurrentLayer.HitTest(x, y) is { } element && ElementDefaults.IsTextual(element.Kind))
+        var hit = Session.CurrentLayer.HitTest(x, y);
+        if (hit is not null && Session.EnterGroup(hit.Id)) return;
+        if (hit is { } element && ElementDefaults.IsTextual(element.Kind))
         {
             Session.Select(element.Id);
             _editingId = element.Id;
@@ -180,11 +184,12 @@
     {
         // A handle of the selected block wins over everything under the pointer: it is small, it is
         // deliberate, and it is drawn on top of whatever it belongs to.
-        if (Session.Selected is { } selected && CanvasInteraction.HandleAt(selected.Bounds, x, y) is { } handle)
+        if (Session.SelectionBounds is { } selectedBounds && CanvasInteraction.HandleAt(selectedBounds, x, y) is { } handle)
         {
             _gesture = CanvasGesture.Resize;
             _handle = handle;
-            _origin = selected.Bounds;
+            _origin = selectedBounds;
+            _dragOrigins = Session.Members().ToDictionary(e => e.Id, e => e.Bounds);
             _startX = x;
             _startY = y;
             _cursor = "nwse-resize";
@@ -225,7 +230,7 @@
         _startX = x;
         _startY = y;
         _cursor = "grabbing";
-        _dragOrigins = TabPanels.WithChildren(Session.CurrentLayer, Session.Selection)
+        _dragOrigins = Session.Members()
             .ToDictionary(element => element.Id, element => element.Bounds);
 
         Session.BeginGesture(Session.Selection.Count > 1 ? "Блоки перемещены" : "Блок перемещён");
@@ -274,6 +279,19 @@
                         return;
                     }
 
+                    if (Session.Selection.Count > 1)
+                    {
+                        var groupBounds = CanvasInteraction.Resize(_origin, handle, deltaX, deltaY, document.GridSize, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
+                        var sx = Math.Max(groupBounds.Width / _origin.Width, _dragOrigins.Values.Max(r => CanvasGeometry.MinimumSize / r.Width));
+                        var sy = Math.Max(groupBounds.Height / _origin.Height, _dragOrigins.Values.Max(r => CanvasGeometry.MinimumSize / r.Height));
+                        foreach (var (memberId, original) in _dragOrigins)
+                        {
+                            if (Session.CurrentLayer.Find(memberId) is not { } member) continue;
+                            var scaled = CanvasGeometry.Clamp(new Rect(groupBounds.X+(original.X-_origin.X)*sx,groupBounds.Y+(original.Y-_origin.Y)*sy,original.Width*sx,original.Height*sy),Session.CurrentLayer.CanvasWidth,Session.CurrentLayer.CanvasHeight);
+                            (member.X,member.Y,member.Width,member.Height)=(scaled.X,scaled.Y,scaled.Width,scaled.Height);
+                        }
+                        return;
+                    }
                     var resized = CanvasInteraction.Resize(
                         _origin, handle, deltaX, deltaY, document.GridSize, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
 
@@ -368,7 +386,12 @@
             case "Redo":
                 return Session.Redo();
 
+            case "Group":
+                Session.GroupSelected(); return true;
+            case "Ungroup":
+                Session.UngroupSelected(); return true;
             case "Escape":
+                if (Session.LeaveGroup()) return true;
                 Session.ClearSelection();
                 return true;
 
@@ -399,7 +422,7 @@
 
     private bool Nudge(double deltaX, double deltaY)
     {
-        var ids = TabPanels.WithChildren(Session.CurrentLayer, Session.Selection).Select(e => e.Id).ToList();
+        var ids = Session.Members().Select(e => e.Id).ToList();
         if (ids.Count == 0)
         {
             return false;

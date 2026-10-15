@@ -173,7 +173,9 @@ function onKeyDown(event) {
     const ctrl = event.ctrlKey || event.metaKey;
     let key = null;
 
-    if (event.key === 'Delete' || event.key === 'Backspace') {
+    if (ctrl && (event.key === 'g' || event.key === 'G')) {
+        key = event.shiftKey ? 'Ungroup' : 'Group';
+    } else if (event.key === 'Delete' || event.key === 'Backspace') {
         key = 'Delete';
     } else if (event.key === 'F2') {
         key = 'EditText';

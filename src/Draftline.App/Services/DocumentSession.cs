@@ -31,6 +31,7 @@ public sealed partial class DocumentSession
         _history = history ?? throw new ArgumentNullException(nameof(history));
         Document = DraftDocument.CreateNew("Без имени");
         _currentLayerId = Document.StartLayer.Id;
+        EditingGroupId = string.Empty;
     }
 
     /// <summary>The open wireframe. Never null: a session always has something to draw.</summary>
@@ -55,6 +56,7 @@ public sealed partial class DocumentSession
         }
 
         _currentLayerId = layer.Id;
+        EditingGroupId = "";
         _selection.Clear();
         Status = "Экран: " + layer.Name;
 
@@ -233,6 +235,7 @@ public sealed partial class DocumentSession
         if (wasCurrent)
         {
             _currentLayerId = Document.StartLayer.Id;
+        EditingGroupId = string.Empty;
             _selection.Clear();
         }
 
@@ -334,6 +337,7 @@ public sealed partial class DocumentSession
 
         var before = Document.Clone();
         change(Document);
+        ElementGroups.Normalize(CurrentLayer);
         PruneSelection();
         Document.Touch();
         _history.Record(before, label);
@@ -352,6 +356,7 @@ public sealed partial class DocumentSession
             .LastOrDefault(candidate => TabPanels.IsContainer(candidate.Kind) && TabPanels.PanelBounds(candidate).Contains(x, y) &&
                 (candidate.Kind != WireframeKind.Accordion || ElementState.IsExpanded(candidate)));
         var element = ElementDefaults.Create(kind);
+        element.GroupPath = parent is not null ? new(parent.GroupPath) : CurrentLayer.Elements.FirstOrDefault(e=>e.GroupPath.Contains(EditingGroupId) && EditingGroupId.Length>0)?.GroupPath.TakeWhile(id=>id!=EditingGroupId).Append(EditingGroupId).ToList() ?? new();
         if (parent is not null)
         {
             element.ParentTabsId = parent.Id;
@@ -396,7 +401,9 @@ public sealed partial class DocumentSession
     {
         ArgumentNullException.ThrowIfNull(ids);
 
-        var next = ids.Where(id => CurrentLayer.Find(id) is { } element && TabPanels.IsVisible(CurrentLayer, element)).Distinct().ToList();
+        var requested=ids.ToList();
+        if(EditingGroupId.Length>0 && requested.Any(id=>CurrentLayer.Find(id) is { } e && !e.GroupPath.Contains(EditingGroupId)))EditingGroupId="";
+        var next = ElementGroups.Expand(CurrentLayer, requested, EditingGroupId).Where(id => CurrentLayer.Find(id) is { } element && TabPanels.IsVisible(CurrentLayer, element)).Distinct().ToList();
         if (next.SequenceEqual(_selection))
         {
             return;
@@ -414,7 +421,7 @@ public sealed partial class DocumentSession
     /// <summary>Deletes the selected blocks. False when there was nothing to delete.</summary>
     public bool RemoveSelected()
     {
-        var ids = TabPanels.WithChildren(CurrentLayer, _selection).Select(element => element.Id).ToList();
+        var ids = Members().Select(element => element.Id).ToList();
         if (ids.Count == 0)
         {
             return false;
@@ -431,37 +438,11 @@ public sealed partial class DocumentSession
     /// <summary>Copies the selected block a step away, selects the copy and returns it.</summary>
     public WireframeElement? DuplicateSelected()
     {
-        if (Selected is not { } source)
-        {
-            return null;
-        }
-
-        var copy = source.Clone(keepId: false);
-        var offset = Document.GridSize > 1 ? Document.GridSize : 8;
-        var members = TabPanels.WithChildren(CurrentLayer, new[] { source.Id }).ToList();
-        var delta = TabPanels.ClampTranslation(members.Select(e => e.Bounds), offset, offset,
-            CurrentLayer.CanvasWidth, CurrentLayer.CanvasHeight);
-        copy.X += delta.X;
-        copy.Y += delta.Y;
-
-        Edit("Блок скопирован", document =>
-        {
-            var layer = LayerIn(document);
-            copy.ZIndex = layer.NextZIndex();
-            layer.Elements.Add(copy);
-            foreach (var child in members.Where(e => e.Id != source.Id))
-            {
-                var childCopy = child.Clone(keepId: false);
-                childCopy.ParentTabsId = copy.Id;
-                childCopy.X += delta.X;
-                childCopy.Y += delta.Y;
-                childCopy.ZIndex = layer.NextZIndex();
-                layer.Elements.Add(childCopy);
-            }
-        });
-
-        Select(copy.Id);
-        return copy;
+        var members=Members();if(members.Count==0)return null;var selectedIds=Selection.ToHashSet();
+        var copies=CloneMembers(members);var offset=Document.GridSize>1?Document.GridSize:8;
+        var delta=TabPanels.ClampTranslation(members.Select(e=>e.Bounds),offset,offset,CurrentLayer.CanvasWidth,CurrentLayer.CanvasHeight);
+        Edit("Блоки скопированы",_=>{foreach(var copy in copies){copy.X+=delta.X;copy.Y+=delta.Y;copy.ZIndex=CurrentLayer.NextZIndex();CurrentLayer.Elements.Add(copy);}});
+        SetSelection(copies.Where((e,index)=>selectedIds.Contains(members[index].Id)).Select(e=>e.Id));return copies[0];
     }
 
     /// <summary>Puts the selected block in front of the others.</summary>
@@ -534,12 +515,9 @@ public sealed partial class DocumentSession
 
     private void RearrangeSelected(string label, Action<DraftDocument, WireframeElement> rearrange)
     {
-        if (Selected is not { } selected)
-        {
-            return;
-        }
-
-        Edit(label, document => rearrange(document, selected));
+        var members=Members().OrderBy(e=>e.ZIndex).ToList();if(members.Count==0)return;
+        if(label.Contains("позади",StringComparison.Ordinal))members.Reverse();
+        Edit(label,document=>{foreach(var e in members)rearrange(document,e);});
     }
 
     /// <summary>
@@ -564,6 +542,7 @@ public sealed partial class DocumentSession
         ArgumentNullException.ThrowIfNull(change);
 
         change(Document);
+        ElementGroups.Normalize(CurrentLayer);
         Document.Touch();
 
         _gestureChanged = true;
@@ -601,8 +580,11 @@ public sealed partial class DocumentSession
     /// <summary>True while a gesture is being drawn.</summary>
     public bool IsGestureRunning => _gestureBefore is not null;
 
-    private void PruneSelection() =>
+    private void PruneSelection()
+    {
+        if(EditingGroupId.Length>0 && !CurrentLayer.Elements.Any(e=>e.GroupPath.Contains(EditingGroupId)))EditingGroupId="";
         _selection.RemoveAll(id => CurrentLayer.Find(id) is not { } element || !TabPanels.IsVisible(CurrentLayer, element));
+    }
 
     /// <summary>
     /// The current screen of a document. A step through the history hands back a copy of the document,
