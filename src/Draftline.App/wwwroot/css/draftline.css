@@ -1283,3 +1283,4 @@ body {
 .df-block-list__row { display: flex; gap: .25rem; margin-block: .25rem; }
 .df-block-list__row button { border: 1px solid var(--flare-border-color, #cbd0d8); border-radius: .2rem; background: transparent; color: inherit; cursor: pointer; min-height: 1.75rem; }
 .df-block-list__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.df-smart-guide { position:absolute; background:#c241b6; pointer-events:none; z-index:20002; }

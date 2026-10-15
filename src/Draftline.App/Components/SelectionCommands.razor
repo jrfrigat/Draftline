@@ -31,6 +31,8 @@
     }
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Размер">
+    <FlareRibbonButton Label="Равные интервалы по горизонтали" Disabled="@(Session.IsPreviewing || !Session.CanDistribute)" OnClick="@(() => Session.DistributeSelection(true))" />
+    <FlareRibbonButton Label="Равные интервалы по вертикали" Disabled="@(Session.IsPreviewing || !Session.CanDistribute)" OnClick="@(() => Session.DistributeSelection(false))" />
     <FlareRibbonButton Label="Во всю ширину" Tooltip="Растянуть блок по ширине холста"
                        Disabled="@SingleDisabled" OnClick="@(() => Align(ElementAlignment.MatchWidth))" />
     <FlareRibbonButton Label="Во всю высоту" Tooltip="Растянуть блок по высоте холста"

@@ -371,6 +371,7 @@
                 style += $"font-size:{size}px;";
             }
 
+            style += $"transform:rotate({Element.Rotation.ToString(System.Globalization.CultureInfo.InvariantCulture)}deg);transform-origin:center;";
             return style;
         }
     }

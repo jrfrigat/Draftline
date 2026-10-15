@@ -9,7 +9,7 @@ public static partial class SvgExporter
     public static string Fragment(WireframeElement e)
     {
         var svg = new StringBuilder($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {Number(e.Width)} {Number(e.Height)}\" width=\"100%\" height=\"100%\">");
-        var drawing = e.Clone(); drawing.Disabled = false;
+        var drawing = e.Clone(); drawing.Disabled = false; drawing.Rotation = 0;
         WriteElement(svg,drawing,-e.X,-e.Y); svg.Append("</svg>"); return svg.ToString();
     }
     private static void WriteExtra(StringBuilder svg, WireframeElement e, double x, double y, double size)

@@ -105,6 +105,7 @@ public sealed class DraftLayer
             element.Columns ??= new List<string>();
             element.Rows ??= new List<List<string>>();
             element.FontScale = element.FontScale > 0 ? element.FontScale : 1;
+            element.Rotation = TabPanels.IsContainer(element.Kind) ? 0 : ElementGeometry.Angle(element.Rotation);
 
             if (element.Columns.Count > 0)
             {

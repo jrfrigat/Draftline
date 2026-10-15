@@ -27,6 +27,8 @@ public sealed class WireframeElement
 
     /// <summary>Height in pixels.</summary>
     public double Height { get; set; }
+    /// <summary>Clockwise rotation in degrees around the block's center.</summary>
+    public double Rotation { get; set; }
 
     /// <summary>What the block shows. Empty means the kind's own placeholder.</summary>
     public string Text { get; set; } = string.Empty;
@@ -160,7 +162,11 @@ public sealed class WireframeElement
         Options.Select(ElementDefaults.SplitOption);
 
     /// <summary>True when the point falls inside the block.</summary>
-    public bool Contains(double x, double y) => Bounds.Contains(x, y);
+    public bool Contains(double x, double y)
+    {
+        var point = ElementGeometry.Rotate(x, y, Bounds, -Rotation);
+        return Bounds.Contains(point.X, point.Y);
+    }
 
     /// <summary>
     /// A copy of the block. The identity is kept by default, because the history snapshots a document
@@ -174,6 +180,7 @@ public sealed class WireframeElement
         Y = Y,
         Width = Width,
         Height = Height,
+        Rotation = Rotation,
         Text = Text,
         Options = new List<string>(Options),
         ChoiceItems = ChoiceItems.Select(item => item.Clone()).ToList(),

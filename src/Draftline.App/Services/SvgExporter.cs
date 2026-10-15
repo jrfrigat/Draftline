@@ -22,7 +22,7 @@ public static partial class SvgExporter
     {
         var selected=ids.ToHashSet();
         var elements=TabPanels.Visible(layer).Where(e=>selected.Contains(e.Id)).ToList();
-        var bounds=ElementGroups.Bounds(elements.Select(e=>new Rect(e.X,e.Y,e.Width,ElementState.DrawingHeight(e))));
+        var bounds=ElementGroups.Bounds(elements.Select(ElementGeometry.DrawingBounds));
         var svg=new StringBuilder();Start(svg,Math.Max(1,bounds.Width),Math.Max(1,bounds.Height));
         foreach(var e in elements.OrderBy(e=>(e.Kind is WireframeKind.Select or WireframeKind.MenuBar)&&ElementState.IsExpanded(e)?1:0))WriteElement(svg,e,-bounds.X,-bounds.Y);
         End(svg);return svg.ToString();
@@ -66,12 +66,13 @@ public static partial class SvgExporter
     {
         ArgumentNullException.ThrowIfNull(element);
 
-        var width = Math.Max(1, element.Width);
-        var height = Math.Max(1, ElementState.DrawingHeight(element));
+        var bounds = ElementGeometry.DrawingBounds(element);
+        var width = Math.Max(1, bounds.Width);
+        var height = Math.Max(1, bounds.Height);
         var svg = new StringBuilder();
 
         Start(svg, width, height);
-        WriteElement(svg, element, offsetX: -element.X, offsetY: -element.Y);
+        WriteElement(svg, element, offsetX: -bounds.X, offsetY: -bounds.Y);
         if (layer is not null && TabPanels.IsContainer(element.Kind))
         {
             foreach (var child in TabPanels.Visible(layer).Where(child => child.ParentTabsId == element.Id))
@@ -99,7 +100,8 @@ public static partial class SvgExporter
 
         // One group per block: the drawing stays readable in a vector editor, and anything reading the
         // file afterwards - a check, a diff, a person - gets the block as one thing.
-        svg.Append(element.Disabled ? "<g opacity=\"0.45\">" : "<g>");
+        svg.Append(element.Disabled ? "<g opacity=\"0.45\"" : "<g");
+        svg.Append($" transform=\"rotate({Number(element.Rotation)} {Number(middle)} {Number(centerY)})\">");
 
         switch (element.Kind)
         {

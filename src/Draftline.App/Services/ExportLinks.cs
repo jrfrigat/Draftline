@@ -14,6 +14,9 @@ public static class ExportLinks
         var links = new List<ExportLink>();
         foreach (var e in TabPanels.Visible(layer))
         {
+            var start = links.Count;
+            try
+            {
             if (e.Disabled) continue;
             if (e.HasTransition) { links.Add(new(e.X, e.Y, e.Width, e.Height, e.TargetLayerId, "")); continue; }
             if (e.Kind == WireframeKind.Link && NavItems.SafeUrl(e.Value) is { Length: > 0 } url)
@@ -42,6 +45,17 @@ public static class ExportLinks
                 var width = e.Width / Math.Max(1, e.ChoiceItems.Count);
                 for (var i = 0; i < e.ChoiceItems.Count; i++) Add(e.ChoiceItems[i], new(e.X + i * width, e.Y, width, e.Height));
                 if (e.Kind == WireframeKind.MenuBar && ElementState.IsExpanded(e)) Rows(NavItems.MenuRows(e), NavItems.MenuBounds(e));
+            }
+            }
+            finally
+            {
+                if (e.Rotation != 0) for(var i=start;i<links.Count;i++)
+                {
+                    var link=links[i];var rect=new Rect(link.X,link.Y,link.Width,link.Height);
+                    var points=new[]{ElementGeometry.Rotate(rect.X,rect.Y,e.Bounds,e.Rotation),ElementGeometry.Rotate(rect.Right,rect.Y,e.Bounds,e.Rotation),ElementGeometry.Rotate(rect.X,rect.Bottom,e.Bounds,e.Rotation),ElementGeometry.Rotate(rect.Right,rect.Bottom,e.Bounds,e.Rotation)};
+                    var x=points.Min(p=>p.X);var y=points.Min(p=>p.Y);
+                    links[i]=link with {X=x,Y=y,Width=points.Max(p=>p.X)-x,Height=points.Max(p=>p.Y)-y};
+                }
             }
         }
         return links;

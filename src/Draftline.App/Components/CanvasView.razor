@@ -20,8 +20,8 @@
 
         @if (Session.SelectionBounds is { } selectionBounds)
         {
-            <div class="df-selection @(Session.SelectedGroupId.Length > 0 ? "df-selection--group" : "")" style="@RectStyle(selectionBounds)">
-                @foreach (var (handle, x, y) in Session.CanTransformSelection ? CanvasInteraction.HandlesOf(selectionBounds) : Array.Empty<(ResizeHandle, double, double)>())
+            <div class="df-selection @(Session.SelectedGroupId.Length > 0 ? "df-selection--group" : "")" style="@(RectStyle(selectionBounds) + (Session.Selected is { } rotated ? $"transform:rotate({Number(rotated.Rotation)}deg);" : ""))">
+                @foreach (var (handle, x, y) in CanResize ? CanvasInteraction.HandlesOf(selectionBounds) : Array.Empty<(ResizeHandle, double, double)>())
                 {
                     <span class="df-handle df-handle--@HandleClass(handle)"
                           style="@HandleStyle(selectionBounds, x, y)"></span>
@@ -29,6 +29,8 @@
             </div>
         }
 
+        @if (_verticalGuide is { } gx) { <div class="df-smart-guide" style="left:@(Number(gx))px;top:0;width:1px;height:100%"></div> }
+        @if (_horizontalGuide is { } gy) { <div class="df-smart-guide" style="top:@(Number(gy))px;left:0;height:1px;width:100%"></div> }
         @if (_marquee is { } frame)
         {
             <div class="df-marquee" style="@RectStyle(frame)"></div>
@@ -67,6 +69,8 @@
     private string _cursor = "default";
     private int _cascade;
     private string? _editingId;
+    private double? _verticalGuide, _horizontalGuide;
+    private bool CanResize => Session.CanTransformSelection && Session.Members().All(e => e.Rotation == 0);
 
     /// <summary>Opens direct text editing for the block under the double click.</summary>
     [JSInvokable]
@@ -184,7 +188,7 @@
     {
         // A handle of the selected block wins over everything under the pointer: it is small, it is
         // deliberate, and it is drawn on top of whatever it belongs to.
-        if (Session.CanTransformSelection && Session.SelectionBounds is { } selectedBounds && CanvasInteraction.HandleAt(selectedBounds, x, y) is { } handle)
+        if (CanResize && Session.SelectionBounds is { } selectedBounds && CanvasInteraction.HandleAt(selectedBounds, x, y) is { } handle)
         {
             _gesture = CanvasGesture.Resize;
             _handle = handle;
@@ -240,7 +244,7 @@
 
     /// <summary>The pointer moving with the button down: the gesture follows it.</summary>
     [JSInvokable]
-    public void OnPointerMove(double x, double y)
+    public void OnPointerMove(double x, double y, bool free = false)
     {
         if (_gesture == CanvasGesture.None)
         {
@@ -253,8 +257,24 @@
         switch (_gesture)
         {
             case CanvasGesture.Move:
+                _verticalGuide = _horizontalGuide = null;
+                if (!free)
+                {
+                    var moving = ElementGroups.Bounds(_dragOrigins.Select(pair =>
+                    {
+                        var e = Session.CurrentLayer.Find(pair.Key)!.Clone();
+                        e.X = pair.Value.X + deltaX; e.Y = pair.Value.Y + deltaY;
+                        return ElementGeometry.DrawingBounds(e);
+                    }));
+                    var snap = SmartGuides.Snap(moving, TabPanels.Visible(Session.CurrentLayer).Where(e => !_dragOrigins.ContainsKey(e.Id)).Select(ElementGeometry.DrawingBounds), Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
+                    deltaX += snap.X; deltaY += snap.Y;
+                    _verticalGuide = snap.Vertical; _horizontalGuide = snap.Horizontal;
+                }
+                var unclamped = (deltaX, deltaY);
                 (deltaX, deltaY) = TabPanels.ClampTranslation(_dragOrigins.Values, deltaX, deltaY,
                     Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
+                if (unclamped.deltaX != deltaX) _verticalGuide = null;
+                if (unclamped.deltaY != deltaY) _horizontalGuide = null;
                 Session.Preview(document =>
                 {
                     foreach (var (id, origin) in _dragOrigins)
@@ -342,6 +362,7 @@
         _handle = null;
         _cursor = "default";
         _dragOrigins.Clear();
+        _verticalGuide = _horizontalGuide = null;
         StateHasChanged();
     }
 

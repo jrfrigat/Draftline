@@ -107,7 +107,7 @@ function onPointerMove(event) {
     }
 
     const point = pointOf(event);
-    dotNet.invokeMethodAsync('OnPointerMove', point.x, point.y);
+    dotNet.invokeMethodAsync('OnPointerMove', point.x, point.y, event.ctrlKey || event.metaKey);
 }
 
 function onPointerUp(event) {
