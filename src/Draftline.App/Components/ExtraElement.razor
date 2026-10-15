@@ -1,4 +1,4 @@
-<div class="df-extra-art" aria-hidden="true">@((MarkupString)SvgExporter.Fragment(Element))</div>
+<div class="df-extra-art" aria-hidden="true">@((MarkupString)SvgExporter.Fragment(Element,Drawing))</div>
 @if (Interactive)
 {
     @if (Element.Kind == WireframeKind.Switch)
@@ -46,6 +46,7 @@
     [Parameter] public bool Interactive { get; set; }
     /// <summary>Preview repaint.</summary>
     [Parameter] public EventCallback StateChanged { get; set; }
+    [CascadingParameter] public DrawingTheme? Drawing { get; set; }
     private string ChoiceStyle(int index) => $"left:{(100d*index/ElementState.Items(Element).Count).ToString(System.Globalization.CultureInfo.InvariantCulture)}%;width:{(100d/ElementState.Items(Element).Count).ToString(System.Globalization.CultureInfo.InvariantCulture)}%;" + (Element.Kind == WireframeKind.Alert ? "top:auto;height:32px;bottom:4px;" : "");
     private async Task Choose(int index) { if (Element.Disabled) return; Element.SelectedIndex=index; await StateChanged.InvokeAsync(); }
     private string InputType => Element.Kind == WireframeKind.DatePicker ? "date" : Element.Kind == WireframeKind.TimePicker ? "time" : "color";

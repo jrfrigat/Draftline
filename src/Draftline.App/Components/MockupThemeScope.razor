@@ -2,12 +2,13 @@
 @inject DocumentSession Session
 @inject ThemeCoordinator Themes
 @implements IDisposable
-<FlareThemeScope Theme="@(Selection.ThemeId=="wireframe"?"fluent2":Selection.ThemeId)" Palette="@Selection.PaletteId" Mode="@(Selection.ThemeId=="wireframe"?ThemeMode.Light:Themes.ResolveMode(Selection.Mode))" Class="df-mockup-scope">
-    @ChildContent
+<FlareThemeScope Theme="@(Selection.ThemeId=="wireframe"?"fluent2":Selection.ThemeId)" Palette="@Selection.PaletteId" Mode="@(Selection.ThemeId=="wireframe"?ThemeMode.Light:Themes.ResolveMode(Selection.Mode))" Class="@(Drawing is null?"df-mockup-scope":"df-mockup-scope df-themed")" Style="@Drawing?.Css">
+    <CascadingValue TValue="DrawingTheme" Value="@Drawing">@ChildContent</CascadingValue>
 </FlareThemeScope>
 @code {
     [Parameter] public RenderFragment? ChildContent{get;set;}
     private MockupThemeSelection Selection=>Session.Document.MockupTheme;
+    private DrawingTheme? Drawing=>Themes.Drawing(Selection);
     protected override void OnInitialized(){Session.Changed+=Refresh;Themes.Changed+=Refresh;}
     protected override async Task OnAfterRenderAsync(bool firstRender){if(firstRender)await Themes.InitializeAsync();}
     private void Refresh()=>InvokeAsync(StateHasChanged);

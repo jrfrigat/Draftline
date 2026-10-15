@@ -15,6 +15,7 @@ public sealed class ThemeCoordinator : IAsyncDisposable
     private Task? _initialization;
     private IJSObjectReference? _module;
     private DotNetObjectReference<ThemeCoordinator>? _self;
+    private readonly Dictionary<string,DrawingTheme?> _drawings=new();
     public ThemeCoordinator(IThemeService editor,IJSRuntime js){Editor=editor;_js=js;Editor.OnThemeChanged+=RootChanged;}
     private Task RootChanged(){Changed?.Invoke();return Task.CompletedTask;}
     public Task InitializeAsync()=>_initialization??=InitializeCore();
@@ -25,6 +26,13 @@ public sealed class ThemeCoordinator : IAsyncDisposable
     }
     [JSInvokable] public void SystemChanged(bool dark){SystemDark=dark;Changed?.Invoke();}
     public ThemeMode ResolveMode(string mode)=>mode=="dark" || mode=="auto" && SystemDark?ThemeMode.Dark:ThemeMode.Light;
+    public DrawingTheme? Drawing(MockupThemeSelection selection)
+    {
+        if(selection.ThemeId=="wireframe")return null;
+        var key=selection.ThemeId+"/"+selection.PaletteId+"/"+ResolveMode(selection.Mode);
+        if(!_drawings.TryGetValue(key,out var drawing))_drawings[key]=drawing=MockupThemeResolver.Resolve(Editor,selection,SystemDark);
+        return drawing;
+    }
     public static ThemeMode EditorMode(string? mode)=>mode switch {"dark"=>ThemeMode.Dark,"light"=>ThemeMode.Light,_=>ThemeMode.Auto};
     public async ValueTask DisposeAsync()
     {

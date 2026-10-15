@@ -1,5 +1,6 @@
 using System.Text;
 using Draftline.App.Model;
+using Draftline.App.Theming;
 using Microsoft.JSInterop;
 
 namespace Draftline.App.Services;
@@ -16,10 +17,11 @@ public sealed partial class DocumentFileService : IAsyncDisposable
     private const string ModulePath = "./js/draftline-files.js";
 
     private readonly IJSRuntime _js;
+    private readonly ThemeCoordinator _themes;
     private IJSObjectReference? _module;
 
     /// <summary>The file operations over the given JavaScript runtime.</summary>
-    public DocumentFileService(IJSRuntime js) => _js = js;
+    public DocumentFileService(IJSRuntime js,ThemeCoordinator themes) { _js=js;_themes=themes; }
 
     /// <summary>Hands the open wireframe to the person as a JSON file.</summary>
     public async Task DownloadJsonAsync(DraftDocument document, CancellationToken cancellationToken = default)
@@ -48,6 +50,7 @@ public sealed partial class DocumentFileService : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(layer);
 
         var drawing = element is null ? SvgExporter.Export(layer) : SvgExporter.ExportElement(element, layer);
+        drawing = SvgExporter.ApplyTheme(drawing,_themes.Drawing(document.MockupTheme));
         var suffix = element is null ? string.Empty : "-" + element.Kind.ToString().ToLowerInvariant();
 
         var module = await ModuleAsync(cancellationToken).ConfigureAwait(false);
@@ -78,7 +81,7 @@ public sealed partial class DocumentFileService : IAsyncDisposable
                     cancellationToken,
                     FileNameFor(document, ".svg", name),
                     "image/svg+xml",
-                    svg)
+                    SvgExporter.ApplyTheme(svg,_themes.Drawing(document.MockupTheme)))
                 .ConfigureAwait(false);
         }
     }

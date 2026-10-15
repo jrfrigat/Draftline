@@ -102,7 +102,10 @@ public static partial class SvgExporter
         // One group per block: the drawing stays readable in a vector editor, and anything reading the
         // file afterwards - a check, a diff, a person - gets the block as one thing.
         svg.Append(element.Disabled ? "<g opacity=\"0.45\"" : "<g");
-        svg.Append($" transform=\"rotate({Number(element.Rotation)} {Number(middle)} {Number(centerY)})\">");
+        svg.Append($" transform=\"rotate({Number(element.Rotation)} {Number(middle)} {Number(centerY)})\" data-kind=\"{element.Kind}\"");
+        if(element.Kind is WireframeKind.ColorPicker or WireframeKind.BarChart or WireframeKind.LineChart or WireframeKind.PieChart && element.Value.StartsWith('#'))
+            svg.Append($" data-author-color=\"{ExtraElements.Color(element.Value)}\"");
+        svg.Append('>');
 
         switch (element.Kind)
         {

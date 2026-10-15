@@ -11,7 +11,7 @@ public sealed partial class DocumentFileService
     public async Task DownloadSelectionSvgAsync(DraftDocument document, DraftLayer layer, IEnumerable<string> ids)
     {
         var module=await ModuleAsync(default);
-        await module.InvokeVoidAsync("download",FileNameFor(document,"-selection.svg",layer.Name),"image/svg+xml",SvgExporter.ExportSelection(layer,ids));
+        await module.InvokeVoidAsync("download",FileNameFor(document,"-selection.svg",layer.Name),"image/svg+xml",SvgExporter.ApplyTheme(SvgExporter.ExportSelection(layer,ids),_themes.Drawing(document.MockupTheme)));
     }
 
     /// <summary>Download one or more screens as PNG files or a linked PDF.</summary>
@@ -20,7 +20,7 @@ public sealed partial class DocumentFileService
         var pages = layers.Select((layer, index) => new
         {
             id = layer.Id, width = layer.CanvasWidth, height = layer.CanvasHeight,
-            svg = SvgExporter.Export(layer), links = ExportLinks.For(layer),
+            svg = SvgExporter.ApplyTheme(SvgExporter.Export(layer),_themes.Drawing(document.MockupTheme)), links = ExportLinks.For(layer),
             fileName = FileNameFor(document, $"-{index + 1}.png", layer.Name)
         }).ToArray();
         _exportModule ??= await _js.InvokeAsync<IJSObjectReference>("import", "./js/draftline-export.js");

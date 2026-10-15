@@ -114,13 +114,13 @@
         case WireframeKind.Image:
             @if (ImageAssets.HasImage(Element))
             {
-                <span class="df-local-image">@((MarkupString)SvgExporter.Fragment(Element))</span>
+                <span class="df-local-image">@((MarkupString)SvgExporter.Fragment(Element,Drawing))</span>
             }
             else
             {
             <span class="df-image__cross"></span>
             }
-            @if (!string.IsNullOrWhiteSpace(Element.Text))
+            @if (!ImageAssets.HasImage(Element) && !string.IsNullOrWhiteSpace(Element.Text))
             {
                 <span class="df-image__caption">@Element.Text</span>
             }
@@ -232,6 +232,7 @@
     /// <summary>The block this view draws.</summary>
     [Parameter, EditorRequired]
     public WireframeElement Element { get; set; } = null!;
+    [CascadingParameter] public DrawingTheme? Drawing { get; set; }
 
     /// <summary>Enables interaction with a preview-owned copy; the authoring canvas remains a drawing.</summary>
     [Parameter] public bool Interactive { get; set; }
