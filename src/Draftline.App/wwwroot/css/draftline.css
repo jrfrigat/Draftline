@@ -1297,3 +1297,6 @@ body {
 .df-component-library button { color:inherit; background:transparent; border:1px solid #757b86; border-radius:.2rem; padding:.35rem; cursor:pointer; }
 .df-component-library button:disabled { opacity:.4; cursor:default; }
 .df-component-library__item { display:flex; justify-content:space-between; align-items:center; gap:.3rem; border-top:1px solid #757b8655; padding-block:.3rem; }
+.df-alternate { display:flex; gap:.25rem; }
+.df-alternate button:first-child { flex:1; text-align:left; }
+.df-alternate button[aria-pressed="true"], .df-alternate button[aria-pressed="True"] { border-color:#3b82f6; }

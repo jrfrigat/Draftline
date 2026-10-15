@@ -1,0 +1,22 @@
+@inject DocumentSession Session
+@implements IDisposable
+<div class="df-component-library">
+    <FlareTextField Label="Название варианта" Size="FieldSize.Xs" Value="@_name" ValueChanged="@((string? value)=>_name=value??"")" />
+    <button type="button" @onclick="@(()=>Session.CreateAlternate(_name))">Сохранить новый вариант</button>
+    <button type="button" disabled="@(Session.CurrentLayer.CurrentAlternateId.Length==0)" @onclick="Session.SaveCurrentAlternate">Обновить текущий вариант</button>
+    <p class="df-hint">При переключении правки текущего варианта сохраняются.</p>
+    @foreach(var alternate in Session.CurrentLayer.Alternates)
+    {
+        <div class="df-alternate" @key="alternate.Id">
+            <button type="button" aria-pressed="@(alternate.Id==Session.CurrentLayer.CurrentAlternateId)" @onclick="@(()=>Session.SwitchAlternate(alternate.Id))">@alternate.Name</button>
+            <button type="button" aria-label="@($"Переименовать вариант {alternate.Name}")" @onclick="@(()=>Session.RenameAlternate(alternate.Id,_name))">Имя</button>
+            <button type="button" aria-label="@($"Удалить вариант {alternate.Name}")" @onclick="@(()=>Session.DeleteAlternate(alternate.Id))">Удалить</button>
+        </div>
+    }
+</div>
+@code {
+    private string _name="Вариант";
+    protected override void OnInitialized()=>Session.Changed+=Refresh;
+    private void Refresh()=>InvokeAsync(StateHasChanged);
+    public void Dispose()=>Session.Changed-=Refresh;
+}

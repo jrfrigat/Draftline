@@ -24,6 +24,8 @@ public sealed class DraftLayer
 
     /// <summary>The blocks on this screen.</summary>
     public List<WireframeElement> Elements { get; set; } = new();
+    public List<ScreenAlternate> Alternates { get; set; } = new();
+    public string CurrentAlternateId { get; set; } = "";
 
     /// <summary>A screen with a name.</summary>
     public static DraftLayer Create(string name) =>
@@ -65,7 +67,8 @@ public sealed class DraftLayer
         Name = Name,
         CanvasWidth = CanvasWidth,
         CanvasHeight = CanvasHeight,
-        Elements = Elements.Select(element => element.Clone()).ToList()
+        Elements = Elements.Select(element => element.Clone()).ToList(),
+        Alternates = Alternates.Select(a=>a.Clone()).ToList(), CurrentAlternateId=CurrentAlternateId
     };
 
     /// <summary>
@@ -76,6 +79,15 @@ public sealed class DraftLayer
     /// </summary>
     public void Normalize()
     {
+        Alternates??=new();CurrentAlternateId??="";
+        var alternateIds=new HashSet<string>();Alternates.RemoveAll(a=>a is null);
+        foreach(var alternate in Alternates)
+        {
+            if(string.IsNullOrWhiteSpace(alternate.Id) || !alternateIds.Add(alternate.Id))alternate.Id=Guid.NewGuid().ToString("n");
+            alternate.Name=string.IsNullOrWhiteSpace(alternate.Name)?"Вариант":alternate.Name.Trim();
+            var snapshot=Create("Variant");snapshot.CanvasWidth=alternate.CanvasWidth;snapshot.CanvasHeight=alternate.CanvasHeight;snapshot.Elements=alternate.Elements??new();snapshot.Normalize();alternate.Capture(snapshot);
+        }
+        if(!Alternates.Any(a=>a.Id==CurrentAlternateId))CurrentAlternateId="";
         Id = string.IsNullOrWhiteSpace(Id) ? Guid.NewGuid().ToString("n") : Id;
         Name = string.IsNullOrWhiteSpace(Name) ? "Экран" : Name.Trim();
         CanvasWidth = CanvasWidth > 0 ? CanvasWidth : DraftDocument.DefaultCanvasWidth;
