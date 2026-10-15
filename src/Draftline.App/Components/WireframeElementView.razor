@@ -158,12 +158,20 @@
             break;
 
         case WireframeKind.Progress:
-            <span class="df-progress__fill" style="@FillStyle"></span>
+            <span class="df-progress__fill @(Element.Indeterminate ? "df-progress__fill--indeterminate" : "")" style="@(Element.Indeterminate ? "left:30%;width:40%" : FillStyle)"></span>
             break;
 
         case WireframeKind.Slider:
-            <span class="df-slider__track"></span>
-            <span class="df-slider__handle" style="@HandleStyle"></span>
+            @if (Interactive)
+            {
+                <input type="range" class="df-preview-slider" aria-label="Ползунок" min="@N(Element.Minimum)" max="@N(Element.Maximum)" step="@N(Element.Step)"
+                       value="@Element.Value" disabled="@Element.Disabled" @oninput="SetSlider" />
+            }
+            else
+            {
+                <span class="df-slider__track"></span>
+                <span class="df-slider__handle" style="@HandleStyle"></span>
+            }
             break;
 
         case WireframeKind.Badge:
@@ -175,23 +183,19 @@
             break;
 
         case WireframeKind.Calendar:
-            <span class="df-calendar__title">@Element.DisplayText</span>
-            <span class="df-calendar__grid">
-                @for (var day = 1; day <= 28; day++)
-                {
-                    <span class="df-calendar__day">@day</span>
-                }
-            </span>
+            <CalendarElement Element="Element" Interactive="Interactive" StateChanged="StateChanged" />
             break;
 
         case WireframeKind.Map:
             <span class="df-map__road df-map__road--one"></span>
             <span class="df-map__road df-map__road--two"></span>
             <span class="df-map__pin"></span>
+            @if (!string.IsNullOrWhiteSpace(Element.Text)) { <span class="df-image__caption">@Element.Text</span> }
             break;
 
         case WireframeKind.Video:
             <span class="df-video__play">▶</span>
+            @if (!string.IsNullOrWhiteSpace(Element.Text)) { <span class="df-image__caption">@Element.Text</span> }
             break;
 
     }
@@ -315,6 +319,7 @@
         {
             var css = "df-el df-el--" + Element.Kind.ToString().ToLowerInvariant();
             if (Element.Disabled) css += " df-el--disabled";
+            if (Element.Vertical) css += " df-el--vertical";
             if (FormState.HasVisualState(Element.Kind)) css += " df-el--" + Element.VisualState.ToString().ToLowerInvariant();
             if ((Element.Kind is WireframeKind.Select or WireframeKind.MenuBar) && ElementState.IsExpanded(Element)) css += " df-el--open";
             return Element.Bold ? css + " df-el--bold" : css;
@@ -334,28 +339,16 @@
     /// The share of its range a bar or a slider shows, as a percentage between 0 and 100. An empty or
     /// unreadable value means the middle of the range, which is what the block lands with.
     /// </summary>
-    private string PercentText
-    {
-        get
-        {
-            var percent = 60d;
-
-            if (double.TryParse(
-                    Element.Value,
-                    System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    out var parsed))
-            {
-                percent = Math.Clamp(parsed, 0, 100);
-            }
-
-            return percent.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
-        }
-    }
-
+    private static string N(double value) => value.ToString("G", System.Globalization.CultureInfo.InvariantCulture);
+    private string PercentText => N(ControlRange.Percent(Element));
     private string FillStyle => "width:" + PercentText + "%;";
-
-    private string HandleStyle => "left:" + PercentText + "%;";
+    private string HandleStyle => (Element.Vertical ? "bottom:" : "left:") + PercentText + "%;";
+    private async Task SetSlider(ChangeEventArgs args)
+    {
+        if (!Interactive || Element.Disabled) return;
+        Element.Value = args.Value?.ToString() ?? ""; ControlRange.Normalize(Element);
+        await StateChanged.InvokeAsync();
+    }
 
     private string Style
     {

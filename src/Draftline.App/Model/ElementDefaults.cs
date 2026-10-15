@@ -90,6 +90,8 @@ public static class ElementDefaults
 
         TreeState.Normalize(element);
         NavItems.Normalize(element);
+        ControlRange.Normalize(element);
+        CalendarState.Normalize(element);
         return element;
     }
 
@@ -214,7 +216,9 @@ public static class ElementDefaults
     /// <summary>True when the block draws a sentence rather than a control.</summary>
     public static bool IsTextual(WireframeKind kind) =>
         kind is WireframeKind.Heading or WireframeKind.Text or WireframeKind.Button
-            or WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Checkbox or WireframeKind.Radio;
+            or WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Checkbox or WireframeKind.Radio
+            or WireframeKind.Badge or WireframeKind.Avatar or WireframeKind.Image or WireframeKind.Panel
+            or WireframeKind.Calendar or WireframeKind.Map or WireframeKind.Video;
 
     /// <summary>True when the kind has a second line worth writing: a description, a detail, a caption.</summary>
     public static bool AcceptsSecondaryText(WireframeKind kind) =>

@@ -20,6 +20,7 @@ else
         <FormInspector Element="element" />
         <NavInspector Element="element" />
         <TableInspector Element="element" />
+        <RangeInspector Element="element" />
 
         @if (ElementState.HasAvailability(element.Kind))
         {
@@ -300,7 +301,7 @@ else
             return;
         }
 
-        Apply(element, "Значение изменено", target => target.Value = text);
+        Apply(element, "Значение изменено", target => { target.Value = text; ControlRange.Normalize(target); });
     }
 
     private void SetPlaceholder(WireframeElement element, string? value)

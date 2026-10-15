@@ -1,0 +1,32 @@
+@inject DocumentSession Session
+@if (Element.Kind == WireframeKind.Progress)
+{
+    <FlareCheckbox Value="@Element.Indeterminate" ValueChanged="@((bool value) => Session.Edit("Состояние прогресса изменено", _ => Element.Indeterminate = value))">Неопределённый прогресс</FlareCheckbox>
+}
+@if (Element.Kind == WireframeKind.Slider)
+{
+    <FlareNumericField Label="Минимум" Size="FieldSize.Xs" Value="@Element.Minimum" ValueChanged="@((double? value) => Change(e => e.Minimum = value ?? 0))" />
+    <FlareNumericField Label="Максимум" Size="FieldSize.Xs" Value="@Element.Maximum" ValueChanged="@((double? value) => Change(e => e.Maximum = value ?? 100))" />
+    <FlareNumericField Label="Шаг" Size="FieldSize.Xs" Min="0.000001" Value="@Element.Step" ValueChanged="@((double? value) => Change(e => e.Step = value ?? 1))" />
+}
+@if (Element.Kind is WireframeKind.Slider or WireframeKind.Divider)
+{
+    <FlareCheckbox Value="@Element.Vertical" ValueChanged="@((bool value) => SetVertical(value))">Вертикальный</FlareCheckbox>
+}
+@if (Element.Kind == WireframeKind.Calendar)
+{
+    <FlareTextField Label="Месяц (ГГГГ-ММ)" Size="FieldSize.Xs" Value="@Element.CalendarMonth" ValueChanged="@((string? value) => Change(e => { e.CalendarMonth = value ?? ""; CalendarState.Normalize(e); }))" />
+    <FlareTextField Label="Выбранная дата (ГГГГ-ММ-ДД)" Size="FieldSize.Xs" Value="@Element.SelectedDate" ValueChanged="@((string? value) => Change(e => CalendarState.SetDate(e, value)))" />
+}
+@code {
+    /// <summary>The selected range, calendar or divider.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    private void Change(Action<WireframeElement> action) => Session.Edit("Свойства блока изменены", _ => { action(Element); ControlRange.Normalize(Element); });
+    private void SetVertical(bool value) => Change(e =>
+    {
+        e.Vertical = value;
+        if ((value && e.Width > e.Height) || (!value && e.Height > e.Width)) (e.Width, e.Height) = (e.Height, e.Width);
+        var bounds = CanvasGeometry.Clamp(e.Bounds, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
+        e.X = bounds.X; e.Y = bounds.Y; e.Width = bounds.Width; e.Height = bounds.Height;
+    });
+}

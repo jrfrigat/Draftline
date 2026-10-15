@@ -70,6 +70,15 @@ public sealed class WireframeElement
     public int SortColumn { get; set; } = -1;
     public bool SortDescending { get; set; }
 
+    /// <summary>Slider range and shared vertical orientation.</summary>
+    public double Minimum { get; set; }
+    public double Maximum { get; set; } = 100;
+    public double Step { get; set; } = 1;
+    public bool Vertical { get; set; }
+    /// <summary>ISO displayed month and selected calendar date.</summary>
+    public string CalendarMonth { get; set; } = string.Empty;
+    public string SelectedDate { get; set; } = string.Empty;
+
     /// <summary>What the block does when it is pressed in the preview: nothing, navigate, open a dialog.</summary>
     public TransitionKind Transition { get; set; } = TransitionKind.None;
 
@@ -168,6 +177,8 @@ public sealed class WireframeElement
         Columns = new List<string>(Columns),
         Rows = Rows.Select(row => new List<string>(row)).ToList(),
         TableStyle = TableStyle, SelectedRow = SelectedRow, SortColumn = SortColumn, SortDescending = SortDescending,
+        Minimum = Minimum, Maximum = Maximum, Step = Step, Vertical = Vertical,
+        CalendarMonth = CalendarMonth, SelectedDate = SelectedDate,
         Transition = Transition,
         TargetLayerId = TargetLayerId,
         Checked = Checked,

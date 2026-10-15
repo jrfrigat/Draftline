@@ -193,7 +193,8 @@ public static partial class SvgExporter
                 break;
 
             case WireframeKind.Divider:
-                Line(svg, x, centerY, right, centerY, 1);
+                if (element.Vertical) Line(svg, middle, y, middle, bottom, 1);
+                else Line(svg, x, centerY, right, centerY, 1);
                 break;
 
             case WireframeKind.DataGrid:
@@ -275,24 +276,23 @@ public static partial class SvgExporter
             }
 
             case WireframeKind.Progress:
-            {
-                Box(svg, x, y, element.Width, element.Height, Paper);
-
-                svg.Append("<rect x=\"").Append(Number(x)).Append("\" y=\"").Append(Number(y))
-                    .Append("\" width=\"").Append(Number(element.Width * PercentOf(element) / 100))
-                    .Append("\" height=\"").Append(Number(element.Height))
-                    .Append("\" fill=\"").Append(Ink).Append("\"/>");
+                WriteProgress(svg, element, x, y);
                 break;
-            }
 
             case WireframeKind.Slider:
-            {
-                var handleX = x + (element.Width * PercentOf(element) / 100);
-
-                Line(svg, x, centerY, right, centerY, 1);
-                Box(svg, handleX - 5, centerY - 8, 10, 16, Paper);
+                if (element.Vertical)
+                {
+                    var handleY = bottom - element.Height * ControlRange.Percent(element) / 100;
+                    Line(svg, middle, y, middle, bottom, 1);
+                    Box(svg, middle - 8, handleY - 5, 16, 10, Paper);
+                }
+                else
+                {
+                    var handleX = x + element.Width * ControlRange.Percent(element) / 100;
+                    Line(svg, x, centerY, right, centerY, 1);
+                    Box(svg, handleX - 5, centerY - 8, 10, 16, Paper);
+                }
                 break;
-            }
 
             case WireframeKind.Badge:
                 Box(svg, x, y, element.Width, element.Height, Paper);
@@ -305,35 +305,8 @@ public static partial class SvgExporter
                 break;
 
             case WireframeKind.Calendar:
-            {
-                var cellWidth = element.Width / 7;
-                var cellHeight = (element.Height - 24) / 4;
-
-                Box(svg, x, y, element.Width, element.Height, "none");
-                Text(svg, x + 6, y + 16, text, size, "700", 1);
-                Line(svg, x, y + 24, right, y + 24, 0.5);
-
-                for (var day = 1; day <= 28; day++)
-                {
-                    var cell = day - 1;
-                    var dayColumn = cell % 7;
-                    var dayRow = cell / 7;
-
-                    Text(
-                        svg,
-                        x + (cellWidth * dayColumn) + (cellWidth / 2),
-                        y + 34 + (cellHeight * dayRow) + (cellHeight / 2),
-                        day.ToString(CultureInfo.InvariantCulture),
-                        10,
-                        "400",
-                        0.8,
-                        "middle");
-
-                    Line(svg, x + (cellWidth * dayColumn), y + 24, x + (cellWidth * dayColumn), bottom, 0.3);
-                }
-
+                WriteCalendar(svg, element, x, y, size);
                 break;
-            }
 
             case WireframeKind.Map:
                 Box(svg, x, y, element.Width, element.Height, Paper);
@@ -341,11 +314,13 @@ public static partial class SvgExporter
                 Line(svg, x + 10, y, right, bottom - 24, 0.6);
                 Circle(svg, middle, centerY - 6, 6, Ink);
                 Tri(svg, middle - 7, centerY, middle + 7, centerY, middle, centerY + 14);
+                if (!string.IsNullOrWhiteSpace(element.Text)) Text(svg, middle, bottom - 6, element.Text, 11, weight, .85, "middle");
                 break;
 
             case WireframeKind.Video:
                 Box(svg, x, y, element.Width, element.Height, Paper);
                 Tri(svg, middle - 10, centerY - 12, middle - 10, centerY + 12, middle + 12, centerY);
+                if (!string.IsNullOrWhiteSpace(element.Text)) Text(svg, middle, bottom - 6, element.Text, 11, weight, .85, "middle");
                 break;
 
 
@@ -379,19 +354,6 @@ public static partial class SvgExporter
             baseline += size * 1.35;
         }
     }
-
-    /// <summary>
-    /// The share of its range a bar or a slider shows, as a percentage between 0 and 100. An empty or
-    /// unreadable value means the middle of the range, which is where the block lands.
-    /// </summary>
-    private static double PercentOf(WireframeElement element) =>
-        double.TryParse(
-            element.Value,
-            NumberStyles.Float,
-            CultureInfo.InvariantCulture,
-            out var parsed)
-            ? Math.Clamp(parsed, 0, 100)
-            : 60;
 
     private static void Box(StringBuilder svg, double x, double y, double width, double height, string fill) =>
         svg.Append("<rect x=\"").Append(Number(x))

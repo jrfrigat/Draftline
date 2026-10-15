@@ -1,0 +1,31 @@
+<div class="df-date-calendar">
+    <div class="df-date-calendar__title">
+        @if (Interactive) { <button type="button" class="df-state-button" aria-label="Предыдущий месяц" disabled="@(Element.Disabled || !CalendarState.CanShift(Element, -1))" @onclick="() => Shift(-1)">‹</button> }
+        <span>@CalendarState.Title(Element)</span>
+        @if (Interactive) { <button type="button" class="df-state-button" aria-label="Следующий месяц" disabled="@(Element.Disabled || !CalendarState.CanShift(Element, 1))" @onclick="() => Shift(1)">›</button> }
+    </div>
+    <div class="df-date-calendar__grid" style="grid-template-rows:20px repeat(@CalendarState.Weeks(Element),1fr)">
+        @foreach (var weekday in CalendarState.Weekdays) { <span class="df-date-calendar__weekday">@weekday</span> }
+        @foreach (var cell in Enumerable.Range(0, CalendarState.Weeks(Element) * 7))
+        {
+            var day = cell - CalendarState.Offset(Element) + 1;
+            @if (day < 1 || day > CalendarState.Days(Element)) { <span></span> }
+            else if (Interactive)
+            {
+                <button type="button" class="df-state-button @(Element.SelectedDate == CalendarState.Date(Element, day) ? "df-item--selected" : "")" disabled="@Element.Disabled"
+                        aria-label="@CalendarState.Date(Element, day)" aria-pressed="@(Element.SelectedDate == CalendarState.Date(Element, day) ? "true" : "false")" @onclick="() => Select(day)">@day</button>
+            }
+            else { <span class="@(Element.SelectedDate == CalendarState.Date(Element, day) ? "df-item--selected" : "")">@day</span> }
+        }
+    </div>
+</div>
+@code {
+    /// <summary>The authored calendar or preview copy.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    /// <summary>Enable temporary month/date changes.</summary>
+    [Parameter] public bool Interactive { get; set; }
+    /// <summary>Preview repaint notification.</summary>
+    [Parameter] public EventCallback StateChanged { get; set; }
+    private async Task Shift(int direction) { if (!Interactive || Element.Disabled) return; CalendarState.Shift(Element, direction); await StateChanged.InvokeAsync(); }
+    private async Task Select(int day) { if (!Interactive || Element.Disabled) return; Element.SelectedDate = CalendarState.Date(Element, day); await StateChanged.InvokeAsync(); }
+}

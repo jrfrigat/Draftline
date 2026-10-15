@@ -35,8 +35,9 @@ public static class TableState
     public static void Normalize(WireframeElement e)
     {
         if (e.Kind == WireframeKind.DataGrid)
-            foreach (var row in e.Rows)
+            for (var index = 0; index < e.Rows.Count; index++)
             {
+                var row = e.Rows[index] ??= new();
                 if (row.Count > e.Columns.Count) row.RemoveRange(e.Columns.Count, row.Count - e.Columns.Count);
                 while (row.Count < e.Columns.Count) row.Add(string.Empty);
             }
