@@ -315,6 +315,7 @@
                     }
                     var resized = CanvasInteraction.Resize(
                         _origin, handle, deltaX, deltaY, document.GridSize, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
+                    resized = ImageAssets.KeepAspect(resized, element, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight, handle is ResizeHandle.North or ResizeHandle.South);
 
                     element.X = resized.X;
                     element.Y = resized.Y;

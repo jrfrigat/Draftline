@@ -21,6 +21,7 @@ else
         <NavInspector Element="element" />
         <TableInspector Element="element" />
         <RangeInspector Element="element" />
+        <ImageInspector @key="@($"image-{element.Id}")" Element="element" />
 
         @if (ElementState.HasAvailability(element.Kind))
         {
@@ -261,7 +262,11 @@ else
             return;
         }
 
-        Apply(element, "Размер изменён", target => target.Width = Math.Max(CanvasGeometry.MinimumSize, width));
+        Apply(element, "Размер изменён", target =>
+        {
+            var bounds=ImageAssets.KeepAspect(target.Bounds.With(width:Math.Max(CanvasGeometry.MinimumSize,width)),target,Session.CurrentLayer.CanvasWidth,Session.CurrentLayer.CanvasHeight);
+            target.Width=bounds.Width;target.Height=bounds.Height;
+        });
     }
 
     private void SetHeight(WireframeElement element, double? value)
@@ -272,7 +277,11 @@ else
             return;
         }
 
-        Apply(element, "Размер изменён", target => target.Height = Math.Max(CanvasGeometry.MinimumSize, height));
+        Apply(element, "Размер изменён", target =>
+        {
+            var bounds=ImageAssets.KeepAspect(target.Bounds.With(height:Math.Max(CanvasGeometry.MinimumSize,height)),target,Session.CurrentLayer.CanvasWidth,Session.CurrentLayer.CanvasHeight,true);
+            target.Width=bounds.Width;target.Height=bounds.Height;
+        });
     }
 
     private void SetText(WireframeElement element, string? value)

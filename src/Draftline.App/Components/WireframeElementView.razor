@@ -103,7 +103,14 @@
             break;
 
         case WireframeKind.Image:
+            @if (ImageAssets.HasImage(Element))
+            {
+                <span class="df-local-image">@((MarkupString)SvgExporter.Fragment(Element))</span>
+            }
+            else
+            {
             <span class="df-image__cross"></span>
+            }
             @if (!string.IsNullOrWhiteSpace(Element.Text))
             {
                 <span class="df-image__caption">@Element.Text</span>

@@ -195,6 +195,7 @@ public static partial class SvgExporter
                 break;
 
             case WireframeKind.Image:
+                if (ImageAssets.HasImage(element)) { WriteImage(svg, element, x, y); break; }
                 Box(svg, x, y, element.Width, element.Height, Paper);
                 Line(svg, x, y, right, bottom, 1);
                 Line(svg, x, bottom, right, y, 1);

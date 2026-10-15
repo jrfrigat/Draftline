@@ -29,6 +29,16 @@ public sealed class WireframeElement
     public double Height { get; set; }
     /// <summary>Clockwise rotation in degrees around the block's center.</summary>
     public double Rotation { get; set; }
+    public string ImageData { get; set; } = "";
+    public string ImageName { get; set; } = "";
+    public double ImageWidth { get; set; }
+    public double ImageHeight { get; set; }
+    public double CropX { get; set; }
+    public double CropY { get; set; }
+    public double CropWidth { get; set; } = 1;
+    public double CropHeight { get; set; } = 1;
+    public string ImageFit { get; set; } = "contain";
+    public bool KeepImageAspect { get; set; } = true;
 
     /// <summary>What the block shows. Empty means the kind's own placeholder.</summary>
     public string Text { get; set; } = string.Empty;
@@ -181,6 +191,8 @@ public sealed class WireframeElement
         Width = Width,
         Height = Height,
         Rotation = Rotation,
+        ImageData = ImageData, ImageName = ImageName, ImageWidth = ImageWidth, ImageHeight = ImageHeight,
+        CropX = CropX, CropY = CropY, CropWidth = CropWidth, CropHeight = CropHeight, ImageFit = ImageFit, KeepImageAspect = KeepImageAspect,
         Text = Text,
         Options = new List<string>(Options),
         ChoiceItems = ChoiceItems.Select(item => item.Clone()).ToList(),

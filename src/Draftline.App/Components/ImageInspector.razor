@@ -1,0 +1,49 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject DocumentSession Session
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+@if(Element.Kind==WireframeKind.Image)
+{
+    <label class="df-image-import">Локальное изображение (PNG, JPEG, GIF, WebP, до 5 МБ)
+        <InputFile OnChange="Import" accept="image/png,image/jpeg,image/gif,image/webp" disabled="@_loading" />
+    </label>
+    @if(_error.Length>0){<p role="alert">@_error</p>}
+    @if(ImageAssets.HasImage(Element))
+    {
+        <p class="df-hint">@Element.ImageName · @Element.ImageWidth × @Element.ImageHeight</p>
+        <FlareSelect Label="Вписывание изображения" Size="FieldSize.Xs" Value="@Element.ImageFit" ValueChanged="@((string? value)=>Change(e=>e.ImageFit=value??"contain"))">
+            <option value="contain">Вписать целиком</option><option value="cover">Заполнить</option><option value="stretch">Растянуть</option>
+        </FlareSelect>
+        <FlareCheckbox Value="@Element.KeepImageAspect" ValueChanged="@((bool value)=>Change(e=>e.KeepImageAspect=value))">Сохранять пропорции</FlareCheckbox>
+        <p class="df-hint">Обрезка исходного изображения, %</p>
+        <FlareNumericField Label="Обрезка слева, %" Size="FieldSize.Xs" Min="0" Max="99" Value="@(Element.CropX*100)" ValueChanged="@((double? value)=>Change(e=>e.CropX=(value??0)/100))" />
+        <FlareNumericField Label="Обрезка сверху, %" Size="FieldSize.Xs" Min="0" Max="99" Value="@(Element.CropY*100)" ValueChanged="@((double? value)=>Change(e=>e.CropY=(value??0)/100))" />
+        <FlareNumericField Label="Ширина области, %" Size="FieldSize.Xs" Min="1" Max="100" Value="@(Element.CropWidth*100)" ValueChanged="@((double? value)=>Change(e=>e.CropWidth=(value??100)/100))" />
+        <FlareNumericField Label="Высота области, %" Size="FieldSize.Xs" Min="1" Max="100" Value="@(Element.CropHeight*100)" ValueChanged="@((double? value)=>Change(e=>e.CropHeight=(value??100)/100))" />
+        <button type="button" @onclick="@(()=>Change(e=>{e.CropX=e.CropY=0;e.CropWidth=e.CropHeight=1;}))">Сбросить обрезку</button>
+        <button type="button" @onclick="@(()=>Change(e=>{e.ImageData="";e.ImageWidth=e.ImageHeight=0;}))">Убрать изображение</button>
+    }
+}
+@code {
+    [Parameter,EditorRequired] public WireframeElement Element{get;set;}=null!;
+    private IJSObjectReference? _module;
+    private bool _loading;
+    private string _error="";
+    private void Change(Action<WireframeElement> change)=>Session.Edit("Изображение изменено",_=>{change(Element);ImageAssets.Normalize(Element);});
+    private async Task Import(InputFileChangeEventArgs args)
+    {
+        _loading=true;_error="";var id=Element.Id;var layerId=Session.CurrentLayerId;
+        try
+        {
+            using var stream=args.File.OpenReadStream(ImageAssets.MaximumBytes);using var buffer=new MemoryStream();await stream.CopyToAsync(buffer);
+            var bytes=buffer.ToArray();var mime=ImageAssets.Mime(bytes);if(mime.Length==0)throw new InvalidOperationException("Выберите PNG, JPEG, GIF или WebP до 5 МБ.");
+            var data="data:"+mime+";base64,"+Convert.ToBase64String(bytes);
+            _module??=await Js.InvokeAsync<IJSObjectReference>("import","./js/draftline-images.js");var dimensions=await _module.InvokeAsync<double[]>("dimensions",data);
+            if(Session.Document.FindLayer(layerId)?.Find(id) is not { } target)return;
+            Session.Edit("Изображение загружено",_=>{target.ImageData=data;target.ImageName=args.File.Name;target.ImageWidth=dimensions[0];target.ImageHeight=dimensions[1];target.CropX=target.CropY=0;target.CropWidth=target.CropHeight=1;});
+        }
+        catch(Exception exception) when(exception is IOException or JSException or InvalidOperationException){_error="Не удалось загрузить изображение: "+exception.Message;}
+        finally{_loading=false;}
+    }
+    public async ValueTask DisposeAsync(){if(_module is not null)await _module.DisposeAsync();}
+}
