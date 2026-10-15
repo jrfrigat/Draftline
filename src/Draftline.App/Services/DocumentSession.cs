@@ -444,7 +444,7 @@ public sealed partial class DocumentSession
         var members=Members();if(members.Count==0)return null;var selectedIds=Selection.ToHashSet();
         var copies=CloneMembers(members);var offset=Document.GridSize>1?Document.GridSize:8;
         var delta=TabPanels.ClampTranslation(members.Select(e=>e.Bounds),offset,offset,CurrentLayer.CanvasWidth,CurrentLayer.CanvasHeight);
-        Edit("Блоки скопированы",_=>{foreach(var copy in copies){copy.X+=delta.X;copy.Y+=delta.Y;copy.ZIndex=CurrentLayer.NextZIndex();CurrentLayer.Elements.Add(copy);}});
+        Edit("Блоки скопированы",_=>{foreach(var copy in copies){copy.X+=delta.X;copy.Y+=delta.Y;copy.ComponentOriginX+=delta.X;copy.ComponentOriginY+=delta.Y;copy.ZIndex=CurrentLayer.NextZIndex();CurrentLayer.Elements.Add(copy);}});
         SetSelection(copies.Where((e,index)=>selectedIds.Contains(members[index].Id)).Select(e=>e.Id));return copies[0];
     }
 

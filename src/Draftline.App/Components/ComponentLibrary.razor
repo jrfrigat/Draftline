@@ -14,7 +14,7 @@
     @if(Session.Document.Components.Count==0){<p class="df-hint">Выделите блоки и сохраните их как компонент.</p>}
     @foreach(var component in Session.Document.Components)
     {
-        <div class="df-component-library__item" @key="component.Id"><span>@component.Name</span><button type="button" aria-label="@($"Вставить компонент {component.Name}")" @onclick="@(()=>Session.InsertComponent(component.Id))">Вставить</button></div>
+        <div class="df-component-library__item" @key="component.Id"><span>@component.Name</span><button type="button" aria-label="@($"Вставить компонент {component.Name}")" @onclick="@(()=>Session.InsertComponent(component.Id))">Вставить</button><button type="button" aria-label="@($"Копировать компонент {component.Name}")" @onclick="@(()=>Session.CopyComponent(component.Id))">Копировать</button></div>
     }
 </div>
 @code {

@@ -57,9 +57,19 @@ public sealed partial class DocumentSession
     {
         var ids=members.ToDictionary(e=>e.Id,_=>Guid.NewGuid().ToString("n"));var groups=new Dictionary<string,string>();
         var copies=new List<WireframeElement>();
+        var instances=new Dictionary<string,string>();
         foreach(var e in members)
         {
             var copy=e.Clone();copy.Id=ids[e.Id];
+            if(e.InstanceKey.Length>0)
+            {
+                if(Document.AllElements.Count(item=>item.InstanceKey==e.InstanceKey)>members.Count(item=>item.InstanceKey==e.InstanceKey))ComponentDefinition.Detach(copy);
+                else
+                {
+                    if(!instances.TryGetValue(e.InstanceKey,out var nextInstance))instances[e.InstanceKey]=nextInstance=Guid.NewGuid().ToString("n");
+                    copy.InstanceKey=nextInstance;
+                }
+            }
             copy.ParentTabsId=ids.TryGetValue(e.ParentTabsId,out var parent)?parent:detach?"":e.ParentTabsId;
             if(copy.ParentTabsId.Length==0)copy.ParentTabIndex=0;
             var prefix=EditingGroupId.Length==0?0:e.GroupPath.IndexOf(EditingGroupId)+1;
