@@ -11,7 +11,7 @@
 }
 @if (Element.Kind is WireframeKind.Slider or WireframeKind.Divider or WireframeKind.Arrow or WireframeKind.Scrollbar or WireframeKind.Splitter)
 {
-    <FlareCheckbox Value="@Element.Vertical" ValueChanged="@((bool value) => SetVertical(value))">Вертикальный</FlareCheckbox>
+    <FlareCheckbox Value="@Element.Vertical" Disabled="@(!Session.CanTransformSelection)" ValueChanged="@((bool value) => SetVertical(value))">Вертикальный</FlareCheckbox>
 }
 @if (Element.Kind == WireframeKind.Calendar)
 {
@@ -22,11 +22,15 @@
     /// <summary>The selected range, calendar or divider.</summary>
     [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
     private void Change(Action<WireframeElement> action) => Session.Edit("Свойства блока изменены", _ => { action(Element); ControlRange.Normalize(Element); });
-    private void SetVertical(bool value) => Change(e =>
+    private void SetVertical(bool value)
+    {
+        if (!Session.CanTransformSelection) return;
+        Change(e =>
     {
         e.Vertical = value;
         if ((value && e.Width > e.Height) || (!value && e.Height > e.Width)) (e.Width, e.Height) = (e.Height, e.Width);
         var bounds = CanvasGeometry.Clamp(e.Bounds, Session.CurrentLayer.CanvasWidth, Session.CurrentLayer.CanvasHeight);
         e.X = bounds.X; e.Y = bounds.Y; e.Width = bounds.Width; e.Height = bounds.Height;
-    });
+        });
+    }
 }

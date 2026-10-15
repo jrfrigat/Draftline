@@ -53,19 +53,19 @@ else
         }
 
         <div class="df-inspector__pair">
-            <FlareNumericField Label="X" Size="FieldSize.Xs" Min="0"
+            <FlareNumericField Label="X" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.X"
                                ValueChanged="@((double? value) => SetX(element, value))" />
-            <FlareNumericField Label="Y" Size="FieldSize.Xs" Min="0"
+            <FlareNumericField Label="Y" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.Y"
                                ValueChanged="@((double? value) => SetY(element, value))" />
         </div>
 
         <div class="df-inspector__pair">
-            <FlareNumericField Label="Ширина" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize"
+            <FlareNumericField Label="Ширина" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.Width"
                                ValueChanged="@((double? value) => SetWidth(element, value))" />
-            <FlareNumericField Label="Высота" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize"
+            <FlareNumericField Label="Высота" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.Height"
                                ValueChanged="@((double? value) => SetHeight(element, value))" />
         </div>
@@ -250,6 +250,7 @@ else
 
     private void SetWidth(WireframeElement element, double? value)
     {
+        if (!Session.CanTransformSelection) return;
         if (value is not { } width || Math.Abs(width - element.Width) < 0.001)
         {
             return;
@@ -260,6 +261,7 @@ else
 
     private void SetHeight(WireframeElement element, double? value)
     {
+        if (!Session.CanTransformSelection) return;
         if (value is not { } height || Math.Abs(height - element.Height) < 0.001)
         {
             return;

@@ -21,7 +21,7 @@
         @if (Session.SelectionBounds is { } selectionBounds)
         {
             <div class="df-selection @(Session.SelectedGroupId.Length > 0 ? "df-selection--group" : "")" style="@RectStyle(selectionBounds)">
-                @foreach (var (handle, x, y) in CanvasInteraction.HandlesOf(selectionBounds))
+                @foreach (var (handle, x, y) in Session.CanTransformSelection ? CanvasInteraction.HandlesOf(selectionBounds) : Array.Empty<(ResizeHandle, double, double)>())
                 {
                     <span class="df-handle df-handle--@HandleClass(handle)"
                           style="@HandleStyle(selectionBounds, x, y)"></span>
@@ -184,7 +184,7 @@
     {
         // A handle of the selected block wins over everything under the pointer: it is small, it is
         // deliberate, and it is drawn on top of whatever it belongs to.
-        if (Session.SelectionBounds is { } selectedBounds && CanvasInteraction.HandleAt(selectedBounds, x, y) is { } handle)
+        if (Session.CanTransformSelection && Session.SelectionBounds is { } selectedBounds && CanvasInteraction.HandleAt(selectedBounds, x, y) is { } handle)
         {
             _gesture = CanvasGesture.Resize;
             _handle = handle;
@@ -226,6 +226,7 @@
             Session.Select(hit.Id);
         }
 
+        if (!Session.CanTransformSelection) { StateHasChanged(); return; }
         _gesture = CanvasGesture.Move;
         _startX = x;
         _startY = y;
@@ -426,7 +427,7 @@
     private bool Nudge(double deltaX, double deltaY)
     {
         var ids = Session.Members().Select(e => e.Id).ToList();
-        if (ids.Count == 0)
+        if (ids.Count == 0 || !Session.CanTransformSelection)
         {
             return false;
         }

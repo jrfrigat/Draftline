@@ -38,9 +38,9 @@ public static class TabPanels
     /// <summary>Whether the element belongs to the selected panel. Preview supplies its own state copies.</summary>
     public static bool IsVisible(DraftLayer layer, WireframeElement element,
         Func<WireframeElement, WireframeElement>? state = null) =>
-        Parent(layer, element) is not { } parent ||
+        !element.Hidden && (Parent(layer, element) is not { } parent || (!parent.Hidden &&
         (element.ParentTabIndex == Index(state?.Invoke(parent) ?? parent) &&
-         (parent.Kind != WireframeKind.Accordion || ElementState.IsExpanded(state?.Invoke(parent) ?? parent)));
+         (parent.Kind != WireframeKind.Accordion || ElementState.IsExpanded(state?.Invoke(parent) ?? parent)))));
 
     /// <summary>Visible elements, keeping each panel behind its children regardless of local order.</summary>
     public static IEnumerable<WireframeElement> Visible(DraftLayer layer,

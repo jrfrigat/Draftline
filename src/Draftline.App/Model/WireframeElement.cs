@@ -126,6 +126,11 @@ public sealed class WireframeElement
     /// <summary>Whether the control is shown as unavailable and ignores preview interactions.</summary>
     public bool Disabled { get; set; }
 
+    /// <summary>Protects the block's position and size while leaving its content editable.</summary>
+    public bool Locked { get; set; }
+    /// <summary>Excluded from drawing, preview, hit testing and export.</summary>
+    public bool Hidden { get; set; }
+
     /// <summary>Text scale, 1 being the kind's own size.</summary>
     public double FontScale { get; set; } = 1;
 
@@ -198,6 +203,8 @@ public sealed class WireframeElement
         ParentTabIndex = ParentTabIndex,
         Expanded = Expanded,
         Disabled = Disabled,
+        Locked = Locked,
+        Hidden = Hidden,
         FontScale = FontScale,
         Bold = Bold,
         ZIndex = ZIndex

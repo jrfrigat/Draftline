@@ -1,0 +1,23 @@
+@inject DocumentSession Session
+@implements IDisposable
+
+<div class="df-block-list">
+    @if (Session.CurrentLayer.Elements.Count == 0) { <p class="df-hint">На экране нет блоков.</p> }
+    @foreach (var element in Session.CurrentLayer.Elements.OrderByDescending(e => e.ZIndex))
+    {
+        <div class="df-block-list__row" @key="element.Id">
+            <button type="button" class="df-block-list__name" title="Показать и выбрать блок" @onclick="@(() => Session.RevealElement(element.Id))">
+                @ElementDefaults.NameOf(element.Kind): @element.DisplayText
+            </button>
+            <button type="button" aria-label="@(element.Hidden ? "Показать блок" : "Скрыть блок")" title="@(element.Hidden ? "Показать блок" : "Скрыть блок")"
+                    @onclick="@(() => Session.SetHidden(new[] { element.Id }, !element.Hidden))">@(element.Hidden ? "◌" : "●")</button>
+            <button type="button" aria-label="@(element.Locked ? "Разблокировать положение" : "Заблокировать положение")" title="@(element.Locked ? "Разблокировать положение" : "Заблокировать положение")"
+                    @onclick="@(() => Session.SetLocked(new[] { element.Id }, !element.Locked))">@(element.Locked ? "🔒" : "◇")</button>
+        </div>
+    }
+</div>
+@code {
+    protected override void OnInitialized() => Session.Changed += Refresh;
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Session.Changed -= Refresh;
+}

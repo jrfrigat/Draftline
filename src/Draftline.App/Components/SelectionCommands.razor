@@ -8,6 +8,8 @@
     <FlareRibbonButton Label="Вставить" Tooltip="Вставить блоки (Ctrl+V)" Disabled="@(Session.IsPreviewing || !Session.CanPaste)" OnClick="@(() => Session.PasteSelection())" />
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Блок">
+    <FlareRibbonButton Label="@(Session.Members().Any(e => e.Locked) ? "Разблокировать" : "Заблокировать")" Disabled="@SelectionDisabled" OnClick="@(() => Session.LockSelection(!Session.Members().Any(e => e.Locked)))" />
+    <FlareRibbonButton Label="Скрыть" Disabled="@SelectionDisabled" OnClick="Session.HideSelection" />
     <FlareRibbonButton Label="Дублировать" Tooltip="Копия выбранного блока (Ctrl+D)"
                        Disabled="@SelectionDisabled" OnClick="Duplicate" />
     <FlareRibbonButton Label="Удалить" Tooltip="Удалить выделенные блоки (Delete)"
@@ -25,7 +27,7 @@
     {
         var target = alignment;
         <FlareRibbonButton Label="@caption" Tooltip="@($"{caption} относительно холста")"
-                           Disabled="@SelectionDisabled" OnClick="@(() => Align(target))" />
+                           Disabled="@(!Session.CanTransformSelection || Session.IsPreviewing)" OnClick="@(() => Align(target))" />
     }
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Размер">
@@ -46,7 +48,7 @@
     public void Dispose() => Session.Changed -= OnChanged;
     private void OnChanged() => InvokeAsync(StateHasChanged);
 
-    private bool SingleDisabled => Session.IsPreviewing || Session.Selected is null;
+    private bool SingleDisabled => Session.IsPreviewing || Session.Selected is null || !Session.CanTransformSelection;
     private bool SelectionDisabled => Session.IsPreviewing || Session.Selection.Count == 0;
 
     private static readonly (ElementAlignment Alignment, string Caption)[] Alignments =
@@ -66,7 +68,7 @@
 
     private void Align(ElementAlignment alignment)
     {
-        if (SelectionDisabled) return;
+        if (SelectionDisabled || !Session.CanTransformSelection) return;
         if (Session.Selected is not { } element) { Session.AlignSelection(alignment); return; }
 
         Session.Edit("Выравнивание", _ =>

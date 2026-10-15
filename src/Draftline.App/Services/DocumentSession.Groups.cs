@@ -78,7 +78,7 @@ public sealed partial class DocumentSession
     /// <summary>Align a selection as one object without changing its internal spacing.</summary>
     public void AlignSelection(ElementAlignment alignment)
     {
-        if(SelectionBounds is not { } bounds)return;
+        if(!CanTransformSelection || SelectionBounds is not { } bounds)return;
         var members=Members();var next=CanvasGeometry.Align(bounds,alignment,Document.GridSize,CurrentLayer.CanvasWidth,CurrentLayer.CanvasHeight);
         var delta=TabPanels.ClampTranslation(members.Select(e=>e.Bounds),next.X-bounds.X,next.Y-bounds.Y,CurrentLayer.CanvasWidth,CurrentLayer.CanvasHeight);
         Edit("Выделение выровнено",_=>{foreach(var e in members){e.X+=delta.X;e.Y+=delta.Y;}});

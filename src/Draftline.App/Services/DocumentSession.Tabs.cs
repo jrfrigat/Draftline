@@ -42,6 +42,7 @@ public sealed partial class DocumentSession
     {
         if (CurrentLayer.Find(id) is not { } element) return;
         var members = Members(new[] { id }).ToList();
+        if (members.Any(e => e.Locked)) return;
         var delta = TabPanels.ClampTranslation(members.Select(e => e.Bounds), x - element.X, y - element.Y,
             CurrentLayer.CanvasWidth, CurrentLayer.CanvasHeight);
         if (delta == (0d, 0d)) return;

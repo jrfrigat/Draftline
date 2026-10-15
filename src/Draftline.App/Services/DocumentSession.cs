@@ -70,6 +70,7 @@ public sealed partial class DocumentSession
         var created = DraftLayer.Create(name);
 
         _currentLayerId = created.Id;
+        EditingGroupId = string.Empty;
         _selection.Clear();
 
         Edit("Экран добавлен: " + name, document => document.Layers.Add(created));
@@ -318,6 +319,7 @@ public sealed partial class DocumentSession
 
         Document = document;
         _currentLayerId = document.StartLayer.Id;
+        EditingGroupId = string.Empty;
         _history.Clear();
         _selection.Clear();
         IsDirty = false;

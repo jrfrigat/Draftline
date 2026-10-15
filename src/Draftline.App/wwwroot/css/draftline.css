@@ -1280,3 +1280,6 @@ body {
 .df-extra-rich { position:absolute; top:28px; left:0; width:100%; height:calc(100% - 28px); box-sizing:border-box; padding:6px; font:inherit; color:#1b1e24; background:white; border:1px solid #1b1e24; border-radius:0; resize:none; }
 .df-extra-choice { right:auto; }
 .df-selection--group { border-color:#7c3aed; } .df-group-breadcrumb { display:flex; gap:12px; align-items:center; padding:4px 8px; }
+.df-block-list__row { display: flex; gap: .25rem; margin-block: .25rem; }
+.df-block-list__row button { border: 1px solid var(--flare-border-color, #cbd0d8); border-radius: .2rem; background: transparent; color: inherit; cursor: pointer; min-height: 1.75rem; }
+.df-block-list__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }

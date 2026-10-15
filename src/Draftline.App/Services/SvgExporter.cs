@@ -85,6 +85,7 @@ public static partial class SvgExporter
     /// <summary>Draws one block. Every kind is a few shapes - the same language the canvas speaks.</summary>
     private static void WriteElement(StringBuilder svg, WireframeElement element, double offsetX = 0, double offsetY = 0)
     {
+        if (element.Hidden) return;
         var x = element.X + offsetX;
         var y = element.Y + offsetY;
         var right = x + element.Width;
