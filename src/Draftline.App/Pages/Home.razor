@@ -58,6 +58,8 @@
             </FlareRibbonTab>
 
             <FlareRibbonTab Title="Вид">
+                <FlareRibbonGroup Label="Оформление конструктора"><ThemePicker Editor="true" /></FlareRibbonGroup>
+                <FlareRibbonGroup Label="Оформление макета"><ThemePicker /></FlareRibbonGroup>
                 <FlareRibbonGroup Label="Режим">
                     <FlareRibbonButton Label="@(Session.IsPreviewing ? "К редактору" : "Просмотр")"
                                        Tooltip="Показать макет так, как его увидит человек"
@@ -89,7 +91,7 @@
             }
             else
             {
-                <CanvasView @ref="_canvas" />
+                <MockupThemeScope><CanvasView @ref="_canvas" /></MockupThemeScope>
             }
         </section>
     </ChildContent>

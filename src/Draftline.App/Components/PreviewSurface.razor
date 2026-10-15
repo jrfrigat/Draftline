@@ -16,6 +16,7 @@
 
             <span class="df-preview__name">@shown.Name</span>
             <span class="df-preview__spacer"></span>
+            <FlareButton Variant="ButtonVariant.Text" OnClick="@(()=>_themeSettingsOpen=!_themeSettingsOpen)">Тема макета</FlareButton>
 
             <FlareButton Variant="ButtonVariant.Text" OnClick="() => Session.ExitPreview()">
                 К редактору
@@ -32,7 +33,8 @@
             </nav>
         }
 
-        <div class="df-preview__stage">
+        @if(_themeSettingsOpen){<ThemePicker />}
+        <MockupThemeScope><div class="df-preview__stage">
             @if (Session.DialogHostLayer is { } host)
             {
                 <div class="df-preview__scrim"></div>
@@ -58,7 +60,7 @@
                                           Activated="@(() => Session.FollowTransition(item))" />
                 }
             </div>
-        </div>
+        </div></MockupThemeScope>
     }
 </div>
 
@@ -66,6 +68,7 @@
     // These copies live only while the preview is mounted. No Session.Edit or autosave sees them.
     private readonly Dictionary<string, WireframeElement> _states = new();
     private ElementReference _root;
+    private bool _themeSettingsOpen;
     private string? _focusedScreen;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

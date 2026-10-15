@@ -5,6 +5,7 @@ using Flare.Abstractions.Tokens;
 using Flare.Components.IDE;
 using Flare.Extensions;
 using Flare.Theme.FluentUI2;
+using Flare.Theme.MaterialDesign3Expressive;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.JSInterop;
@@ -14,14 +15,9 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// One design system, one palette, no theme switch: Draftline is a wireframing tool, so the chrome
-// stays quiet on purpose and the canvas owns the attention. The theme is Fluent UI 2 - the tighter
-// preset, more of the screen goes to the sheet - with one of its values changed for an editor: the
-// padding it puts around a page is gone, so the canvas reaches the window's edges (see DraftlineTheme,
-// which also says why the value is changed in the theme and not in our stylesheet). The neutral blue
-// palette keeps the one accent the low-fi look is allowed. The mode follows the machine until the
-// visitor decides otherwise: the same defaults the bootstrap script in index.html paints the first
-// frame with, because two of those disagreeing is a flash of the wrong colour.
+// The root theme is local editor chrome; document appearance is isolated by MockupThemeScope.
+// Keep these initial defaults in sync with the bootstrap in index.html. Flare persists subsequent
+// editor choices itself; the drawing's theme travels with the document instead.
 builder.Services.AddFlare(options =>
 {
     options.DefaultTheme = DraftlineTheme.Build();
@@ -32,6 +28,10 @@ builder.Services.AddFlare(options =>
 // The IDE shell's companion service: the layout drags its region borders through it. Registered beside
 // the design system because the shell is part of it, not of the editor.
 builder.Services.AddFlareIde();
+builder.Services.AddFlareTheme(new FluentUI2Theme());
+builder.Services.AddFlareTheme(new MaterialDesign3ExpressiveTheme());
+builder.Services.AddFlareTheme(DraftlineTheme.BuildExpressive());
+builder.Services.AddScoped<ThemeCoordinator>();
 
 // The editor's state, one per browser session: the open wireframe, what is selected on it, and the
 // history behind it. Everything that draws or changes a wireframe reads this same object.

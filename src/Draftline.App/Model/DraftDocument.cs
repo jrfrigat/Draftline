@@ -21,8 +21,8 @@ public sealed class DraftDocument
     /// 4 - a wireframe carries screens, and a block may point at another one.
     /// </summary>
     /// 5 - authored component states. 6 - tab panel content and block membership.
-    // 7: per-component data. 8: extended palette, canvas organization and reusable assets.
-    public const int CurrentSchemaVersion = 8;
+    // 7: per-component data. 8: extended palette, canvas organization and reusable assets. 9: document theme.
+    public const int CurrentSchemaVersion = 9;
 
     /// <summary>A sheet in pixels, as a new screen starts.</summary>
     public const double DefaultCanvasWidth = 960;
@@ -45,6 +45,7 @@ public sealed class DraftDocument
     /// <summary>The screens of this wireframe, in the order they are listed.</summary>
     public List<DraftLayer> Layers { get; set; } = new();
     public List<ComponentDefinition> Components { get; set; } = new();
+    public MockupThemeSelection MockupTheme { get; set; } = new();
 
     /// <summary>The screen a preview opens on; empty means the first one.</summary>
     public string StartLayerId { get; set; } = string.Empty;
@@ -156,6 +157,7 @@ public sealed class DraftDocument
         GridSize = GridSize,
         Layers = Layers.Select(layer => layer.Clone()).ToList(),
         Components = Components.Select(component => component.Clone()).ToList(),
+        MockupTheme = MockupTheme.Clone(),
         StartLayerId = StartLayerId,
         CreatedAt = CreatedAt,
         UpdatedAt = UpdatedAt
@@ -169,6 +171,7 @@ public sealed class DraftDocument
     /// </summary>
     public void Normalize()
     {
+        MockupTheme??=new();MockupTheme.Normalize();
         var legacyTabHeaders = SchemaVersion < 6;
         SchemaVersion = CurrentSchemaVersion;
         Id = string.IsNullOrWhiteSpace(Id) ? Guid.NewGuid().ToString("n") : Id;

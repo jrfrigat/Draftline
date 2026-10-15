@@ -1,0 +1,15 @@
+@using Draftline.App.Theming
+@inject DocumentSession Session
+@inject ThemeCoordinator Themes
+@implements IDisposable
+<FlareThemeScope Theme="@(Selection.ThemeId=="wireframe"?"fluent2":Selection.ThemeId)" Palette="@Selection.PaletteId" Mode="@(Selection.ThemeId=="wireframe"?ThemeMode.Light:Themes.ResolveMode(Selection.Mode))" Class="df-mockup-scope">
+    @ChildContent
+</FlareThemeScope>
+@code {
+    [Parameter] public RenderFragment? ChildContent{get;set;}
+    private MockupThemeSelection Selection=>Session.Document.MockupTheme;
+    protected override void OnInitialized(){Session.Changed+=Refresh;Themes.Changed+=Refresh;}
+    protected override async Task OnAfterRenderAsync(bool firstRender){if(firstRender)await Themes.InitializeAsync();}
+    private void Refresh()=>InvokeAsync(StateHasChanged);
+    public void Dispose(){Session.Changed-=Refresh;Themes.Changed-=Refresh;}
+}
