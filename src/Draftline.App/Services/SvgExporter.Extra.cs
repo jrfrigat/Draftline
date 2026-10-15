@@ -16,6 +16,7 @@ public static partial class SvgExporter
     {
         var w=e.Width; var h=e.Height; var cx=x+w/2; var cy=y+h/2;
         if (ExtraElements.IsDiagram(e.Kind)) { WriteDiagram(svg,e,x,y,size); return; }
+        if (ExtraElements.IsFrame(e.Kind)) { WriteFrame(svg,e,x,y,size); return; }
         switch(e.Kind)
         {
             case WireframeKind.Link:

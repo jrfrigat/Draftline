@@ -18,6 +18,22 @@
     {
         <input type="@InputType" class="df-extra-input" aria-label="@Element.DisplayText" value="@Element.Value" disabled="@Element.Disabled" @onchange="SetValue" />
     }
+    else if (Element.Kind == WireframeKind.AudioPlayer)
+    {
+        <button type="button" class="df-extra-overlay" aria-label="@(Element.Checked ? "Пауза" : "Воспроизвести")" aria-pressed="@(Element.Checked ? "true" : "false")" disabled="@Element.Disabled" @onclick="Toggle">▶</button>
+    }
+    else if (Element.Kind == WireframeKind.RichTextEditor)
+    {
+        <textarea class="df-extra-rich" aria-label="@Element.DisplayText" value="@Element.Value" disabled="@Element.Disabled" @onchange="SetValue"></textarea>
+    }
+    else if (Element.Kind is WireframeKind.CoverFlow or WireframeKind.Alert)
+    {
+        @foreach (var index in Enumerable.Range(0, ElementState.Items(Element).Count))
+        {
+            <button type="button" class="df-extra-overlay df-extra-choice" style="@ChoiceStyle(index)" aria-label="@ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label"
+                    aria-pressed="@(ElementState.Index(Element) == index ? "true" : "false")" disabled="@Element.Disabled" @onclick="() => Choose(index)">@index</button>
+        }
+    }
     else if (Element.Kind == WireframeKind.Link && !Element.Disabled && NavItems.SafeUrl(Element.Value).Length > 0)
     {
         <a class="df-extra-overlay" href="@NavItems.SafeUrl(Element.Value)" target="_blank" rel="noopener noreferrer" aria-label="@Element.DisplayText">@Element.DisplayText</a>
@@ -30,6 +46,8 @@
     [Parameter] public bool Interactive { get; set; }
     /// <summary>Preview repaint.</summary>
     [Parameter] public EventCallback StateChanged { get; set; }
+    private string ChoiceStyle(int index) => $"left:{(100d*index/ElementState.Items(Element).Count).ToString(System.Globalization.CultureInfo.InvariantCulture)}%;width:{(100d/ElementState.Items(Element).Count).ToString(System.Globalization.CultureInfo.InvariantCulture)}%;" + (Element.Kind == WireframeKind.Alert ? "top:auto;height:32px;bottom:4px;" : "");
+    private async Task Choose(int index) { if (Element.Disabled) return; Element.SelectedIndex=index; await StateChanged.InvokeAsync(); }
     private string InputType => Element.Kind == WireframeKind.DatePicker ? "date" : Element.Kind == WireframeKind.TimePicker ? "time" : "color";
     private async Task Toggle() { if (Element.Disabled) return; Element.Checked = !Element.Checked; await StateChanged.InvokeAsync(); }
     private async Task Expand() { if (Element.Disabled) return; Element.Expanded = !ElementState.IsExpanded(Element); await StateChanged.InvokeAsync(); }

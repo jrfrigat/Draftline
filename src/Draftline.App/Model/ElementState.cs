@@ -13,7 +13,7 @@ public static class ElementState
     /// <summary>Whether the kind has a selectable item.</summary>
     public static bool HasChoice(WireframeKind kind) => kind is
         WireframeKind.Select or WireframeKind.List or WireframeKind.Tabs or WireframeKind.MenuBar or
-        WireframeKind.Accordion or WireframeKind.Tree;
+        WireframeKind.Accordion or WireframeKind.Tree or WireframeKind.CoverFlow or WireframeKind.Alert;
 
     /// <summary>Whether the kind can reveal more content.</summary>
     public static bool HasDisclosure(WireframeKind kind) => kind is

@@ -95,5 +95,6 @@ public enum WireframeKind
     StatusBar,
 
     Link, Icon, Switch, Stepper, Tooltip, Popover, DatePicker, TimePicker, ColorPicker,
-    Note, Arrow, Callout, Rectangle, Ellipse, Diamond, SiteMap, BarChart, LineChart, PieChart
+    Note, Arrow, Callout, Rectangle, Ellipse, Diamond, SiteMap, BarChart, LineChart, PieChart,
+    Device, Browser, Fieldset, Scrollbar, Splitter, AudioPlayer, RichTextEditor, AppBar, Alert, CoverFlow, IosKeyboard, Camera
 }

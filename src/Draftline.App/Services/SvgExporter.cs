@@ -361,8 +361,8 @@ public static partial class SvgExporter
     private static void Box(StringBuilder svg, double x, double y, double width, double height, string fill) =>
         svg.Append("<rect x=\"").Append(Number(x))
             .Append("\" y=\"").Append(Number(y))
-            .Append("\" width=\"").Append(Number(width))
-            .Append("\" height=\"").Append(Number(height))
+            .Append("\" width=\"").Append(Number(Math.Max(0, width)))
+            .Append("\" height=\"").Append(Number(Math.Max(0, height)))
             .Append("\" fill=\"").Append(fill)
             .Append("\" stroke=\"").Append(Ink)
             .Append("\" stroke-width=\"1\"/>");

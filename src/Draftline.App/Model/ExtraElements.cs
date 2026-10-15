@@ -28,18 +28,33 @@ public static class ExtraElements
         [WireframeKind.SiteMap] = new("Карта сайта",360,160,"Главная"),
         [WireframeKind.BarChart] = new("Столбчатая диаграмма",280,180,"Данные"),
         [WireframeKind.LineChart] = new("Линейная диаграмма",280,180,"Данные"),
-        [WireframeKind.PieChart] = new("Круговая диаграмма",240,180,"Данные")
+        [WireframeKind.PieChart] = new("Круговая диаграмма",240,180,"Данные"),
+        [WireframeKind.Device] = new("Устройство",200,340,""),
+        [WireframeKind.Browser] = new("Браузер",360,240,"Окно браузера"),
+        [WireframeKind.Fieldset] = new("Группа полей",280,180,"Раздел"),
+        [WireframeKind.Scrollbar] = new("Полоса прокрутки",20,180,""),
+        [WireframeKind.Splitter] = new("Разделитель панелей",240,12,""),
+        [WireframeKind.AudioPlayer] = new("Аудиоплеер",280,40,"Аудио"),
+        [WireframeKind.RichTextEditor] = new("Текстовый редактор",320,160,"Редактор"),
+        [WireframeKind.AppBar] = new("Панель приложения",360,48,"Приложение"),
+        [WireframeKind.Alert] = new("Сообщение",320,150,"Сообщение"),
+        [WireframeKind.CoverFlow] = new("Карусель",320,160,""),
+        [WireframeKind.IosKeyboard] = new("Экранная клавиатура",320,160,""),
+        [WireframeKind.Camera] = new("Камера",240,180,"Камера")
     };
     /// <summary>Additional palette sections.</summary>
     public static IReadOnlyList<(string Title, IReadOnlyList<WireframeKind> Kinds)> Sections => new[]
     {
-        ("Дополнительные формы", (IReadOnlyList<WireframeKind>)Definitions.Keys.Where(k => !IsDiagram(k)).ToArray()),
-        ("Схемы и аннотации", (IReadOnlyList<WireframeKind>)Definitions.Keys.Where(IsDiagram).ToArray())
+        ("Дополнительные формы", (IReadOnlyList<WireframeKind>)Definitions.Keys.Where(k => !IsDiagram(k) && !IsFrame(k)).ToArray()),
+        ("Схемы и аннотации", (IReadOnlyList<WireframeKind>)Definitions.Keys.Where(IsDiagram).ToArray()),
+        ("Рамки и медиа", (IReadOnlyList<WireframeKind>)Definitions.Keys.Where(IsFrame).ToArray())
     };
+    /// <summary>Frame and media wireframes.</summary>
+    public static bool IsFrame(WireframeKind kind) => kind is WireframeKind.Device or WireframeKind.Browser or WireframeKind.Fieldset or WireframeKind.Scrollbar or WireframeKind.Splitter or WireframeKind.AudioPlayer or WireframeKind.RichTextEditor or WireframeKind.AppBar or WireframeKind.Alert or WireframeKind.CoverFlow or WireframeKind.IosKeyboard or WireframeKind.Camera;
     /// <summary>Shapes, annotations and data diagrams.</summary>
     public static bool IsDiagram(WireframeKind kind) => kind is WireframeKind.Note or WireframeKind.Arrow or WireframeKind.Callout or WireframeKind.Rectangle or WireframeKind.Ellipse or WireframeKind.Diamond or WireframeKind.SiteMap or WireframeKind.BarChart or WireframeKind.LineChart or WireframeKind.PieChart;
     /// <summary>Whether a diagram has editable rows.</summary>
-    public static bool HasRows(WireframeKind kind) => kind is WireframeKind.SiteMap or WireframeKind.BarChart or WireframeKind.LineChart or WireframeKind.PieChart;
+    public static bool HasRows(WireframeKind kind) => kind is WireframeKind.SiteMap or WireframeKind.BarChart or WireframeKind.LineChart or WireframeKind.PieChart or WireframeKind.AppBar or WireframeKind.Alert or WireframeKind.CoverFlow or WireframeKind.IosKeyboard;
     /// <summary>Finite nonnegative chart data, with a bounded item count.</summary>
     public static IReadOnlyList<(string Label, double Value)> Chart(WireframeElement e) => ElementState.Items(e).Take(24).Select(row =>
     {
@@ -49,7 +64,7 @@ public static class ExtraElements
     /// <summary>Whether a kind uses the shared SVG-fragment view.</summary>
     public static bool Is(WireframeKind kind) => Definitions.ContainsKey(kind);
     /// <summary>Whether the kind accepts a value.</summary>
-    public static bool HasValue(WireframeKind kind) => kind is WireframeKind.Link or WireframeKind.Stepper or WireframeKind.DatePicker or WireframeKind.TimePicker or WireframeKind.ColorPicker;
+    public static bool HasValue(WireframeKind kind) => kind is WireframeKind.Link or WireframeKind.Stepper or WireframeKind.DatePicker or WireframeKind.TimePicker or WireframeKind.ColorPicker or WireframeKind.Browser or WireframeKind.Scrollbar or WireframeKind.AudioPlayer or WireframeKind.RichTextEditor;
     /// <summary>Safe monochrome/default colour or a valid authored hexadecimal colour.</summary>
     public static string Color(string? text) => text is { Length:7 } && text[0]=='#' && text[1..].All(Uri.IsHexDigit) ? text : "#999999";
     /// <summary>Additional defaults without changing the meaning of existing kinds.</summary>
@@ -57,6 +72,14 @@ public static class ExtraElements
     {
         if (HasRows(e.Kind)) e.Options = new() { "Первый = 30", "Второй = 60", "Третий = 90" };
         if (e.Kind == WireframeKind.SiteMap) e.Options = new() { "Раздел A", "Раздел B", "Раздел C" };
+        if (e.Kind == WireframeKind.Scrollbar) { e.Vertical = true; e.Value = "60"; }
+        if (e.Kind == WireframeKind.AudioPlayer) e.Value = "0:00 / 3:00";
+        if (e.Kind == WireframeKind.RichTextEditor) e.Value = "Введите текст";
+        if (e.Kind == WireframeKind.Browser) e.Value = "https://example.com";
+        if (e.Kind == WireframeKind.AppBar) e.Options = new() { "Главная", "Поиск", "Профиль" };
+        if (e.Kind == WireframeKind.Alert) { e.Options = new() { "Отмена", "ОК" }; e.SecondaryText = "Текст сообщения"; }
+        if (e.Kind == WireframeKind.CoverFlow) { e.Options = new() { "Первый", "Второй", "Третий" }; e.SelectedIndex = 1; }
+        if (e.Kind == WireframeKind.IosKeyboard) e.Options = new() { "Q W E R T Y U I O P", "A S D F G H J K L", "⇧ Z X C V B N M ⌫", "123 пробел ↵" };
         if (e.Kind == WireframeKind.Stepper) e.Value = "0";
         if (e.Kind == WireframeKind.ColorPicker) e.Value = "#999999";
         if (e.Kind is WireframeKind.Tooltip or WireframeKind.Popover) { e.Expanded = true; e.SecondaryText = "Пояснение"; }

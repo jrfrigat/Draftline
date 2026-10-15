@@ -21,6 +21,7 @@ public sealed class DraftDocument
     /// 4 - a wireframe carries screens, and a block may point at another one.
     /// </summary>
     /// 5 - authored component states. 6 - tab panel content and block membership.
+    // 7: per-component data. 8: extended palette, canvas organization and reusable assets.
     public const int CurrentSchemaVersion = 8;
 
     /// <summary>A sheet in pixels, as a new screen starts.</summary>

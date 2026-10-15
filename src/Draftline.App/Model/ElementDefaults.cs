@@ -212,7 +212,7 @@ public static class ElementDefaults
             or WireframeKind.StatusBar;
 
     /// <summary>True when the kind carries a check state.</summary>
-    public static bool HasCheck(WireframeKind kind) => kind is WireframeKind.Checkbox or WireframeKind.Radio or WireframeKind.Switch;
+    public static bool HasCheck(WireframeKind kind) => kind is WireframeKind.Checkbox or WireframeKind.Radio or WireframeKind.Switch or WireframeKind.AudioPlayer;
 
     /// <summary>True when the block draws a sentence rather than a control.</summary>
     public static bool IsTextual(WireframeKind kind) =>
@@ -223,7 +223,7 @@ public static class ElementDefaults
 
     /// <summary>True when the kind has a second line worth writing: a description, a detail, a caption.</summary>
     public static bool AcceptsSecondaryText(WireframeKind kind) =>
-        kind is WireframeKind.Text or WireframeKind.Heading or WireframeKind.Panel or WireframeKind.List or WireframeKind.Tooltip or WireframeKind.Popover;
+        kind is WireframeKind.Text or WireframeKind.Heading or WireframeKind.Panel or WireframeKind.List or WireframeKind.Tooltip or WireframeKind.Popover or WireframeKind.Alert;
 
     /// <summary>
     /// True when the kind stands for something a person types, chooses or drags, so a value makes
