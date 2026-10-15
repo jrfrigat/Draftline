@@ -33,6 +33,7 @@
                     <ProjectMenu Ready="_ready" />
                 </FlareRibbonGroup>
                 <FlareRibbonGroup Label="Правка">
+                    <FlareRibbonButton Label="Найти в макете" Tooltip="Поиск по макету (Ctrl+F)" Disabled="Session.IsPreviewing" OnClick="Session.ShowSearch" />
                     <FlareRibbonButton Label="Отменить" Tooltip="Шаг назад"
                                        Disabled="@(!Session.CanUndo)" OnClick="Undo" />
                     <FlareRibbonButton Label="Повторить" Tooltip="Шаг вперёд"
@@ -81,6 +82,7 @@
 
     <ChildContent>
         <section class="df-stage" aria-label="Холст макета">
+            @if(Session.SearchOpen){<DocumentSearchPanel />}
             @if (Session.IsPreviewing)
             {
                 <PreviewSurface />

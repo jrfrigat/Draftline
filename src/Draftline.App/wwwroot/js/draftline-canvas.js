@@ -14,6 +14,12 @@ export function isCompactViewport() {
     return window.matchMedia('(max-width: 900px)').matches;
 }
 
+export function scrollToElement(id) {
+    if (!canvas) return;
+    const element = Array.from(canvas.querySelectorAll('[data-element-id]')).find(e => e.dataset.elementId === id);
+    element?.scrollIntoView({block:'center', inline:'center'});
+}
+
 // Attaches to a sheet. Called once, when the canvas first renders.
 export function attach(element, reference) {
     detach();
@@ -162,6 +168,14 @@ function isTyping(target) {
 }
 
 function onKeyDown(event) {
+    if (dotNet && event.key === 'Escape' && event.target.closest('.df-document-search')) {
+        event.preventDefault();
+        return dotNet.invokeMethodAsync('OnKey', 'CloseSearch', false);
+    }
+    if (dotNet && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        return dotNet.invokeMethodAsync('OnKey', 'Search', false);
+    }
     if (!dotNet || isTyping(event.target)) {
         return;
     }

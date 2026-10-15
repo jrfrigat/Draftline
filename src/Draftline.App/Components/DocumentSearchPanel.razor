@@ -1,0 +1,28 @@
+@inject DocumentSession Session
+@implements IDisposable
+
+<section class="df-document-search" aria-label="Поиск по макету" @onkeydown="KeyDown" @onkeydown:stopPropagation="true">
+    <div class="df-document-search__header"><label for="df-search-query">Поиск по макету</label><button type="button" @onclick="Session.CloseSearch" aria-label="Закрыть поиск">×</button></div>
+    <input id="df-search-query" @ref="_input" type="search" value="@_query" @oninput="@(e=>_query=e.Value?.ToString()??"")" placeholder="Текст, значение, данные…" />
+    @{var results=DocumentSearch.Find(Session.Document,_query);}
+    @if(_query.Trim().Length>0)
+    {
+        <p class="df-hint" role="status">Найдено: @results.Count</p>
+        <div class="df-document-search__results">
+            @foreach(var hit in results)
+            {
+                <button type="button" @onclick="@(()=>Session.SelectSearchResult(hit))"><strong>@hit.LayerName · @hit.Kind</strong><span>@hit.Excerpt</span></button>
+            }
+        </div>
+    }
+</section>
+@code {
+    private ElementReference _input;
+    private string _query="";
+    private int _focused=-1;
+    protected override void OnInitialized()=>Session.Changed+=Refresh;
+    private void Refresh()=>InvokeAsync(StateHasChanged);
+    public void Dispose()=>Session.Changed-=Refresh;
+    protected override async Task OnAfterRenderAsync(bool firstRender){if(_focused==Session.SearchFocusVersion)return;_focused=Session.SearchFocusVersion;await _input.FocusAsync();}
+    private void KeyDown(KeyboardEventArgs args){if(args.Key=="Escape")Session.CloseSearch();}
+}

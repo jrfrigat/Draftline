@@ -1300,3 +1300,11 @@ body {
 .df-alternate { display:flex; gap:.25rem; }
 .df-alternate button:first-child { flex:1; text-align:left; }
 .df-alternate button[aria-pressed="true"], .df-alternate button[aria-pressed="True"] { border-color:#3b82f6; }
+.df-stage { position:relative; }
+.df-document-search { position:absolute; top:.75rem; right:1rem; width:min(28rem,90%); padding:.75rem; z-index:30000; background:var(--flare-surface, #202226); color:var(--flare-text, #eee); border:1px solid #757b86; border-radius:.35rem; box-shadow:0 4px 18px #0005; }
+.df-document-search__header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem; }
+.df-document-search input { width:100%; box-sizing:border-box; color:inherit; background:transparent; border:1px solid #757b86; border-radius:.2rem; padding:.4rem; }
+.df-document-search button { color:inherit; background:transparent; border:1px solid #757b86; border-radius:.2rem; cursor:pointer; padding:.35rem; }
+.df-document-search__results { max-height:18rem; overflow:auto; display:grid; gap:.35rem; margin-top:.5rem; }
+.df-document-search__results button { display:grid; gap:.3rem; text-align:left; }
+.df-document-search__results span { overflow-wrap:anywhere; font-size:.8rem; }

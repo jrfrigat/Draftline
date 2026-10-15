@@ -70,6 +70,7 @@
     private int _cascade;
     private string? _editingId;
     private double? _verticalGuide, _horizontalGuide;
+    private int _searchNavigation;
     private bool CanResize => Session.CanTransformSelection && Session.Members().All(e => e.Rotation == 0);
 
     /// <summary>Opens direct text editing for the block under the double click.</summary>
@@ -140,6 +141,10 @@
     {
         if (!firstRender)
         {
+            if(_module is not null && _searchNavigation!=Session.SearchNavigationVersion && Session.Selected is { } found)
+            {
+                _searchNavigation=Session.SearchNavigationVersion;await _module.InvokeVoidAsync("scrollToElement",found.Id);
+            }
             return;
         }
 
@@ -391,6 +396,8 @@
 
         switch (key)
         {
+            case "Search": Session.ShowSearch(); return true;
+            case "CloseSearch": Session.CloseSearch(); return true;
             case "EditText":
                 if (Session.Selected is not { } textual || !ElementDefaults.IsTextual(textual.Kind)) return false;
                 _editingId = textual.Id;
