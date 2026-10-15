@@ -1275,3 +1275,4 @@ body {
 .df-extra-disclosure { height:28px; bottom:auto; }
 .df-extra-input { position:absolute; inset:0; width:100%; height:100%; box-sizing:border-box; border:1px solid #1b1e24; border-radius:0; color:#1b1e24; background:#fff; font:inherit; }
 .df-el--link,.df-el--icon,.df-el--switch,.df-el--stepper,.df-el--tooltip,.df-el--popover,.df-el--datepicker,.df-el--timepicker,.df-el--colorpicker { border:0; background:none; padding:0; }
+.df-el--note,.df-el--arrow,.df-el--callout,.df-el--rectangle,.df-el--ellipse,.df-el--diamond,.df-el--sitemap,.df-el--barchart,.df-el--linechart,.df-el--piechart { border:0; background:none; padding:0; }

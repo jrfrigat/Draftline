@@ -207,7 +207,7 @@ public static class ElementDefaults
     /// the same kind of list.
     /// </summary>
     public static bool HasRows(WireframeKind kind) =>
-        kind is WireframeKind.List or WireframeKind.Select or WireframeKind.Tabs or WireframeKind.MenuBar
+        ExtraElements.HasRows(kind) || kind is WireframeKind.List or WireframeKind.Select or WireframeKind.Tabs or WireframeKind.MenuBar
             or WireframeKind.Accordion or WireframeKind.Tree or WireframeKind.Breadcrumbs
             or WireframeKind.StatusBar;
 

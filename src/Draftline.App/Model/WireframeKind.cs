@@ -94,5 +94,6 @@ public enum WireframeKind
     /// <summary>A status bar along the bottom.</summary>
     StatusBar,
 
-    Link, Icon, Switch, Stepper, Tooltip, Popover, DatePicker, TimePicker, ColorPicker
+    Link, Icon, Switch, Stepper, Tooltip, Popover, DatePicker, TimePicker, ColorPicker,
+    Note, Arrow, Callout, Rectangle, Ellipse, Diamond, SiteMap, BarChart, LineChart, PieChart
 }

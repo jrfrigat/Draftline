@@ -18,13 +18,34 @@ public static class ExtraElements
         [WireframeKind.Popover] = new("Всплывающая панель",240,120,"Подробнее"),
         [WireframeKind.DatePicker] = new("Выбор даты",180,36,"Дата"),
         [WireframeKind.TimePicker] = new("Выбор времени",140,36,"Время"),
-        [WireframeKind.ColorPicker] = new("Выбор цвета",160,36,"Цвет")
+        [WireframeKind.ColorPicker] = new("Выбор цвета",160,36,"Цвет"),
+        [WireframeKind.Note] = new("Заметка",220,120,"Заметка"),
+        [WireframeKind.Arrow] = new("Стрелка",220,40,""),
+        [WireframeKind.Callout] = new("Выноска",220,100,"Пояснение"),
+        [WireframeKind.Rectangle] = new("Прямоугольник",180,100,"Текст"),
+        [WireframeKind.Ellipse] = new("Овал",180,100,"Текст"),
+        [WireframeKind.Diamond] = new("Ромб",160,120,"Условие"),
+        [WireframeKind.SiteMap] = new("Карта сайта",360,160,"Главная"),
+        [WireframeKind.BarChart] = new("Столбчатая диаграмма",280,180,"Данные"),
+        [WireframeKind.LineChart] = new("Линейная диаграмма",280,180,"Данные"),
+        [WireframeKind.PieChart] = new("Круговая диаграмма",240,180,"Данные")
     };
     /// <summary>Additional palette sections.</summary>
     public static IReadOnlyList<(string Title, IReadOnlyList<WireframeKind> Kinds)> Sections => new[]
     {
-        ("Дополнительные формы", (IReadOnlyList<WireframeKind>)Definitions.Keys.ToArray())
+        ("Дополнительные формы", (IReadOnlyList<WireframeKind>)Definitions.Keys.Where(k => !IsDiagram(k)).ToArray()),
+        ("Схемы и аннотации", (IReadOnlyList<WireframeKind>)Definitions.Keys.Where(IsDiagram).ToArray())
     };
+    /// <summary>Shapes, annotations and data diagrams.</summary>
+    public static bool IsDiagram(WireframeKind kind) => kind is WireframeKind.Note or WireframeKind.Arrow or WireframeKind.Callout or WireframeKind.Rectangle or WireframeKind.Ellipse or WireframeKind.Diamond or WireframeKind.SiteMap or WireframeKind.BarChart or WireframeKind.LineChart or WireframeKind.PieChart;
+    /// <summary>Whether a diagram has editable rows.</summary>
+    public static bool HasRows(WireframeKind kind) => kind is WireframeKind.SiteMap or WireframeKind.BarChart or WireframeKind.LineChart or WireframeKind.PieChart;
+    /// <summary>Finite nonnegative chart data, with a bounded item count.</summary>
+    public static IReadOnlyList<(string Label, double Value)> Chart(WireframeElement e) => ElementState.Items(e).Take(24).Select(row =>
+    {
+        var (label,value)=ElementDefaults.SplitOption(row);
+        return (label, double.TryParse(value,NumberStyles.Float,CultureInfo.InvariantCulture,out var n) && double.IsFinite(n) ? Math.Clamp(n,0,1e9) : 0);
+    }).ToList();
     /// <summary>Whether a kind uses the shared SVG-fragment view.</summary>
     public static bool Is(WireframeKind kind) => Definitions.ContainsKey(kind);
     /// <summary>Whether the kind accepts a value.</summary>
@@ -34,6 +55,8 @@ public static class ExtraElements
     /// <summary>Additional defaults without changing the meaning of existing kinds.</summary>
     public static void Initialize(WireframeElement e)
     {
+        if (HasRows(e.Kind)) e.Options = new() { "Первый = 30", "Второй = 60", "Третий = 90" };
+        if (e.Kind == WireframeKind.SiteMap) e.Options = new() { "Раздел A", "Раздел B", "Раздел C" };
         if (e.Kind == WireframeKind.Stepper) e.Value = "0";
         if (e.Kind == WireframeKind.ColorPicker) e.Value = "#999999";
         if (e.Kind is WireframeKind.Tooltip or WireframeKind.Popover) { e.Expanded = true; e.SecondaryText = "Пояснение"; }
