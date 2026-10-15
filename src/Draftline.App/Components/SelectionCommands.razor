@@ -2,6 +2,11 @@
 @inject DocumentFileService Files
 @implements IDisposable
 
+<FlareRibbonGroup Label="Буфер">
+    <FlareRibbonButton Label="Копировать" Tooltip="Копировать блоки (Ctrl+C)" Disabled="@SelectionDisabled" OnClick="@(() => Session.CopySelection())" />
+    <FlareRibbonButton Label="Вырезать" Tooltip="Вырезать блоки (Ctrl+X)" Disabled="@SelectionDisabled" OnClick="@(() => Session.CutSelection())" />
+    <FlareRibbonButton Label="Вставить" Tooltip="Вставить блоки (Ctrl+V)" Disabled="@(Session.IsPreviewing || !Session.CanPaste)" OnClick="@(() => Session.PasteSelection())" />
+</FlareRibbonGroup>
 <FlareRibbonGroup Label="Блок">
     <FlareRibbonButton Label="Дублировать" Tooltip="Копия выбранного блока (Ctrl+D)"
                        Disabled="@SelectionDisabled" OnClick="Duplicate" />

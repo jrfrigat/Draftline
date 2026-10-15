@@ -181,6 +181,12 @@ function onKeyDown(event) {
         key = 'EditText';
     } else if (event.key === 'Escape') {
         key = 'Escape';
+    } else if (ctrl && (event.key === 'c' || event.key === 'C')) {
+        key = 'Copy';
+    } else if (ctrl && (event.key === 'v' || event.key === 'V')) {
+        key = 'Paste';
+    } else if (ctrl && (event.key === 'x' || event.key === 'X')) {
+        key = 'Cut';
     } else if (ctrl && (event.key === 'd' || event.key === 'D')) {
         key = 'Duplicate';
     } else if (ctrl && !event.shiftKey && (event.key === 'z' || event.key === 'Z')) {

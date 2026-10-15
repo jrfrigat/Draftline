@@ -376,6 +376,9 @@
             case "Delete":
                 return Session.RemoveSelected();
 
+            case "Copy": return Session.CopySelection();
+            case "Cut": return Session.CutSelection();
+            case "Paste": return Session.PasteSelection();
             case "Duplicate":
                 Session.DuplicateSelected();
                 return true;
