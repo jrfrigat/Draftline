@@ -20,8 +20,11 @@ public static partial class SvgExporter
         switch(e.Kind)
         {
             case WireframeKind.Link:
-                Text(svg,x+2,cy+4,e.DisplayText,size,"400",1); Line(svg,x+2,cy+6,x+Math.Min(w-2,e.DisplayText.Length*size*.6),cy+6,1); break;
+                var labelX=x+(WireframeIcons.Find(e.IconKey) is null?2:24);
+                WriteIcon(svg,e.IconKey,x+3,cy-8,16);
+                Text(svg,labelX,cy+4,e.DisplayText,size,"400",1); Line(svg,labelX,cy+6,x+Math.Min(w-2,e.DisplayText.Length*size*.6+labelX-x),cy+6,1); break;
             case WireframeKind.Icon:
+                if(WireframeIcons.Find(e.IconKey) is not null){var iconSize=Math.Min(w,h);WriteIcon(svg,e.IconKey,cx-iconSize/2,cy-iconSize/2,iconSize);break;}
                 Text(svg,cx,cy+Math.Min(w,h)/3,e.DisplayText,Math.Min(w,h)*.8,"400",1,"middle"); break;
             case WireframeKind.Switch:
                 Box(svg,x+1,cy-10,40,20,e.Checked ? "#e5e7eb" : Paper); Box(svg,x+(e.Checked ? 23 : 3),cy-8,16,16,e.Checked ? Ink : Paper);

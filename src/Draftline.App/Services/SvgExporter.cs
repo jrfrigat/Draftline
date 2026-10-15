@@ -94,6 +94,7 @@ public static partial class SvgExporter
         var middle = x + (element.Width / 2);
         var centerY = y + (element.Height / 2);
         var text = element.DisplayText;
+        var iconWidth = WireframeIcons.Find(element.IconKey) is not null && WireframeIcons.Supports(element.Kind) ? 22 : 0;
         var size = Math.Max(1, Math.Round(12 * element.FontScale, 1));
         var weight = element.Bold ? "700" : "400";
         var checkTop = y + ((element.Height - 14) / 2);
@@ -120,11 +121,11 @@ public static partial class SvgExporter
                 break;
 
             case WireframeKind.Heading:
-                Text(svg, x, centerY + (size / 3), text, Math.Max(size, 20), "700", 1);
+                Text(svg, x + iconWidth, centerY + (size / 3), text, Math.Max(size, 20), "700", 1);
                 break;
 
             case WireframeKind.Text:
-                WriteLines(svg, text, x + 2, y + size, size, element.Height);
+                WriteLines(svg, text, x + 2 + iconWidth, y + size, size, element.Height);
 
                 if (!string.IsNullOrWhiteSpace(element.SecondaryText))
                 {
@@ -135,7 +136,7 @@ public static partial class SvgExporter
 
             case WireframeKind.Button:
                 Box(svg, x, y, element.Width, element.Height, element.VisualState == ControlVisualState.Selected ? "#e5e7eb" : Paper);
-                Text(svg, middle, centerY + (size / 3), text, size, weight, 1, "middle");
+                if (!element.IconOnly || iconWidth == 0) Text(svg, middle + iconWidth / 2, centerY + (size / 3), text, size, weight, 1, "middle");
                 break;
 
             case WireframeKind.TextField:
@@ -343,6 +344,8 @@ public static partial class SvgExporter
                 break;
         }
 
+        if (iconWidth > 0 && element.Kind is WireframeKind.Button or WireframeKind.Text or WireframeKind.Heading)
+            WriteIcon(svg, element.IconKey, element.IconOnly && element.Kind == WireframeKind.Button ? middle - 8 : x + 4, centerY - 8, 16);
         if (FormState.HasVisualState(element.Kind) && element.VisualState is ControlVisualState.Focused or ControlVisualState.Error)
         {
             svg.Append("<rect x=\"").Append(Number(x + 2)).Append("\" y=\"").Append(Number(y + 2))

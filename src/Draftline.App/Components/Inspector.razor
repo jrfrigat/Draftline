@@ -22,6 +22,7 @@ else
         <TableInspector Element="element" />
         <RangeInspector Element="element" />
         <ImageInspector @key="@($"image-{element.Id}")" Element="element" />
+        <IconInspector @key="@($"icon-{element.Id}")" Element="element" />
 
         @if (ElementState.HasAvailability(element.Kind))
         {

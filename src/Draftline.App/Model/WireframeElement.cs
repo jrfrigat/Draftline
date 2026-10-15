@@ -39,6 +39,8 @@ public sealed class WireframeElement
     public double CropHeight { get; set; } = 1;
     public string ImageFit { get; set; } = "contain";
     public bool KeepImageAspect { get; set; } = true;
+    public string IconKey { get; set; } = "";
+    public bool IconOnly { get; set; }
 
     /// <summary>What the block shows. Empty means the kind's own placeholder.</summary>
     public string Text { get; set; } = string.Empty;
@@ -192,6 +194,7 @@ public sealed class WireframeElement
         Height = Height,
         Rotation = Rotation,
         ImageData = ImageData, ImageName = ImageName, ImageWidth = ImageWidth, ImageHeight = ImageHeight,
+        IconKey = IconKey, IconOnly = IconOnly,
         CropX = CropX, CropY = CropY, CropWidth = CropWidth, CropHeight = CropHeight, ImageFit = ImageFit, KeepImageAspect = KeepImageAspect,
         Text = Text,
         Options = new List<string>(Options),

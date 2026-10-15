@@ -17,12 +17,12 @@
             break;
 
         case WireframeKind.Heading:
-            <span class="df-heading">@Element.DisplayText</span>
+            <span class="df-heading"><WireframeIconView Key="@Element.IconKey" />@Element.DisplayText</span>
             break;
 
         case WireframeKind.Text:
             <span class="df-text-block">
-                <span class="df-text">@Element.DisplayText</span>
+                <span class="df-text"><WireframeIconView Key="@Element.IconKey" />@Element.DisplayText</span>
                 @if (!string.IsNullOrWhiteSpace(Element.SecondaryText))
                 {
                     <span class="df-text__secondary">@Element.SecondaryText</span>
@@ -31,7 +31,7 @@
             break;
 
         case WireframeKind.Button:
-            <span class="df-button">@Element.DisplayText</span>
+            <span class="df-button"><WireframeIconView Key="@Element.IconKey" />@(Element.IconOnly && Element.IconKey.Length>0 ? "" : Element.DisplayText)</span>
             break;
 
         case WireframeKind.TextField:

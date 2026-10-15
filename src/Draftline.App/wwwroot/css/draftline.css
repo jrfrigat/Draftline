@@ -1288,3 +1288,8 @@ body {
 .df-local-image svg { display:block; }
 .df-image-import { display:grid; gap:.35rem; font-size:.8rem; margin-block:.5rem; }
 .df-image-import input { max-width:100%; font-size:.75rem; }
+.df-wire-icon { width:1.25em; height:1.25em; flex-shrink:0; vertical-align:middle; margin-inline-end:.3em; }
+.df-icon-catalog { display:flex; flex-wrap:wrap; gap:.25rem; max-height:8rem; overflow:auto; margin-block:.35rem; }
+.df-icon-catalog button { width:2rem; height:2rem; display:grid; place-items:center; background:transparent; color:inherit; border:1px solid #757b86; border-radius:.2rem; cursor:pointer; }
+.df-icon-catalog button[aria-pressed="True"], .df-icon-catalog button[aria-pressed="true"] { border-color:#3b82f6; background:#3b82f633; }
+.df-icon-catalog .df-wire-icon { margin:0; width:1.2rem; height:1.2rem; }

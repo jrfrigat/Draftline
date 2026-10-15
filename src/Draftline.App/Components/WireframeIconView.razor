@@ -1,0 +1,5 @@
+@if (WireframeIcons.Find(Key) is { } icon)
+{
+    <svg class="df-wire-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="@icon.Path" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+}
+@code { [Parameter] public string Key { get; set; } = ""; }

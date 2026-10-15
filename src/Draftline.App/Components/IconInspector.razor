@@ -1,0 +1,19 @@
+@inject DocumentSession Session
+@if (WireframeIcons.Supports(Element.Kind))
+{
+    <FlareTextField Label="Найти иконку" Size="FieldSize.Xs" Immediate="true" Value="@_query" ValueChanged="@((string? value)=>_query=value??"")" />
+    <div class="df-icon-catalog" aria-label="Иконки">
+        <button type="button" title="Без иконки" @onclick="@(()=>Assign(""))">—</button>
+        @foreach(var icon in WireframeIcons.All.Where(i=>i.Name.Contains(_query,StringComparison.OrdinalIgnoreCase)||i.Key.Contains(_query,StringComparison.OrdinalIgnoreCase)))
+        {
+            <button type="button" title="@icon.Name" aria-label="@icon.Name" aria-pressed="@(Element.IconKey==icon.Key)" @onclick="@(()=>Assign(icon.Key))"><WireframeIconView Key="@icon.Key" /></button>
+        }
+    </div>
+    @if (Element.Kind==WireframeKind.Button && Element.IconKey.Length>0)
+    { <FlareCheckbox Value="@Element.IconOnly" ValueChanged="@((bool value)=>Session.Edit("Подпись иконки изменена",_=>Element.IconOnly=value))">Только иконка</FlareCheckbox> }
+}
+@code {
+    [Parameter,EditorRequired] public WireframeElement Element{get;set;}=null!;
+    private string _query="";
+    private void Assign(string key)=>Session.Edit("Иконка изменена",_=>Element.IconKey=key);
+}
