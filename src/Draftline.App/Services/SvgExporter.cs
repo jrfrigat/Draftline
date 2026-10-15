@@ -324,6 +324,9 @@ public static partial class SvgExporter
                 break;
 
 
+            default:
+                WriteExtra(svg, element, x, y, size);
+                break;
         }
 
         if (FormState.HasVisualState(element.Kind) && element.VisualState is ControlVisualState.Focused or ControlVisualState.Error)

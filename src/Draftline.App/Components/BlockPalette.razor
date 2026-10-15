@@ -4,11 +4,13 @@
    to the spot it belongs in: clicking when you are arranging things, dragging when you already know
    where the block goes. Both exist because both are how people work, and neither is a mode. *@
 <div class="df-palette">
+    <FlareTextField Label="Найти блок" Immediate="true" Size="FieldSize.Xs" Value="@_query" ValueChanged="@((string? value) => _query = value ?? "")" />
     @foreach (var (title, kinds) in ElementDefaults.Sections)
     {
+        @if (!kinds.Any(Matches)) { continue; }
         <p class="df-palette__section">@title</p>
 
-        @foreach (var kind in kinds)
+        @foreach (var kind in kinds.Where(Matches))
         {
             var item = kind;
             <div class="df-palette__row">
@@ -28,6 +30,8 @@
 </div>
 
 @code {
+    private string _query = "";
+    private bool Matches(WireframeKind kind) => ElementDefaults.NameOf(kind).Contains(_query, StringComparison.OrdinalIgnoreCase);
     /// <summary>Raised when a block was asked for; the canvas decides where it lands.</summary>
     [Parameter, EditorRequired]
     public EventCallback<WireframeKind> AddRequested { get; set; }

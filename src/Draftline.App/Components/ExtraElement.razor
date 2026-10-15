@@ -1,0 +1,38 @@
+<div class="df-extra-art" aria-hidden="true">@((MarkupString)SvgExporter.Fragment(Element))</div>
+@if (Interactive)
+{
+    @if (Element.Kind == WireframeKind.Switch)
+    {
+        <button type="button" class="df-extra-overlay" role="switch" aria-label="@Element.DisplayText" aria-checked="@(Element.Checked ? "true" : "false")" disabled="@Element.Disabled" @onclick="Toggle">@Element.DisplayText</button>
+    }
+    else if (Element.Kind == WireframeKind.Stepper)
+    {
+        <button type="button" class="df-extra-overlay df-extra-step df-extra-step--minus" aria-label="Уменьшить" disabled="@(Element.Disabled || ControlRange.Value(Element) <= Element.Minimum)" @onclick="() => Step(-1)">−</button>
+        <button type="button" class="df-extra-overlay df-extra-step df-extra-step--plus" aria-label="Увеличить" disabled="@(Element.Disabled || ControlRange.Value(Element) + Element.Step > Element.Maximum + 1e-9)" @onclick="() => Step(1)">+</button>
+    }
+    else if (Element.Kind is WireframeKind.Tooltip or WireframeKind.Popover)
+    {
+        <button type="button" class="df-extra-overlay df-extra-disclosure" aria-label="@Element.DisplayText" aria-expanded="@(ElementState.IsExpanded(Element) ? "true" : "false")" disabled="@Element.Disabled" @onclick="Expand">@Element.DisplayText</button>
+    }
+    else if (Element.Kind is WireframeKind.DatePicker or WireframeKind.TimePicker or WireframeKind.ColorPicker)
+    {
+        <input type="@InputType" class="df-extra-input" aria-label="@Element.DisplayText" value="@Element.Value" disabled="@Element.Disabled" @onchange="SetValue" />
+    }
+    else if (Element.Kind == WireframeKind.Link && !Element.Disabled && NavItems.SafeUrl(Element.Value).Length > 0)
+    {
+        <a class="df-extra-overlay" href="@NavItems.SafeUrl(Element.Value)" target="_blank" rel="noopener noreferrer" aria-label="@Element.DisplayText">@Element.DisplayText</a>
+    }
+}
+@code {
+    /// <summary>The block or preview-owned copy.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    /// <summary>Temporary prototype interaction.</summary>
+    [Parameter] public bool Interactive { get; set; }
+    /// <summary>Preview repaint.</summary>
+    [Parameter] public EventCallback StateChanged { get; set; }
+    private string InputType => Element.Kind == WireframeKind.DatePicker ? "date" : Element.Kind == WireframeKind.TimePicker ? "time" : "color";
+    private async Task Toggle() { if (Element.Disabled) return; Element.Checked = !Element.Checked; await StateChanged.InvokeAsync(); }
+    private async Task Expand() { if (Element.Disabled) return; Element.Expanded = !ElementState.IsExpanded(Element); await StateChanged.InvokeAsync(); }
+    private async Task Step(int direction) { if (Element.Disabled) return; Element.Value = (ControlRange.Value(Element) + direction * Element.Step).ToString(System.Globalization.CultureInfo.InvariantCulture); ControlRange.Normalize(Element); await StateChanged.InvokeAsync(); }
+    private async Task SetValue(ChangeEventArgs args) { if (Element.Disabled) return; Element.Value = args.Value?.ToString() ?? ""; ExtraElements.Normalize(Element); await StateChanged.InvokeAsync(); }
+}

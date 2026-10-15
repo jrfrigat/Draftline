@@ -92,5 +92,7 @@ public enum WireframeKind
     Breadcrumbs,
 
     /// <summary>A status bar along the bottom.</summary>
-    StatusBar
+    StatusBar,
+
+    Link, Icon, Switch, Stepper, Tooltip, Popover, DatePicker, TimePicker, ColorPicker
 }

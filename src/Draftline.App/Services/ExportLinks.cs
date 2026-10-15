@@ -16,6 +16,8 @@ public static class ExportLinks
         {
             if (e.Disabled) continue;
             if (e.HasTransition) { links.Add(new(e.X, e.Y, e.Width, e.Height, e.TargetLayerId, "")); continue; }
+            if (e.Kind == WireframeKind.Link && NavItems.SafeUrl(e.Value) is { Length: > 0 } url)
+                links.Add(new(e.X, e.Y, e.Width, e.Height, "", url));
             if (!NavItems.Supports(e.Kind)) continue;
             void Add(NavItem item, Rect rect)
             {

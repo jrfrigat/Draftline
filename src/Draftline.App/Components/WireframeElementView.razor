@@ -198,6 +198,9 @@
             @if (!string.IsNullOrWhiteSpace(Element.Text)) { <span class="df-image__caption">@Element.Text</span> }
             break;
 
+        default:
+            <ExtraElement Element="Element" Interactive="Interactive" StateChanged="StateChanged" />
+            break;
     }
     @if (FormState.HasFeedback(Element.Kind) && !string.IsNullOrEmpty(Element.FeedbackText))
     {

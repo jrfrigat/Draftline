@@ -3,7 +3,7 @@
 {
     <FlareCheckbox Value="@Element.Indeterminate" ValueChanged="@((bool value) => Session.Edit("Состояние прогресса изменено", _ => Element.Indeterminate = value))">Неопределённый прогресс</FlareCheckbox>
 }
-@if (Element.Kind == WireframeKind.Slider)
+@if (Element.Kind is WireframeKind.Slider or WireframeKind.Stepper)
 {
     <FlareNumericField Label="Минимум" Size="FieldSize.Xs" Value="@Element.Minimum" ValueChanged="@((double? value) => Change(e => e.Minimum = value ?? 0))" />
     <FlareNumericField Label="Максимум" Size="FieldSize.Xs" Value="@Element.Maximum" ValueChanged="@((double? value) => Change(e => e.Maximum = value ?? 100))" />

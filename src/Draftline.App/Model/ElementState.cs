@@ -17,10 +17,10 @@ public static class ElementState
 
     /// <summary>Whether the kind can reveal more content.</summary>
     public static bool HasDisclosure(WireframeKind kind) => kind is
-        WireframeKind.Select or WireframeKind.Accordion or WireframeKind.MenuBar;
+        WireframeKind.Select or WireframeKind.Accordion or WireframeKind.MenuBar or WireframeKind.Tooltip or WireframeKind.Popover;
 
     /// <summary>Whether availability is meaningful for this control.</summary>
-    public static bool HasAvailability(WireframeKind kind) => HasChoice(kind) || kind is
+    public static bool HasAvailability(WireframeKind kind) => HasChoice(kind) || ExtraElements.Is(kind) || kind is
         WireframeKind.Button or WireframeKind.TextField or WireframeKind.TextArea or
         WireframeKind.Checkbox or WireframeKind.Radio or WireframeKind.Slider or WireframeKind.DataGrid or WireframeKind.Calendar;
 

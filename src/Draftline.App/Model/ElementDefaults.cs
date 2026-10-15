@@ -58,7 +58,7 @@ public static class ElementDefaults
             WireframeKind.Tabs, WireframeKind.MenuBar, WireframeKind.Breadcrumbs, WireframeKind.Accordion,
             WireframeKind.StatusBar
         })
-    };
+    }.Concat(ExtraElements.Sections).ToArray();
 
     /// <summary>A fresh block of this kind, with its identity in place and its data already started.</summary>
     public static WireframeElement Create(WireframeKind kind)
@@ -88,6 +88,7 @@ public static class ElementDefaults
             element.Value = "60";
         }
 
+        ExtraElements.Initialize(element);
         TreeState.Normalize(element);
         NavItems.Normalize(element);
         ControlRange.Normalize(element);
@@ -96,7 +97,7 @@ public static class ElementDefaults
     }
 
     /// <summary>Width and height a new block of this kind lands with.</summary>
-    public static (double Width, double Height) SizeOf(WireframeKind kind) => kind switch
+    public static (double Width, double Height) SizeOf(WireframeKind kind) => ExtraElements.Definitions.TryGetValue(kind, out var extra) ? (extra.Width, extra.Height) : kind switch
     {
         WireframeKind.Heading => (240, 40),
         WireframeKind.Text => (200, 24),
@@ -128,7 +129,7 @@ public static class ElementDefaults
     };
 
     /// <summary>The words a block shows when nobody has written any.</summary>
-    public static string PlaceholderFor(WireframeKind kind) => kind switch
+    public static string PlaceholderFor(WireframeKind kind) => ExtraElements.Definitions.TryGetValue(kind, out var extra) ? extra.Text : kind switch
     {
         WireframeKind.Heading => "Заголовок",
         WireframeKind.Text => "Текст",
@@ -147,7 +148,7 @@ public static class ElementDefaults
     };
 
     /// <summary>The name the palette and the inspector show for a kind.</summary>
-    public static string NameOf(WireframeKind kind) => kind switch
+    public static string NameOf(WireframeKind kind) => ExtraElements.Definitions.TryGetValue(kind, out var extra) ? extra.Name : kind switch
     {
         WireframeKind.Panel => "Панель",
         WireframeKind.Text => "Текст",
@@ -211,24 +212,24 @@ public static class ElementDefaults
             or WireframeKind.StatusBar;
 
     /// <summary>True when the kind carries a check state.</summary>
-    public static bool HasCheck(WireframeKind kind) => kind is WireframeKind.Checkbox or WireframeKind.Radio;
+    public static bool HasCheck(WireframeKind kind) => kind is WireframeKind.Checkbox or WireframeKind.Radio or WireframeKind.Switch;
 
     /// <summary>True when the block draws a sentence rather than a control.</summary>
     public static bool IsTextual(WireframeKind kind) =>
-        kind is WireframeKind.Heading or WireframeKind.Text or WireframeKind.Button
+        ExtraElements.Is(kind) || kind is WireframeKind.Heading or WireframeKind.Text or WireframeKind.Button
             or WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Checkbox or WireframeKind.Radio
             or WireframeKind.Badge or WireframeKind.Avatar or WireframeKind.Image or WireframeKind.Panel
             or WireframeKind.Calendar or WireframeKind.Map or WireframeKind.Video;
 
     /// <summary>True when the kind has a second line worth writing: a description, a detail, a caption.</summary>
     public static bool AcceptsSecondaryText(WireframeKind kind) =>
-        kind is WireframeKind.Text or WireframeKind.Heading or WireframeKind.Panel or WireframeKind.List;
+        kind is WireframeKind.Text or WireframeKind.Heading or WireframeKind.Panel or WireframeKind.List or WireframeKind.Tooltip or WireframeKind.Popover;
 
     /// <summary>
     /// True when the kind stands for something a person types, chooses or drags, so a value makes
     /// sense. A bar and a slider read it as a percentage.
     /// </summary>
     public static bool AcceptsValue(WireframeKind kind) =>
-        kind is WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Select
+        ExtraElements.HasValue(kind) || kind is WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Select
             or WireframeKind.Progress or WireframeKind.Slider;
 }

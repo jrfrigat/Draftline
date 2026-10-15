@@ -301,7 +301,7 @@ else
             return;
         }
 
-        Apply(element, "Значение изменено", target => { target.Value = text; ControlRange.Normalize(target); });
+        Apply(element, "Значение изменено", target => { target.Value = text; ControlRange.Normalize(target); ExtraElements.Normalize(target); });
     }
 
     private void SetPlaceholder(WireframeElement element, string? value)
