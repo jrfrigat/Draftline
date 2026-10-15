@@ -4,7 +4,7 @@
    that lead somewhere actually leading there. A block that leads somewhere is a real button, so a
    wireframe can be walked with the keyboard as well as with a mouse - and the button is what carries
    the focus ring, which the drawing itself must not have. *@
-<div class="df-preview" tabindex="0" @onkeydown="OnKeyDown">
+<div class="df-preview" @ref="_root" tabindex="0" @onkeydown="OnKeyDown">
     @if (Session.PreviewLayer is { } shown)
     {
         <div class="df-preview__bar">
@@ -21,6 +21,16 @@
                 К редактору
             </FlareButton>
         </div>
+
+        @if (TabPanels.Visible(shown, element => PreviewElement(shown, element)).Any(item => item.HasTransition && PreviewInteraction.Stateful(item.Kind) && !item.Disabled))
+        {
+            <nav class="df-preview__actions" aria-label="Переходы компонентов">
+                @foreach(var item in TabPanels.Visible(shown, element => PreviewElement(shown, element)).Where(item => item.HasTransition && PreviewInteraction.Stateful(item.Kind) && !item.Disabled))
+                {
+                    <button type="button" title="@LeadsTo(item)" @onclick="@(() => Session.FollowTransition(item))">@ElementDefaults.NameOf(item.Kind): @LeadsTo(item)</button>
+                }
+            </nav>
+        }
 
         <div class="df-preview__stage">
             @if (Session.DialogHostLayer is { } host)
@@ -42,19 +52,10 @@
                 @foreach (var element in TabPanels.Visible(shown, element => PreviewElement(shown, element)))
                 {
                     var item = element;
-                    <WireframeElementView Element="@PreviewElement(shown, item)" Interactive="@(!item.HasTransition)"
+                    <WireframeElementView Element="@PreviewElement(shown, item)" Interactive="true"
                                           DrawingOrder="@(drawOrder++)" StateChanged="StateHasChanged"
-                                          CheckedChanged="@(state => ChangeCheck(shown, state))" ItemActivated="FollowItem" />
-
-                    @if (item.HasTransition && !item.Disabled)
-                    {
-                        <button type="button"
-                                class="df-preview__hotspot"
-                                style="@HotspotStyle(item)"
-                                title="@LeadsTo(item)"
-                                aria-label="@LeadsTo(item)"
-                                @onclick="() => Session.FollowTransition(item)"></button>
-                    }
+                                          CheckedChanged="@(state => ChangeCheck(shown, state))" ItemActivated="FollowItem"
+                                          Activated="@(() => Session.FollowTransition(item))" />
                 }
             </div>
         </div>
@@ -64,6 +65,15 @@
 @code {
     // These copies live only while the preview is mounted. No Session.Edit or autosave sees them.
     private readonly Dictionary<string, WireframeElement> _states = new();
+    private ElementReference _root;
+    private string? _focusedScreen;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var screen = Session.PreviewLayerId + "/" + Session.IsDialogOpen;
+        if (_focusedScreen == screen) return;
+        _focusedScreen = screen;
+        await _root.FocusAsync(preventScroll: true);
+    }
 
     private WireframeElement PreviewElement(DraftLayer layer, WireframeElement authored)
     {
@@ -89,10 +99,6 @@
     private string SheetClass =>
         Session.IsDialogOpen ? "df-preview__sheet df-preview__sheet--dialog" : "df-preview__sheet";
 
-    private static string HotspotStyle(WireframeElement element) =>
-        $"left:{Number(element.X)}px;top:{Number(element.Y)}px;width:{Number(element.Width)}px;" +
-        $"height:{Number(element.Height)}px;";
-
     private string LeadsTo(WireframeElement element) =>
         element.Transition == TransitionKind.OpenDialog
             ? "Открыть диалог: " + LayerNameOf(element.TargetLayerId)
@@ -110,6 +116,8 @@
             return;
         }
 
+        var open = _states.Values.Where(e=>e.Kind is WireframeKind.Select or WireframeKind.MenuBar or WireframeKind.Tooltip or WireframeKind.Popover && ElementState.IsExpanded(e)).ToList();
+        if(open.Count>0){foreach(var e in open)e.Expanded=false;StateHasChanged();return;}
         // Escape closes the dialog if one is open and leaves the preview if none is: one key, the two
         // things a person means by pressing it.
         if (!Session.CloseDialog())

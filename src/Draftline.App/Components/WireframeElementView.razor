@@ -31,7 +31,16 @@
             break;
 
         case WireframeKind.Button:
+            @if (Interactive)
+            {
+                <button type="button" class="df-button df-state-button" disabled="@Element.Disabled" aria-label="@Element.DisplayText" @onclick="Activate">
+                    <WireframeIconView Key="@Element.IconKey" />@(Element.IconOnly && Element.IconKey.Length>0 ? "" : Element.DisplayText)
+                </button>
+            }
+            else
+            {
             <span class="df-button"><WireframeIconView Key="@Element.IconKey" />@(Element.IconOnly && Element.IconKey.Length>0 ? "" : Element.DisplayText)</span>
+            }
             break;
 
         case WireframeKind.TextField:
@@ -213,6 +222,10 @@
     {
         <span class="df-control-feedback">@Element.FeedbackText</span>
     }
+    @if (Interactive && Element.HasTransition && Element.Kind != WireframeKind.Button && !PreviewInteraction.Stateful(Element.Kind) && !Element.Disabled)
+    {
+        <button type="button" class="df-element-hotspot" aria-label="@Element.DisplayText" title="Перейти по ссылке блока" @onclick="Activate"></button>
+    }
 </div>
 
 @code {
@@ -262,6 +275,15 @@
     [Parameter] public EventCallback<WireframeElement> CheckedChanged { get; set; }
     [Parameter] public EventCallback<Action<WireframeElement>> Edited { get; set; }
     [Parameter] public EventCallback<NavItem> ItemActivated { get; set; }
+    /// <summary>Explicit activation, separate from local state changes.</summary>
+    [Parameter] public EventCallback Activated { get; set; }
+    private async Task Activate()
+    {
+        if (!Interactive || Element.Disabled) return;
+        if (Element.Kind == WireframeKind.Button) Element.VisualState = ControlVisualState.Selected;
+        await StateChanged.InvokeAsync();
+        await Activated.InvokeAsync();
+    }
 
     private string CheckClass => "df-check" + (Element.Indeterminate ? " df-check--mixed" : Element.Checked ? " df-check--on" : "");
     private async Task SetPreviewValue(ChangeEventArgs args)

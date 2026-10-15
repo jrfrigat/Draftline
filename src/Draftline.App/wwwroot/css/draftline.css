@@ -1308,3 +1308,8 @@ body {
 .df-document-search__results { max-height:18rem; overflow:auto; display:grid; gap:.35rem; margin-top:.5rem; }
 .df-document-search__results button { display:grid; gap:.3rem; text-align:left; }
 .df-document-search__results span { overflow-wrap:anywhere; font-size:.8rem; }
+.df-element-hotspot { position:absolute; inset:0; border:0; padding:0; background:transparent; cursor:pointer; }
+.df-element-hotspot:focus-visible { outline:2px solid #1b1e24; outline-offset:-2px; }
+.df-preview__actions { display:flex; flex-wrap:wrap; gap:.4rem; font-size:.8rem; }
+.df-preview__actions button { color:inherit; border:1px solid currentColor; border-radius:.2rem; padding:.3rem .5rem; background:transparent; cursor:pointer; }
+.df-button.df-state-button { width:100%; height:100%; justify-content:center; }
