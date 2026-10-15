@@ -1,0 +1,23 @@
+using Draftline.App.Model;
+using Microsoft.JSInterop;
+
+namespace Draftline.App.Services;
+
+public sealed partial class DocumentFileService
+{
+    private IJSObjectReference? _exportModule;
+
+    /// <summary>Download one or more screens as PNG files or a linked PDF.</summary>
+    public async Task DownloadDrawingAsync(DraftDocument document, IEnumerable<DraftLayer> layers, bool pdf)
+    {
+        var pages = layers.Select((layer, index) => new
+        {
+            id = layer.Id, width = layer.CanvasWidth, height = layer.CanvasHeight,
+            svg = SvgExporter.Export(layer), links = ExportLinks.For(layer),
+            fileName = FileNameFor(document, $"-{index + 1}.png", layer.Name)
+        }).ToArray();
+        _exportModule ??= await _js.InvokeAsync<IJSObjectReference>("import", "./js/draftline-export.js");
+        if (pdf) await _exportModule.InvokeVoidAsync("exportPdf", FileNameFor(document, ".pdf"), pages);
+        else await _exportModule.InvokeVoidAsync("exportPng", (object)pages);
+    }
+}

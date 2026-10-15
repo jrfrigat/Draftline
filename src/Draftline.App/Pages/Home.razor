@@ -47,6 +47,10 @@
                                        Disabled="@(Session.Document.TotalElements == 0)" OnClick="ExportSvg" />
                     <FlareRibbonButton Label="Все экраны в SVG" Tooltip="Каждый экран отдельным файлом"
                                        Disabled="@(Session.Document.Layers.Count < 2)" OnClick="ExportAllSvg" />
+                    <FlareRibbonButton Label="Экспорт PNG" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, false))" />
+                    <FlareRibbonButton Label="Все экраны в PNG" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, true))" />
+                    <FlareRibbonButton Label="Экспорт PDF" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, false))" />
+                    <FlareRibbonButton Label="Все экраны в PDF" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, true))" />
                     <FlareRibbonButton Label="Выгрузить JSON" Tooltip="Макет в файл" OnClick="ExportJson" />
                     <FlareRibbonButton Label="Загрузить JSON" Tooltip="Макет из файла" OnClick="ImportJson" />
                 </FlareRibbonGroup>
@@ -236,6 +240,20 @@
 
     /// <summary>The whole sheet as a drawing. One block on its own is exported from the inspector.</summary>
     private Task ExportSvg() => Files.DownloadSvgAsync(Session.Document, Session.CurrentLayer);
+
+    private bool _exporting;
+    private async Task ExportDrawing(bool pdf, bool all)
+    {
+        if (_exporting) return;
+        _exporting = true; _notice = "Подготовка экспорта…";
+        try
+        {
+            await Files.DownloadDrawingAsync(Session.Document, all ? Session.Document.Layers : new[] { Session.CurrentLayer }, pdf);
+            _notice = pdf ? "PDF подготовлен" : "PNG подготовлен";
+        }
+        catch (JSException) { _notice = "Не удалось экспортировать макет. Попробуйте меньший размер экрана."; }
+        finally { _exporting = false; }
+    }
 
     private Task ExportJson() => Files.DownloadJsonAsync(Session.Document);
 

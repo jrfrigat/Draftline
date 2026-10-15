@@ -11,7 +11,7 @@ namespace Draftline.App.Services;
 /// input the person has to click. What stays on this side is the part that can be reasoned about - what
 /// the file is called, what goes into it, and whether what came back is a wireframe at all.
 /// </summary>
-public sealed class DocumentFileService : IAsyncDisposable
+public sealed partial class DocumentFileService : IAsyncDisposable
 {
     private const string ModulePath = "./js/draftline-files.js";
 
@@ -132,6 +132,7 @@ public sealed class DocumentFileService : IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        if (_exportModule is not null) { await _exportModule.DisposeAsync(); _exportModule = null; }
         if (_module is not null)
         {
             await _module.DisposeAsync().ConfigureAwait(false);
