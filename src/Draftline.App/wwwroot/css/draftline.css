@@ -1293,3 +1293,7 @@ body {
 .df-icon-catalog button { width:2rem; height:2rem; display:grid; place-items:center; background:transparent; color:inherit; border:1px solid #757b86; border-radius:.2rem; cursor:pointer; }
 .df-icon-catalog button[aria-pressed="True"], .df-icon-catalog button[aria-pressed="true"] { border-color:#3b82f6; background:#3b82f633; }
 .df-icon-catalog .df-wire-icon { margin:0; width:1.2rem; height:1.2rem; }
+.df-component-library { display:grid; gap:.35rem; padding:.4rem; }
+.df-component-library button { color:inherit; background:transparent; border:1px solid #757b86; border-radius:.2rem; padding:.35rem; cursor:pointer; }
+.df-component-library button:disabled { opacity:.4; cursor:default; }
+.df-component-library__item { display:flex; justify-content:space-between; align-items:center; gap:.3rem; border-top:1px solid #757b8655; padding-block:.3rem; }

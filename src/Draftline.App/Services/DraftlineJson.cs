@@ -18,6 +18,7 @@ namespace Draftline.App.Services;
     PropertyNameCaseInsensitive = true,
     DefaultIgnoreCondition = JsonIgnoreCondition.Never)]
 [JsonSerializable(typeof(DraftDocument))]
+[JsonSerializable(typeof(WireframeElement))]
 public sealed partial class DraftlineJsonContext : JsonSerializerContext
 {
 }

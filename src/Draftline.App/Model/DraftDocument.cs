@@ -44,6 +44,7 @@ public sealed class DraftDocument
 
     /// <summary>The screens of this wireframe, in the order they are listed.</summary>
     public List<DraftLayer> Layers { get; set; } = new();
+    public List<ComponentDefinition> Components { get; set; } = new();
 
     /// <summary>The screen a preview opens on; empty means the first one.</summary>
     public string StartLayerId { get; set; } = string.Empty;
@@ -121,6 +122,7 @@ public sealed class DraftDocument
 
         foreach (var element in AllElements)
         {
+            if(element.ComponentKey.Length>0 && (!Components.Any(c=>c.Id==element.ComponentKey) || element.InstanceKey.Length==0))ComponentDefinition.Detach(element);
             if (element.TargetLayerId == id)
             {
                 element.Transition = TransitionKind.None;
@@ -153,6 +155,7 @@ public sealed class DraftDocument
         Name = Name,
         GridSize = GridSize,
         Layers = Layers.Select(layer => layer.Clone()).ToList(),
+        Components = Components.Select(component => component.Clone()).ToList(),
         StartLayerId = StartLayerId,
         CreatedAt = CreatedAt,
         UpdatedAt = UpdatedAt
@@ -183,6 +186,16 @@ public sealed class DraftDocument
         }
 
         Layers ??= new List<DraftLayer>();
+        Components ??= new();
+        var componentIds = new HashSet<string>();
+        Components.RemoveAll(c=>c is null);
+        foreach(var component in Components)
+        {
+            if(string.IsNullOrWhiteSpace(component.Id) || !componentIds.Add(component.Id))component.Id=Guid.NewGuid().ToString("n");
+            component.Name=string.IsNullOrWhiteSpace(component.Name)?"Компонент":component.Name.Trim();
+            var template=DraftLayer.Create("Component");template.CanvasWidth=100000;template.CanvasHeight=100000;template.Elements=component.Elements??new();template.Normalize();
+            component.Elements=template.Elements;foreach(var e in component.Elements)ComponentDefinition.Detach(e);
+        }
 
         // A file written before screens existed kept its blocks on the document itself. Those blocks
         // become the one screen such a file has: nothing is invented and nothing is lost, which is the

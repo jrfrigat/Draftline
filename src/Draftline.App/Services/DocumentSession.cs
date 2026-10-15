@@ -333,12 +333,13 @@ public sealed partial class DocumentSession
     /// and tells everyone. The label is what the person reads in the status line and what an undo
     /// says afterwards.
     /// </summary>
-    public void Edit(string label, Action<DraftDocument> change)
+    public void Edit(string label, Action<DraftDocument> change, bool trackComponents = true)
     {
         ArgumentNullException.ThrowIfNull(change);
 
         var before = Document.Clone();
         change(Document);
+        if (trackComponents) TrackComponentTranslation(before);
         ElementGroups.Normalize(CurrentLayer);
         PruneSelection();
         Document.Touch();
@@ -572,6 +573,7 @@ public sealed partial class DocumentSession
             return false;
         }
 
+        TrackComponentTranslation(before);
         _history.Record(before, label);
         Status = label;
 

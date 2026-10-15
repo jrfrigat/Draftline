@@ -41,6 +41,12 @@ public sealed class WireframeElement
     public bool KeepImageAspect { get; set; } = true;
     public string IconKey { get; set; } = "";
     public bool IconOnly { get; set; }
+    public string ComponentKey { get; set; } = "";
+    public string InstanceKey { get; set; } = "";
+    public string SourceKey { get; set; } = "";
+    public string ComponentBaseline { get; set; } = "";
+    public double ComponentOriginX { get; set; }
+    public double ComponentOriginY { get; set; }
 
     /// <summary>What the block shows. Empty means the kind's own placeholder.</summary>
     public string Text { get; set; } = string.Empty;
@@ -195,6 +201,8 @@ public sealed class WireframeElement
         Rotation = Rotation,
         ImageData = ImageData, ImageName = ImageName, ImageWidth = ImageWidth, ImageHeight = ImageHeight,
         IconKey = IconKey, IconOnly = IconOnly,
+        ComponentKey=ComponentKey,InstanceKey=InstanceKey,SourceKey=SourceKey,ComponentBaseline=ComponentBaseline,
+        ComponentOriginX=ComponentOriginX,ComponentOriginY=ComponentOriginY,
         CropX = CropX, CropY = CropY, CropWidth = CropWidth, CropHeight = CropHeight, ImageFit = ImageFit, KeepImageAspect = KeepImageAspect,
         Text = Text,
         Options = new List<string>(Options),

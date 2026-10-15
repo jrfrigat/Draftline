@@ -116,6 +116,9 @@ public sealed class DraftLayer
             ControlRange.Normalize(element);
             ExtraElements.Normalize(element);
             ImageAssets.Normalize(element);
+            element.ComponentKey??="";element.InstanceKey??="";element.SourceKey??="";element.ComponentBaseline??="";
+            if(!double.IsFinite(element.ComponentOriginX))element.ComponentOriginX=0;
+            if(!double.IsFinite(element.ComponentOriginY))element.ComponentOriginY=0;
             if (WireframeIcons.Find(element.IconKey) is null) element.IconKey = "";
             CalendarState.Normalize(element);
             var bounds = CanvasGeometry.Clamp(element.Bounds, CanvasWidth, CanvasHeight);
