@@ -114,23 +114,7 @@
             break;
 
         case WireframeKind.DataGrid:
-            <span class="df-table">
-                <span class="df-table__row df-table__head">
-                    @foreach (var column in Element.Columns)
-                    {
-                        <span class="df-table__cell">@column</span>
-                    }
-                </span>
-                @foreach (var row in Element.Rows)
-                {
-                    <span class="df-table__row">
-                        @foreach (var cell in row)
-                        {
-                            <span class="df-table__cell">@cell</span>
-                        }
-                    </span>
-                }
-            </span>
+            <TableElement Element="Element" Interactive="Interactive" StateChanged="StateChanged" />
             break;
 
         case WireframeKind.Tabs:

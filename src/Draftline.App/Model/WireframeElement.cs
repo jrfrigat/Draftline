@@ -64,6 +64,12 @@ public sealed class WireframeElement
     /// </summary>
     public List<List<string>> Rows { get; set; } = new();
 
+    /// <summary>Table appearance and row/sort state; indices refer to authored data.</summary>
+    public TableStyle TableStyle { get; set; }
+    public int SelectedRow { get; set; } = -1;
+    public int SortColumn { get; set; } = -1;
+    public bool SortDescending { get; set; }
+
     /// <summary>What the block does when it is pressed in the preview: nothing, navigate, open a dialog.</summary>
     public TransitionKind Transition { get; set; } = TransitionKind.None;
 
@@ -161,6 +167,7 @@ public sealed class WireframeElement
         SecondaryText = SecondaryText,
         Columns = new List<string>(Columns),
         Rows = Rows.Select(row => new List<string>(row)).ToList(),
+        TableStyle = TableStyle, SelectedRow = SelectedRow, SortColumn = SortColumn, SortDescending = SortDescending,
         Transition = Transition,
         TargetLayerId = TargetLayerId,
         Checked = Checked,

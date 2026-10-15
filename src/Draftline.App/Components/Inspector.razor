@@ -19,6 +19,7 @@ else
         <TreeInspector Element="element" />
         <FormInspector Element="element" />
         <NavInspector Element="element" />
+        <TableInspector Element="element" />
 
         @if (ElementState.HasAvailability(element.Kind))
         {
@@ -188,7 +189,7 @@ else
             return;
         }
 
-        Apply(element, "Колонки изменены", target => target.Columns = columns);
+        Apply(element, "Колонки изменены", target => { target.Columns = columns; TableState.Normalize(target); });
     }
 
     private void SetRows(WireframeElement element, string? value)
@@ -223,7 +224,7 @@ else
             return;
         }
 
-        Apply(element, "Строки таблицы изменены", target => target.Rows = rows);
+        Apply(element, "Строки таблицы изменены", target => { target.Rows = rows; TableState.Normalize(target); });
     }
 
     private void SetX(WireframeElement element, double? value)

@@ -1,0 +1,34 @@
+<table class="df-data-table df-data-table--@Element.TableStyle.ToString().ToLowerInvariant()" role="grid" aria-label="Таблица">
+    <thead><tr>
+        @foreach (var index in Enumerable.Range(0, Element.Columns.Count))
+        {
+            <th scope="col" aria-sort="@(Element.SortColumn == index ? Element.SortDescending ? "descending" : "ascending" : "none")">
+                @if (Interactive)
+                {
+                    <button type="button" class="df-state-button" disabled="@Element.Disabled" @onclick="() => Sort(index)">@TableState.Header(Element, index)</button>
+                }
+                else { @TableState.Header(Element, index) }
+            </th>
+        }
+    </tr></thead>
+    <tbody>
+        @foreach (var row in TableState.Ordered(Element))
+        {
+            <tr class="@(Element.SelectedRow == row.Index ? "df-item--selected" : "")" aria-selected="@(Element.SelectedRow == row.Index ? "true" : "false")"
+                tabindex="@(Interactive && !Element.Disabled ? 0 : -1)" @onclick="() => Select(row.Index)" @onkeydown="args => OnKey(args, row.Index)">
+                @foreach (var cell in row.Cells) { <td>@cell</td> }
+            </tr>
+        }
+    </tbody>
+</table>
+@code {
+    /// <summary>The authored table or preview copy.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    /// <summary>Temporary sorting and row selection.</summary>
+    [Parameter] public bool Interactive { get; set; }
+    /// <summary>Repaints preview after changing its copy.</summary>
+    [Parameter] public EventCallback StateChanged { get; set; }
+    private async Task Sort(int index) { if (!Interactive || Element.Disabled) return; TableState.Sort(Element, index); await StateChanged.InvokeAsync(); }
+    private async Task Select(int index) { if (!Interactive || Element.Disabled) return; Element.SelectedRow = index; await StateChanged.InvokeAsync(); }
+    private Task OnKey(KeyboardEventArgs args, int index) => args.Key is "Enter" or " " ? Select(index) : Task.CompletedTask;
+}

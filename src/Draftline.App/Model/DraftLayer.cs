@@ -111,6 +111,7 @@ public sealed class DraftLayer
                 NormalizeRows(element);
             }
 
+            TableState.Normalize(element);
             var bounds = CanvasGeometry.Clamp(element.Bounds, CanvasWidth, CanvasHeight);
             element.X = bounds.X;
             element.Y = bounds.Y;

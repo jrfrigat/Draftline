@@ -1,0 +1,24 @@
+@inject DocumentSession Session
+@if (Element.Kind == WireframeKind.DataGrid)
+{
+    <FlareSelect Label="Стиль таблицы" Size="FieldSize.Xs" Value="@Element.TableStyle.ToString()" ValueChanged="@((string? value) => SetStyle(value))">
+        <option value="Grid">Сетка</option><option value="Rows">Линии строк</option><option value="Columns">Линии колонок</option>
+        <option value="Plain">Без линий</option><option value="Zebra">Чередование строк</option>
+    </FlareSelect>
+    <FlareSelect Label="Выбранная строка" Size="FieldSize.Xs" Value="@Element.SelectedRow.ToString()" ValueChanged="@((string? value) => SetRow(value))">
+        <option value="-1">Не выбрана</option>
+        @foreach (var row in TableState.Ordered(Element)) { <option value="@row.Index">@(row.Index + 1). @string.Join(" · ", row.Cells)</option> }
+    </FlareSelect>
+    <FlareSelect Label="Сортировка по колонке" Size="FieldSize.Xs" Value="@Element.SortColumn.ToString()" ValueChanged="@((string? value) => SetSort(value))">
+        <option value="-1">Исходный порядок</option>
+        @foreach (var index in Enumerable.Range(0, Element.Columns.Count)) { <option value="@index">@Element.Columns[index]</option> }
+    </FlareSelect>
+    <FlareCheckbox Value="@Element.SortDescending" ValueChanged="@((bool value) => Session.Edit("Порядок сортировки изменён", _ => Element.SortDescending = value))">По убыванию</FlareCheckbox>
+}
+@code {
+    /// <summary>The selected table.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    private void SetStyle(string? value) { if (Enum.TryParse<TableStyle>(value, out var style) && style != Element.TableStyle) Session.Edit("Стиль таблицы изменён", _ => Element.TableStyle = style); }
+    private void SetRow(string? value) { if (int.TryParse(value, out var index) && index != Element.SelectedRow) Session.Edit("Строка таблицы выбрана", _ => { Element.SelectedRow = index; TableState.Normalize(Element); }); }
+    private void SetSort(string? value) { if (int.TryParse(value, out var index) && index != Element.SortColumn) Session.Edit("Сортировка таблицы изменена", _ => { Element.SortColumn = index; Element.SortDescending = false; TableState.Normalize(Element); }); }
+}

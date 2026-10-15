@@ -197,46 +197,8 @@ public static partial class SvgExporter
                 break;
 
             case WireframeKind.DataGrid:
-            {
-                Box(svg, x, y, element.Width, element.Height, Paper);
-
-                var columns = element.Columns.Count;
-                var columnWidth = element.Width / Math.Max(1, columns);
-                var headerHeight = 24d;
-                var dataRowHeight = element.Rows.Count > 0
-                    ? Math.Max(14, (element.Height - headerHeight) / element.Rows.Count)
-                    : 0d;
-
-                for (var column = 0; column < columns; column++)
-                {
-                    Text(svg, x + (columnWidth * column) + 6, y + 16, element.Columns[column], size, "700", 1);
-
-                    if (column > 0)
-                    {
-                        Line(svg, x + (columnWidth * column), y, x + (columnWidth * column), bottom, 0.5);
-                    }
-                }
-
-                Line(svg, x, y + headerHeight, right, y + headerHeight, 1);
-
-                for (var rowIndex = 0; rowIndex < element.Rows.Count; rowIndex++)
-                {
-                    var rowTop = y + headerHeight + (dataRowHeight * rowIndex);
-
-                    for (var column = 0; column < element.Rows[rowIndex].Count; column++)
-                    {
-                        Text(svg, x + (columnWidth * column) + 6, rowTop + (dataRowHeight / 2) + 4,
-                            element.Rows[rowIndex][column], size, "400", 1);
-                    }
-
-                    if (rowIndex > 0)
-                    {
-                        Line(svg, x, rowTop, right, rowTop, 0.5);
-                    }
-                }
-
+                WriteTable(svg, element, x, y, size);
                 break;
-            }
 
             case WireframeKind.Tabs:
             {

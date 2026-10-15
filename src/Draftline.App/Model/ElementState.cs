@@ -22,7 +22,7 @@ public static class ElementState
     /// <summary>Whether availability is meaningful for this control.</summary>
     public static bool HasAvailability(WireframeKind kind) => HasChoice(kind) || kind is
         WireframeKind.Button or WireframeKind.TextField or WireframeKind.TextArea or
-        WireframeKind.Checkbox or WireframeKind.Radio or WireframeKind.Slider;
+        WireframeKind.Checkbox or WireframeKind.Radio or WireframeKind.Slider or WireframeKind.DataGrid;
 
     /// <summary>Effective selected item, with a first-tab default for old files.</summary>
     public static int Index(WireframeElement element) =>
