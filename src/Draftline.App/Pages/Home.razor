@@ -298,10 +298,11 @@
 
         // An imported wireframe is written into this browser straight away: it arrived from a file, and
         // until it is saved the editor is holding something the project list does not know about.
-        Session.Open(result.Document);
-        await Catalog.SaveAsync(result.Document);
-        await Catalog.RememberLastAsync(result.Document.Id);
-        Session.MarkSaved("Загружено из файла: " + result.Document.Name);
+        var imported = await Catalog.PrepareImportAsync(result.Document);
+        Session.Open(imported);
+        await Catalog.SaveAsync(imported);
+        await Catalog.RememberLastAsync(imported.Id);
+        Session.MarkSaved("Загружено из файла: " + imported.Name);
 
         _notice = null;
     }

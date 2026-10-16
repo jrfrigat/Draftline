@@ -52,6 +52,20 @@ public sealed class ProjectCatalog
     /// <summary>The catalog over a storage.</summary>
     public ProjectCatalog(IBrowserStorage storage) => _storage = storage;
 
+    /// <summary>An imported file never overwrites an existing project without consent.</summary>
+    public async Task<DraftDocument> PrepareImportAsync(DraftDocument source)
+    {
+        var document = source.Clone();
+        if (await _storage.GetAsync(DocumentKeyPrefix + document.Id) is not null ||
+            (await ListAsync()).Any(line => line.Id == document.Id))
+        {
+            do { document.Id = Guid.NewGuid().ToString("n"); }
+            while (await _storage.GetAsync(DocumentKeyPrefix + document.Id) is not null);
+            document.Name += " (копия)";
+        }
+        return document;
+    }
+
     /// <summary>The projects, most recently written first.</summary>
     public async Task<IReadOnlyList<ProjectSummary>> ListAsync(CancellationToken cancellationToken = default)
     {
