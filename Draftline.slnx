@@ -1,9 +1,8 @@
 <Solution>
-  <!-- The editor itself. Everything Draftline ships lives here: a client-only Blazor WebAssembly
-       PWA with no server side at all. A test project is deliberately absent from the first version
-       (the person's call of 14.10.2026): the logic is still written as plain classes with no DOM, so
-       specs can be added later without moving anything. -->
   <Folder Name="/src/">
     <Project Path="src/Draftline.App/Draftline.App.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Draftline.App.Tests/Draftline.App.Tests.csproj" />
   </Folder>
 </Solution>

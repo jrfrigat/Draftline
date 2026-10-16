@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- xunit.v3 supplies the process entry point and refuses to build a test project that is not
+         executable. -->
+    <OutputType>Exe</OutputType>
+    <!-- The opt-in for the new "dotnet test" experience: the command then drives the test application
+         through Microsoft.Testing.Platform, which is the runner global.json names. -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The specs build the app's own types, and those are written against the Blazor runtime
+         (IComponent, NavigationManager, IJSRuntime), so the shared framework has to be referable here. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Microsoft.NET.Test.Sdk marks the project as a test project for the SDK; xunit.v3 is the runner
+         and the assertion library; the TRX extension is the report format CI reads. -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.3.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Draftline.App\Draftline.App.csproj" />
+  </ItemGroup>
+
+</Project>
