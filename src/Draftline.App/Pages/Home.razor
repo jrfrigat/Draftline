@@ -186,6 +186,7 @@
     protected override void OnInitialized()
     {
         Session.Changed += OnSessionChanged;
+        Session.GestureChanged += OnGestureChanged;
         Autosave.Changed += OnSaveChanged;
     }
 
@@ -193,6 +194,7 @@
     public async ValueTask DisposeAsync()
     {
         Session.Changed -= OnSessionChanged;
+        Session.GestureChanged -= OnGestureChanged;
         Autosave.Changed -= OnSaveChanged;
         if (_viewportModule is not null) await _viewportModule.DisposeAsync();
         if (_lifecycleModule is not null)
@@ -246,11 +248,14 @@
         StateHasChanged();
     }
 
-    [JSInvokable] public Task<bool> SaveBeforeHide() => Autosave.FlushAsync();
+    [JSInvokable] public Task<bool> SaveBeforeHide() { Session.EndGesture(); return Autosave.FlushAsync(); }
 
+    private bool? _warnedDirty;
+    private void OnGestureChanged() => _ = UpdateDirtyWarning();
     private async Task UpdateDirtyWarning()
     {
-        if (_lifecycleModule is null) return;
+        if (_lifecycleModule is null || _warnedDirty == Session.IsDirty) return;
+        _warnedDirty = Session.IsDirty;
         try { await _lifecycleModule.InvokeVoidAsync("setDirty", Session.IsDirty); }
         catch (JSException) { /* The page may already be closing. */ }
     }

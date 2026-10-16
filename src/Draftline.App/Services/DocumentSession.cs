@@ -296,6 +296,7 @@ public sealed partial class DocumentSession
 
     /// <summary>Raised after every change of the document or the selection.</summary>
     public event Action? Changed;
+    public event Action? GestureChanged;
 
     /// <summary>True while the document holds changes the storage has not written yet.</summary>
     public bool IsDirty { get; private set; }
@@ -349,7 +350,7 @@ public sealed partial class DocumentSession
         ElementGroups.Normalize(CurrentLayer);
         PruneSelection();
         Document.Touch();
-        _history.Record(before, label);
+        _history.RecordSnapshot(before, label);
 
         IsDirty = true;
         EditVersion++;
@@ -558,14 +559,13 @@ public sealed partial class DocumentSession
         if (!IsGestureRunning) return;
 
         change(Document);
-        ElementGroups.Normalize(CurrentLayer);
         Document.Touch();
 
         _gestureChanged = true;
         IsDirty = true;
         EditVersion++;
 
-        Changed?.Invoke();
+        GestureChanged?.Invoke();
     }
 
     /// <summary>
@@ -588,7 +588,8 @@ public sealed partial class DocumentSession
         }
 
         TrackComponentTranslation(before);
-        _history.Record(before, label);
+        ElementGroups.Normalize(CurrentLayer);
+        _history.RecordSnapshot(before, label);
         Status = label;
 
         Changed?.Invoke();

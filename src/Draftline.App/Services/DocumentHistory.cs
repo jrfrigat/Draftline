@@ -42,8 +42,13 @@ public sealed class DocumentHistory
     public void Record(DraftDocument before, string label)
     {
         ArgumentNullException.ThrowIfNull(before);
+        RecordSnapshot(before.Clone(), label);
+    }
 
-        _past.Add(new Entry(before.Clone(), label));
+    /// <summary>Consumes a snapshot privately created by DocumentSession; callers retain no mutable reference.</summary>
+    internal void RecordSnapshot(DraftDocument before, string label)
+    {
+        _past.Add(new Entry(before, label));
 
         if (_past.Count > Capacity)
         {

@@ -186,6 +186,7 @@
     protected override void OnInitialized()
     {
         Session.Changed += OnSessionChanged;
+        Session.GestureChanged += OnSessionChanged;
     }
 
     /// <inheritdoc />
@@ -214,6 +215,7 @@
     public async ValueTask DisposeAsync()
     {
         Session.Changed -= OnSessionChanged;
+        Session.GestureChanged -= OnSessionChanged;
 
         if (_attached && _module is not null)
         {

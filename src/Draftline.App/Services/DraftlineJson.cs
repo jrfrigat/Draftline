@@ -52,6 +52,9 @@ public static class DraftlineJson
 
     private static readonly DraftlineJsonContext CompactContext = new(new JsonSerializerOptions(DraftlineJsonContext.Default.Options) { WriteIndented = false });
 
+    /// <summary>Writes the trusted in-memory document without repeating import validation and decoding images.</summary>
+    public static string SerializeForStorage(DraftDocument document) => JsonSerializer.Serialize(document, CompactContext.DraftDocument);
+
     /// <summary>Reads a document, or explains why it could not be read.</summary>
     public static DocumentReadResult Read(string json)
     {

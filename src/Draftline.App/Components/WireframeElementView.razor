@@ -114,7 +114,7 @@
         case WireframeKind.Image:
             @if (ImageAssets.HasImage(Element))
             {
-                <span class="df-local-image">@((MarkupString)SvgExporter.Fragment(Element,Drawing))</span>
+                <span class="df-local-image">@((MarkupString)_fragment.Render(Element,Drawing))</span>
             }
             else
             {
@@ -229,6 +229,7 @@
 </div>
 
 @code {
+    private readonly ElementFragmentCache _fragment = new();
     /// <summary>The block this view draws.</summary>
     [Parameter, EditorRequired]
     public WireframeElement Element { get; set; } = null!;

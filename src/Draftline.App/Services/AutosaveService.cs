@@ -73,6 +73,7 @@ public sealed class AutosaveService : IDisposable
 
     private async Task<bool> WriteAsync(CancellationToken cancellationToken)
     {
+        if (_session.IsGestureRunning) return false;
         if (!_session.IsDirty) return true;
         var version = _session.EditVersion;
         var document = _session.Document.Clone();

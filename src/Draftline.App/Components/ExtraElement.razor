@@ -1,4 +1,4 @@
-<div class="df-extra-art" aria-hidden="true">@((MarkupString)SvgExporter.Fragment(Element,Drawing))</div>
+<div class="df-extra-art" aria-hidden="true">@((MarkupString)_fragment.Render(Element,Drawing))</div>
 @if (Interactive)
 {
     @if (Element.Kind == WireframeKind.Switch)
@@ -40,6 +40,7 @@
     }
 }
 @code {
+    private readonly ElementFragmentCache _fragment = new();
     /// <summary>The block or preview-owned copy.</summary>
     [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
     /// <summary>Temporary prototype interaction.</summary>
