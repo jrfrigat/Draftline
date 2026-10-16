@@ -1343,3 +1343,17 @@ body {
     .df-handle { width:calc(44px / var(--df-zoom,1)); height:calc(44px / var(--df-zoom,1)); margin:calc(-22px / var(--df-zoom,1)) 0 0 calc(-22px / var(--df-zoom,1)); }
     .df-canvas-toolbar button { min-height:44px; min-width:44px; }
 }
+
+/* Application command composition: every group remains reachable on a narrow viewport. */
+.df-ribbon > .flare-ribbon__commands { overflow-x:hidden; overflow-y:auto; max-height:min(35vh,18rem); }
+.df-ribbon .flare-ribbon__tabpanel { flex:1 1 auto; min-width:0; width:100%; flex-wrap:wrap; align-items:flex-start; }
+.df-ribbon .flare-ribbon__group { flex:0 1 auto; min-width:0; max-width:100%; }
+.df-ribbon .flare-ribbon__group-content { display:flex; flex-wrap:wrap; align-items:center; gap:4px; min-width:0; }
+.df-ribbon .df-projects { flex-wrap:wrap; min-width:0; max-width:100%; }
+.df-ribbon .df-projects__name { min-width:0; max-width:100%; }
+.df-ribbon .df-theme-fields { flex-wrap:wrap; }
+@media(max-width:600px) {
+    .df-ribbon-brand { inset-inline-start:8px; font-size:12px; }
+    .df-ribbon > .flare-ribbon__tabs { padding-inline-start:108px; flex-wrap:wrap; }
+    .df-ribbon .flare-ribbon__group { width:100%; }
+}
