@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Draftline.App/Draftline.App.csproj" />
+    <Project Path="src/Flare.Theme.OneC/Flare.Theme.OneC.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Draftline.App.Tests/Draftline.App.Tests.csproj" />
