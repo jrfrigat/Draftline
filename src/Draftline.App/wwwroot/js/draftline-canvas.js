@@ -10,6 +10,8 @@ let dotNet = null;
 let activePointer = null;
 let hand = false, pan = null;
 let viewportObserver = null;
+let hasSelection = false, canPaste = false;
+export function setSelectionState(selected, paste) { hasSelection = selected; canPaste = paste; }
 export function isCoarsePointer() { return window.matchMedia('(pointer: coarse)').matches; }
 export function setHand(value) { hand = value; }
 export function availableWidth() { return Math.max(100, canvas?.parentElement.clientWidth - 28); }
@@ -71,6 +73,7 @@ export function detach() {
     dotNet = null;
     activePointer = null;
     hand = false; pan = null;
+    hasSelection = canPaste = false;
 }
 
 // Where the pointer is, in the sheet's own pixels. The difference between the two rectangles is the
@@ -258,6 +261,9 @@ function onKeyDown(event) {
     if (!key) {
         return;
     }
+    if (['Copy','Cut','Delete','Duplicate','Group','Ungroup','Front','Back'].includes(key) && !hasSelection) return;
+    if (key === 'Paste' && !canPaste) return;
+    if (key === 'Copy' && window.getSelection()?.toString()) return;
 
     event.preventDefault();
     return dotNet.invokeMethodAsync('OnKey', key, event.shiftKey);

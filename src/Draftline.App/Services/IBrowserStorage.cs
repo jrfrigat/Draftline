@@ -1,5 +1,4 @@
 namespace Draftline.App.Services;
-
 /// <summary>
 /// The browser's own storage, seen by the app: a small key-value box that outlives a reload.
 ///
@@ -11,13 +10,10 @@ public interface IBrowserStorage
 {
     /// <summary>The value under a key, or null when there is none.</summary>
     Task<string?> GetAsync(string key, CancellationToken cancellationToken = default);
-
-    /// <summary>Writes a value. Throws <see cref="BrowserStorageException"/> when the browser refuses.</summary>
+    /// <summary>Writes a value. Throws <see cref = "BrowserStorageException"/> when the browser refuses.</summary>
     Task SetAsync(string key, string value, CancellationToken cancellationToken = default);
-
     /// <summary>Removes a key. Removing a key that is not there is not an error.</summary>
     Task RemoveAsync(string key, CancellationToken cancellationToken = default);
-
     /// <summary>Every key the app's storage holds.</summary>
     Task<IReadOnlyList<string>> KeysAsync(CancellationToken cancellationToken = default);
 }
@@ -26,14 +22,12 @@ public interface IBrowserStorage
 public sealed class BrowserStorageException : Exception
 {
     /// <summary>A refusal with the sentence the person sees.</summary>
-    public BrowserStorageException(string message)
-        : base(message)
+    public BrowserStorageException(string message) : base(message)
     {
     }
 
     /// <summary>A refusal that wraps what actually happened.</summary>
-    public BrowserStorageException(string message, Exception innerException)
-        : base(message, innerException)
+    public BrowserStorageException(string message, Exception innerException) : base(message, innerException)
     {
     }
 }
@@ -49,29 +43,25 @@ public sealed class BrowserStorageException : Exception
 public sealed class InMemoryBrowserStorage : IBrowserStorage
 {
     private readonly Dictionary<string, string> _entries = new(StringComparer.Ordinal);
-
     /// <summary>True when this storage forgets everything with the page - the reason it exists.</summary>
     public bool IsVolatile => true;
 
-    /// <inheritdoc />
-    public Task<string?> GetAsync(string key, CancellationToken cancellationToken = default) =>
-        Task.FromResult(_entries.TryGetValue(key, out var value) ? value : null);
-
-    /// <inheritdoc />
+    /// <inheritdoc/>
+    public Task<string?> GetAsync(string key, CancellationToken cancellationToken = default) => Task.FromResult(_entries.TryGetValue(key, out var value) ? value : null);
+    /// <inheritdoc/>
     public Task SetAsync(string key, string value, CancellationToken cancellationToken = default)
     {
         _entries[key] = value;
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
         _entries.Remove(key);
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc />
-    public Task<IReadOnlyList<string>> KeysAsync(CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyList<string>>(_entries.Keys.ToList());
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<string>> KeysAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<string>>(_entries.Keys.ToList());
 }

@@ -109,6 +109,7 @@
     private string? _editingId;
     private double? _verticalGuide, _horizontalGuide;
     private int _searchNavigation;
+    private (bool Selection, bool Paste)? _keyboardState;
     private bool CanResize => Session.CanTransformSelection && Session.Members().All(e => e.Rotation == 0);
     private string SelectionDescription => Session.Selected is { } selected
         ? $"{ElementDefaults.NameOf(selected.Kind)}: {selected.DisplayText}. X {Number(selected.X)}, Y {Number(selected.Y)}. Размер {Number(selected.Width)} на {Number(selected.Height)}."
@@ -192,6 +193,7 @@
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_module is not null) await UpdateKeyboardState();
         if (!firstRender)
         {
             if(_module is not null && _searchNavigation!=Session.SearchNavigationVersion && Session.Selected is { } found)
@@ -205,10 +207,19 @@
         _self = DotNetObjectReference.Create(this);
 
         await _module.InvokeVoidAsync("attach", _sheet, _self);
+        await UpdateKeyboardState();
         _coarse = await _module.InvokeAsync<bool>("isCoarsePointer");
         if (_coarse) { _hand = true; await _module.InvokeVoidAsync("setHand", true); }
         if (_coarse || await _module.InvokeAsync<bool>("isCompactViewport")) { await FitWidth(); StateHasChanged(); }
         _attached = true;
+    }
+
+    private async Task UpdateKeyboardState()
+    {
+        var state = (Session.Selection.Count > 0, Session.CanPaste);
+        if (_keyboardState == state) return;
+        _keyboardState = state;
+        await _module!.InvokeVoidAsync("setSelectionState", state.Item1, state.Item2);
     }
 
     /// <inheritdoc />

@@ -1,11 +1,10 @@
 using Draftline.App.Model;
 
 namespace Draftline.App.Services;
-
 /// <summary>
 /// The editor's state: which wireframe is open, what is selected on it, and how it got here.
 ///
-/// Every change goes through <see cref="Edit"/>. That single door is what keeps three consumers
+/// Every change goes through <see cref = "Edit"/>. That single door is what keeps three consumers
 /// honest - the canvas draws what this class holds, the inspector writes through it, and the autosave
 /// listens to it - because there is no second path by which the document could change. A change that
 /// did not go through here would be a change nobody could undo and nobody would save.
@@ -18,10 +17,8 @@ public sealed partial class DocumentSession
     private DraftDocument? _gestureBefore;
     private string? _gestureLabel;
     private bool _gestureChanged;
-
     /// <summary>A session holding a new, empty wireframe.</summary>
-    public DocumentSession()
-        : this(new DocumentHistory())
+    public DocumentSession() : this(new DocumentHistory())
     {
     }
 
@@ -36,10 +33,8 @@ public sealed partial class DocumentSession
 
     /// <summary>The open wireframe. Never null: a session always has something to draw.</summary>
     public DraftDocument Document { get; private set; }
-
     /// <summary>The screen being drawn on.</summary>
     public DraftLayer CurrentLayer => LayerIn(Document);
-
     /// <summary>Identity of the screen being drawn on.</summary>
     public string CurrentLayerId => CurrentLayer.Id;
 
@@ -50,7 +45,7 @@ public sealed partial class DocumentSession
     /// </summary>
     public void SelectLayer(string id)
     {
-        if (Document.FindLayer(id) is not { } layer || layer.Id == CurrentLayerId)
+        if (Document.FindLayer(id)is not { } layer || layer.Id == CurrentLayerId)
         {
             return;
         }
@@ -59,7 +54,6 @@ public sealed partial class DocumentSession
         EditingGroupId = "";
         _selection.Clear();
         Status = "Экран: " + layer.Name;
-
         Changed?.Invoke();
     }
 
@@ -68,37 +62,27 @@ public sealed partial class DocumentSession
     {
         var name = "Экран " + (Document.Layers.Count + 1);
         var created = DraftLayer.Create(name);
-
         _currentLayerId = created.Id;
         EditingGroupId = string.Empty;
         _selection.Clear();
-
         Edit("Экран добавлен: " + name, document => document.Layers.Add(created));
         return created;
     }
 
     private readonly List<string> _previewPath = new();
     private bool _dialogOpen;
-
     /// <summary>True while the wireframe is being shown rather than drawn.</summary>
     public bool IsPreviewing => _previewPath.Count > 0;
-
     /// <summary>The screen being shown; null while the editor is open.</summary>
     public string? PreviewLayerId => IsPreviewing ? _previewPath[^1] : null;
-
     /// <summary>True when the screen on top was opened as a dialog over the one under it.</summary>
     public bool IsDialogOpen => _dialogOpen;
-
     /// <summary>The screen a dialog stands over, or null.</summary>
-    public string? DialogHostLayerId =>
-        _dialogOpen && _previewPath.Count > 1 ? _previewPath[^2] : null;
-
+    public string? DialogHostLayerId => _dialogOpen && _previewPath.Count > 1 ? _previewPath[^2] : null;
     /// <summary>Whether there is a screen to step back to.</summary>
     public bool CanGoBack => _previewPath.Count > 1;
-
     /// <summary>The screen being shown in the preview, or null.</summary>
     public DraftLayer? PreviewLayer => PreviewLayerId is { } id ? Document.FindLayer(id) : null;
-
     /// <summary>The screen a dialog stands over, or null.</summary>
     public DraftLayer? DialogHostLayer => DialogHostLayerId is { } id ? Document.FindLayer(id) : null;
 
@@ -114,7 +98,6 @@ public sealed partial class DocumentSession
         _dialogOpen = false;
         _selection.Clear();
         Status = "Просмотр: " + Document.StartLayer.Name;
-
         Changed?.Invoke();
     }
 
@@ -129,7 +112,6 @@ public sealed partial class DocumentSession
         _previewPath.Clear();
         _dialogOpen = false;
         Status = "Просмотр закрыт";
-
         Changed?.Invoke();
     }
 
@@ -139,8 +121,7 @@ public sealed partial class DocumentSession
     /// </summary>
     public bool FollowTransition(WireframeElement? element)
     {
-        if (!IsPreviewing || element is null || !element.HasTransition
-            || Document.FindLayer(element.TargetLayerId) is not { } target)
+        if (!IsPreviewing || element is null || !element.HasTransition || Document.FindLayer(element.TargetLayerId)is not { } target)
         {
             return false;
         }
@@ -185,7 +166,6 @@ public sealed partial class DocumentSession
         _previewPath.RemoveAt(_previewPath.Count - 1);
         _dialogOpen = false;
         Status = "Просмотр: " + (Document.FindLayer(_previewPath[^1])?.Name ?? string.Empty);
-
         Changed?.Invoke();
         return true;
     }
@@ -205,7 +185,6 @@ public sealed partial class DocumentSession
 
         _previewPath.RemoveAt(_previewPath.Count - 1);
         Status = "Просмотр: " + (Document.FindLayer(_previewPath[^1])?.Name ?? string.Empty);
-
         Changed?.Invoke();
         return true;
     }
@@ -214,7 +193,7 @@ public sealed partial class DocumentSession
     public void RenameLayer(string id, string name)
     {
         var trimmed = string.IsNullOrWhiteSpace(name) ? "Экран" : name.Trim();
-        if (Document.FindLayer(id) is not { } layer || layer.Name == trimmed)
+        if (Document.FindLayer(id)is not { } layer || layer.Name == trimmed)
         {
             return;
         }
@@ -225,18 +204,17 @@ public sealed partial class DocumentSession
     /// <summary>Removes a screen. The last screen is never removed.</summary>
     public bool RemoveLayer(string id)
     {
-        if (Document.Layers.Count <= 1 || Document.FindLayer(id) is not { } layer)
+        if (Document.Layers.Count <= 1 || Document.FindLayer(id)is not { } layer)
         {
             return false;
         }
 
         var wasCurrent = CurrentLayerId == id;
         Edit("Экран удалён: " + layer.Name, document => document.RemoveLayer(id));
-
         if (wasCurrent)
         {
             _currentLayerId = Document.StartLayer.Id;
-        EditingGroupId = string.Empty;
+            EditingGroupId = string.Empty;
             _selection.Clear();
         }
 
@@ -246,7 +224,7 @@ public sealed partial class DocumentSession
     /// <summary>Marks a screen as the one a preview opens on.</summary>
     public void SetStartLayer(string id)
     {
-        if (Document.FindLayer(id) is not { } layer || Document.StartLayerId == id)
+        if (Document.FindLayer(id)is not { } layer || Document.StartLayerId == id)
         {
             return;
         }
@@ -261,26 +239,21 @@ public sealed partial class DocumentSession
     public void SetTransition(WireframeElement element, string? targetLayerId, bool asDialog)
     {
         ArgumentNullException.ThrowIfNull(element);
-
         var target = string.IsNullOrEmpty(targetLayerId) ? null : Document.FindLayer(targetLayerId);
         var kind = target is null ? TransitionKind.None : asDialog ? TransitionKind.OpenDialog : TransitionKind.Navigate;
         var id = target?.Id ?? string.Empty;
-
         if (element.Transition == kind && element.TargetLayerId == id)
         {
             return;
         }
 
-        var label = target is null
-            ? "Переход снят"
-            : (asDialog ? "Диалог: " : "Переход: ") + target.Name;
-
+        var label = target is null ? "Переход снят" : (asDialog ? "Диалог: " : "Переход: ") + target.Name;
         // The block is looked up by identity inside the change: the element the inspector holds may be
         // a copy from before the last edit, and only the one in the document is the document's.
         var elementId = element.Id;
         Edit(label, document =>
         {
-            if (document.AllElements.FirstOrDefault(item => item.Id == elementId) is { } current)
+            if (document.AllElements.FirstOrDefault(item => item.Id == elementId)is { } current)
             {
                 current.Transition = kind;
                 current.TargetLayerId = id;
@@ -290,24 +263,19 @@ public sealed partial class DocumentSession
 
     /// <summary>Identities of the selected blocks, in the order they were selected.</summary>
     public IReadOnlyList<string> Selection => _selection;
-
     /// <summary>The single selected block, or null when nothing - or more than one thing - is selected.</summary>
     public WireframeElement? Selected => _selection.Count == 1 ? CurrentLayer.Find(_selection[0]) : null;
 
     /// <summary>Raised after every change of the document or the selection.</summary>
     public event Action? Changed;
     public event Action? GestureChanged;
-
     /// <summary>True while the document holds changes the storage has not written yet.</summary>
     public bool IsDirty { get; private set; }
     public long EditVersion { get; private set; }
-
     /// <summary>What the last change was. The shell shows it beside the save state.</summary>
     public string Status { get; private set; } = "Новый макет";
-
     /// <summary>Whether there is a change to undo.</summary>
     public bool CanUndo => _history.CanUndo;
-
     /// <summary>Whether there is an undone change to redo.</summary>
     public bool CanRedo => _history.CanRedo;
 
@@ -321,7 +289,6 @@ public sealed partial class DocumentSession
         _gestureBefore = null;
         _gestureChanged = false;
         _gestureLabel = null;
-
         Document = document;
         _currentLayerId = document.StartLayer.Id;
         EditingGroupId = string.Empty;
@@ -330,7 +297,6 @@ public sealed partial class DocumentSession
         IsDirty = false;
         Status = "Открыт макет: " + document.Name;
         EditVersion++;
-
         Changed?.Invoke();
     }
 
@@ -342,51 +308,39 @@ public sealed partial class DocumentSession
     public void Edit(string label, Action<DraftDocument> change, bool trackComponents = true)
     {
         ArgumentNullException.ThrowIfNull(change);
-        if (IsGestureRunning) EndGesture();
-
+        if (IsGestureRunning)
+            EndGesture();
         var before = Document.Clone();
         change(Document);
-        if (trackComponents) TrackComponentTranslation(before);
+        if (trackComponents)
+            TrackComponentTranslation(before);
         ElementGroups.Normalize(CurrentLayer);
         PruneSelection();
         Document.Touch();
         _history.RecordSnapshot(before, label);
-
         IsDirty = true;
         EditVersion++;
         Status = label;
-
         Changed?.Invoke();
     }
 
     /// <summary>Adds a block at a point, snaps it to the grid, selects it and returns it.</summary>
     public WireframeElement Add(WireframeKind kind, double x, double y, string? parentTabsId = null)
     {
-        var parent = TabPanels.IsContainer(kind) ? null :
-            CurrentLayer.Find(parentTabsId) is { } selectedParent && TabPanels.IsContainer(selectedParent.Kind) ? selectedParent : TabPanels.Visible(CurrentLayer)
-            .LastOrDefault(candidate => TabPanels.IsContainer(candidate.Kind) && TabPanels.PanelBounds(candidate).Contains(x, y) &&
-                (candidate.Kind != WireframeKind.Accordion || ElementState.IsExpanded(candidate)));
+        var parent = TabPanels.IsContainer(kind) ? null : CurrentLayer.Find(parentTabsId)is { } selectedParent && TabPanels.IsContainer(selectedParent.Kind) ? selectedParent : TabPanels.Visible(CurrentLayer).LastOrDefault(candidate => TabPanels.IsContainer(candidate.Kind) && TabPanels.PanelBounds(candidate).Contains(x, y) && (candidate.Kind != WireframeKind.Accordion || ElementState.IsExpanded(candidate)));
         var element = ElementDefaults.Create(kind);
-        element.GroupPath = parent is not null ? new(parent.GroupPath) : CurrentLayer.Elements.FirstOrDefault(e=>e.GroupPath.Contains(EditingGroupId) && EditingGroupId.Length>0)?.GroupPath.TakeWhile(id=>id!=EditingGroupId).Append(EditingGroupId).ToList() ?? new();
+        element.GroupPath = parent is not null ? new(parent.GroupPath) : CurrentLayer.Elements.FirstOrDefault(e => e.GroupPath.Contains(EditingGroupId) && EditingGroupId.Length > 0)?.GroupPath.TakeWhile(id => id != EditingGroupId).Append(EditingGroupId).ToList() ?? new();
         if (parent is not null)
         {
             element.ParentTabsId = parent.Id;
             element.ParentTabIndex = TabPanels.Index(parent);
         }
-        var bounds = CanvasGeometry.Clamp(
-            new Rect(
-                CanvasGeometry.Snap(x, Document.GridSize),
-                CanvasGeometry.Snap(y, Document.GridSize),
-                element.Width,
-                element.Height),
-            CurrentLayer.CanvasWidth,
-            CurrentLayer.CanvasHeight);
 
+        var bounds = CanvasGeometry.Clamp(new Rect(CanvasGeometry.Snap(x, Document.GridSize), CanvasGeometry.Snap(y, Document.GridSize), element.Width, element.Height), CurrentLayer.CanvasWidth, CurrentLayer.CanvasHeight);
         element.X = bounds.X;
         element.Y = bounds.Y;
         element.Width = bounds.Width;
         element.Height = bounds.Height;
-
         Edit("Добавлен блок: " + ElementDefaults.NameOf(kind), document =>
         {
             var layer = LayerIn(document);
@@ -395,26 +349,24 @@ public sealed partial class DocumentSession
                 parent.Expanded = true;
                 parent.SelectedIndex = TabPanels.Index(parent);
             }
+
             element.ZIndex = layer.NextZIndex();
             layer.Elements.Add(element);
         });
-
         Select(element.Id);
         return element;
     }
 
     /// <summary>Selects one block; an identity that is not in the document clears the selection.</summary>
-    public void Select(string? id) =>
-        SetSelection(id is null || CurrentLayer.Find(id) is null ? Array.Empty<string>() : new[] { id });
-
+    public void Select(string? id) => SetSelection(id is null || CurrentLayer.Find(id)is null ? Array.Empty<string>() : new[] { id });
     /// <summary>Replaces the selection.</summary>
     public void SetSelection(IEnumerable<string> ids)
     {
         ArgumentNullException.ThrowIfNull(ids);
-
-        var requested=ids.ToList();
-        if(EditingGroupId.Length>0 && requested.Any(id=>CurrentLayer.Find(id) is { } e && !e.GroupPath.Contains(EditingGroupId)))EditingGroupId="";
-        var next = ElementGroups.Expand(CurrentLayer, requested, EditingGroupId).Where(id => CurrentLayer.Find(id) is { } element && TabPanels.IsVisible(CurrentLayer, element)).Distinct().ToList();
+        var requested = ids.ToList();
+        if (EditingGroupId.Length > 0 && requested.Any(id => CurrentLayer.Find(id)is { } e && !e.GroupPath.Contains(EditingGroupId)))
+            EditingGroupId = "";
+        var next = ElementGroups.Expand(CurrentLayer, requested, EditingGroupId).Where(id => CurrentLayer.Find(id)is { } element && TabPanels.IsVisible(CurrentLayer, element)).Distinct().ToList();
         if (next.SequenceEqual(_selection))
         {
             return;
@@ -422,13 +374,11 @@ public sealed partial class DocumentSession
 
         _selection.Clear();
         _selection.AddRange(next);
-
         Changed?.Invoke();
     }
 
     /// <summary>Deselects everything - what a click on the empty sheet does.</summary>
     public void ClearSelection() => SetSelection(Array.Empty<string>());
-
     /// <summary>Deletes the selected blocks. False when there was nothing to delete.</summary>
     public bool RemoveSelected()
     {
@@ -438,10 +388,7 @@ public sealed partial class DocumentSession
             return false;
         }
 
-        Edit(
-            ids.Count == 1 ? "Блок удалён" : $"Удалено блоков: {ids.Count}",
-            document => LayerIn(document).Elements.RemoveAll(element => ids.Contains(element.Id)));
-
+        Edit(ids.Count == 1 ? "Блок удалён" : $"Удалено блоков: {ids.Count}", document => LayerIn(document).Elements.RemoveAll(element => ids.Contains(element.Id)));
         ClearSelection();
         return true;
     }
@@ -449,25 +396,38 @@ public sealed partial class DocumentSession
     /// <summary>Copies the selected block a step away, selects the copy and returns it.</summary>
     public WireframeElement? DuplicateSelected()
     {
-        var members=Members();if(members.Count==0)return null;var selectedIds=Selection.ToHashSet();
-        var copies=CloneMembers(members);var offset=Document.GridSize>1?Document.GridSize:8;
-        var delta=TabPanels.ClampTranslation(members.Select(e=>e.Bounds),offset,offset,CurrentLayer.CanvasWidth,CurrentLayer.CanvasHeight);
-        Edit("Блоки скопированы",_=>{foreach(var copy in copies){copy.X+=delta.X;copy.Y+=delta.Y;copy.ComponentOriginX+=delta.X;copy.ComponentOriginY+=delta.Y;copy.ZIndex=CurrentLayer.NextZIndex();CurrentLayer.Elements.Add(copy);}});
-        SetSelection(copies.Where((e,index)=>selectedIds.Contains(members[index].Id)).Select(e=>e.Id));return copies[0];
+        var members = Members();
+        if (members.Count == 0)
+            return null;
+        var selectedIds = Selection.ToHashSet();
+        var copies = CloneMembers(members);
+        var offset = Document.GridSize > 1 ? Document.GridSize : 8;
+        var delta = TabPanels.ClampTranslation(members.Select(e => e.Bounds), offset, offset, CurrentLayer.CanvasWidth, CurrentLayer.CanvasHeight);
+        Edit("Блоки скопированы", _ =>
+        {
+            foreach (var copy in copies)
+            {
+                copy.X += delta.X;
+                copy.Y += delta.Y;
+                copy.ComponentOriginX += delta.X;
+                copy.ComponentOriginY += delta.Y;
+                copy.ZIndex = CurrentLayer.NextZIndex();
+                CurrentLayer.Elements.Add(copy);
+            }
+        });
+        SetSelection(copies.Where((e, index) => selectedIds.Contains(members[index].Id)).Select(e => e.Id));
+        return copies[0];
     }
 
     /// <summary>Puts the selected block in front of the others.</summary>
-    public void BringSelectedToFront() =>
-        RearrangeSelected("Блок поверх остальных", (document, element) => LayerIn(document).BringToFront(element));
-
+    public void BringSelectedToFront() => RearrangeSelected("Блок поверх остальных", (document, element) => LayerIn(document).BringToFront(element));
     /// <summary>Puts the selected block behind the others.</summary>
-    public void SendSelectedToBack() =>
-        RearrangeSelected("Блок позади остальных", (document, element) => LayerIn(document).SendToBack(element));
-
+    public void SendSelectedToBack() => RearrangeSelected("Блок позади остальных", (document, element) => LayerIn(document).SendToBack(element), reverse: true);
     /// <summary>Steps back one change. False when there is nothing to undo.</summary>
     public bool Undo()
     {
-        if (IsGestureRunning) return false;
+        if (IsGestureRunning)
+            return false;
         var entry = _history.Undo(Document);
         if (entry is null)
         {
@@ -476,13 +436,11 @@ public sealed partial class DocumentSession
 
         Document = entry.Document;
         PruneSelection();
-
         // Undoing is a change like any other: it leaves the document different from what the storage
         // last wrote, so the document is dirty again and the status says what was undone.
         IsDirty = true;
         EditVersion++;
         Status = entry.Status;
-
         Changed?.Invoke();
         return true;
     }
@@ -490,7 +448,8 @@ public sealed partial class DocumentSession
     /// <summary>Steps forward again into an undone change. False when there is nothing to redo.</summary>
     public bool Redo()
     {
-        if (IsGestureRunning) return false;
+        if (IsGestureRunning)
+            return false;
         var entry = _history.Redo(Document);
         if (entry is null)
         {
@@ -502,7 +461,6 @@ public sealed partial class DocumentSession
         IsDirty = true;
         EditVersion++;
         Status = entry.Status;
-
         Changed?.Invoke();
         return true;
     }
@@ -524,30 +482,36 @@ public sealed partial class DocumentSession
     {
         IsDirty = false;
         Status = status;
-
         Changed?.Invoke();
     }
 
-    private void RearrangeSelected(string label, Action<DraftDocument, WireframeElement> rearrange)
+    private void RearrangeSelected(string label, Action<DraftDocument, WireframeElement> rearrange, bool reverse = false)
     {
-        var members=Members().OrderBy(e=>e.ZIndex).ToList();if(members.Count==0)return;
-        if(label.Contains("позади",StringComparison.Ordinal))members.Reverse();
-        Edit(label,document=>{foreach(var e in members)rearrange(document,e);});
+        var members = Members().OrderBy(e => e.ZIndex).ToList();
+        if (members.Count == 0)
+            return;
+        if (reverse)
+            members.Reverse();
+        Edit(label, document =>
+        {
+            foreach (var e in members)
+                rearrange(document, e);
+        });
     }
 
     /// <summary>
     /// Starts a change that will be drawn many times but recorded once - a drag, a resize. The
-    /// document is snapshotted here, so everything <see cref="Preview"/> does between this call and
-    /// <see cref="EndGesture"/> becomes a single step in the history. Without that, dragging a block
+    /// document is snapshotted here, so everything <see cref = "Preview"/> does between this call and
+    /// <see cref = "EndGesture"/> becomes a single step in the history. Without that, dragging a block
     /// across the sheet would fill the history with one step per pixel of movement.
     /// </summary>
     public void BeginGesture(string label)
     {
-        if (IsGestureRunning) return;
+        if (IsGestureRunning)
+            return;
         _gestureBefore = Document.Clone();
         _gestureLabel = label;
         _gestureChanged = false;
-
         Status = label;
         Changed?.Invoke();
     }
@@ -556,15 +520,13 @@ public sealed partial class DocumentSession
     public void Preview(Action<DraftDocument> change)
     {
         ArgumentNullException.ThrowIfNull(change);
-        if (!IsGestureRunning) return;
-
+        if (!IsGestureRunning)
+            return;
         change(Document);
         Document.Touch();
-
         _gestureChanged = true;
         IsDirty = true;
         EditVersion++;
-
         GestureChanged?.Invoke();
     }
 
@@ -577,11 +539,9 @@ public sealed partial class DocumentSession
         var before = _gestureBefore;
         var label = _gestureLabel ?? "Изменение";
         var changed = _gestureChanged;
-
         _gestureBefore = null;
         _gestureLabel = null;
         _gestureChanged = false;
-
         if (before is null || !changed)
         {
             return false;
@@ -591,7 +551,6 @@ public sealed partial class DocumentSession
         ElementGroups.Normalize(CurrentLayer);
         _history.RecordSnapshot(before, label);
         Status = label;
-
         Changed?.Invoke();
         return true;
     }
@@ -601,8 +560,9 @@ public sealed partial class DocumentSession
 
     private void PruneSelection()
     {
-        if(EditingGroupId.Length>0 && !CurrentLayer.Elements.Any(e=>e.GroupPath.Contains(EditingGroupId)))EditingGroupId="";
-        _selection.RemoveAll(id => CurrentLayer.Find(id) is not { } element || !TabPanels.IsVisible(CurrentLayer, element));
+        if (EditingGroupId.Length > 0 && !CurrentLayer.Elements.Any(e => e.GroupPath.Contains(EditingGroupId)))
+            EditingGroupId = "";
+        _selection.RemoveAll(id => CurrentLayer.Find(id)is not { } element || !TabPanels.IsVisible(CurrentLayer, element));
     }
 
     /// <summary>

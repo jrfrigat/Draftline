@@ -6,7 +6,6 @@ using Flare.Theming;
 using Flare.Theme.MaterialDesign3Expressive;
 
 namespace Draftline.App.Theming;
-
 /// <summary>
 /// The look Draftline runs: Fluent UI 2 with one value changed.
 ///
@@ -26,7 +25,6 @@ public static class DraftlineTheme
 {
     /// <summary>What the layout puts around a page: nothing, because the sheet reaches the window's edges.</summary>
     private const string NoContentPadding = "0";
-
     /// <summary>Builds the theme the application registers.</summary>
     public static ITheme Build()
     {
@@ -38,17 +36,21 @@ public static class DraftlineTheme
                 ContentPaddingMobile = NoContentPadding,
             },
         };
-
-        return new FlareThemeBuilder("draftline-fluent2", "Draftline - Fluent UI 2", design)
-            .WithBase(new FluentUI2Theme())
-            .Build();
+        return new FlareThemeBuilder("draftline-fluent2", "Draftline - Fluent UI 2", design).WithBase(new FluentUI2Theme()).Build();
     }
 
     /// <summary>Material's design tokens with the same edge-to-edge editor layout.</summary>
     public static ITheme BuildExpressive()
     {
-        var theme=new MaterialDesign3ExpressiveTheme();
-        var design=theme.Design with {Layout=theme.Design.Layout with {ContentPadding="0",ContentPaddingMobile="0"}};
-        return new FlareThemeBuilder("draftline-md3e","Draftline - Material Design 3 Expressive",design).WithBase(theme).Build();
+        var theme = new MaterialDesign3ExpressiveTheme();
+        var design = theme.Design with
+        {
+            Layout = theme.Design.Layout with
+            {
+                ContentPadding = "0",
+                ContentPaddingMobile = "0"
+            }
+        };
+        return new FlareThemeBuilder("draftline-md3e", "Draftline - Material Design 3 Expressive", design).WithBase(theme).Build();
     }
 }

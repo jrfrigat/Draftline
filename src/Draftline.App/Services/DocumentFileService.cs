@@ -4,7 +4,6 @@ using Draftline.App.Theming;
 using Microsoft.JSInterop;
 
 namespace Draftline.App.Services;
-
 /// <summary>
 /// Handing a wireframe to the person as a file, and taking one back.
 ///
@@ -15,75 +14,45 @@ namespace Draftline.App.Services;
 public sealed partial class DocumentFileService : IAsyncDisposable
 {
     private const string ModulePath = "./js/draftline-files.js";
-
     private readonly IJSRuntime _js;
     private readonly ThemeCoordinator _themes;
     private IJSObjectReference? _module;
-
     /// <summary>The file operations over the given JavaScript runtime.</summary>
-    public DocumentFileService(IJSRuntime js,ThemeCoordinator themes) { _js=js;_themes=themes; }
+    public DocumentFileService(IJSRuntime js, ThemeCoordinator themes)
+    {
+        _js = js;
+        _themes = themes;
+    }
 
     /// <summary>Hands the open wireframe to the person as a JSON file.</summary>
     public async Task DownloadJsonAsync(DraftDocument document, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
-
         var module = await ModuleAsync(cancellationToken).ConfigureAwait(false);
-
-        await module.InvokeVoidAsync(
-                "download",
-                cancellationToken,
-                FileNameFor(document, DraftlineJson.FileExtension),
-                "application/json",
-                DraftlineJson.Serialize(document))
-            .ConfigureAwait(false);
+        await module.InvokeVoidAsync("download", cancellationToken, FileNameFor(document, DraftlineJson.FileExtension), "application/json", DraftlineJson.Serialize(document)).ConfigureAwait(false);
     }
 
     /// <summary>Hands one screen to the person as an SVG drawing - the whole sheet, or one block.</summary>
-    public async Task DownloadSvgAsync(
-        DraftDocument document,
-        DraftLayer layer,
-        WireframeElement? element = null,
-        CancellationToken cancellationToken = default)
+    public async Task DownloadSvgAsync(DraftDocument document, DraftLayer layer, WireframeElement? element = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(layer);
-
         var drawing = element is null ? SvgExporter.Export(layer) : SvgExporter.ExportElement(element, layer);
-        drawing = SvgExporter.ApplyTheme(drawing,_themes.Drawing(document.MockupTheme));
+        drawing = SvgExporter.ApplyTheme(drawing, _themes.Drawing(document.MockupTheme));
         var suffix = element is null ? string.Empty : "-" + element.Kind.ToString().ToLowerInvariant();
-
         var module = await ModuleAsync(cancellationToken).ConfigureAwait(false);
-
-        await module.InvokeVoidAsync(
-                "download",
-                cancellationToken,
-                FileNameFor(document, suffix + ".svg", layer.Name),
-                "image/svg+xml",
-                drawing)
-            .ConfigureAwait(false);
+        await module.InvokeVoidAsync("download", cancellationToken, FileNameFor(document, suffix + ".svg", layer.Name), "image/svg+xml", drawing).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Hands every screen to the person, one file each. A wireframe of five screens is five pictures,
-    /// and one file carrying all of them would be a format nobody could open anywhere.
+    /// Hands every screen to the person in one ZIP, avoiding blocked multiple downloads.
     /// </summary>
     public async Task DownloadAllSvgAsync(DraftDocument document, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
-
         var module = await ModuleAsync(cancellationToken).ConfigureAwait(false);
-
-        foreach (var (name, svg) in SvgExporter.ExportAll(document))
-        {
-            await module.InvokeVoidAsync(
-                    "download",
-                    cancellationToken,
-                    FileNameFor(document, ".svg", name),
-                    "image/svg+xml",
-                    SvgExporter.ApplyTheme(svg,_themes.Drawing(document.MockupTheme)))
-                .ConfigureAwait(false);
-        }
+        var files = SvgExporter.ExportAll(document).Select((entry, index) => new { name = $"{index + 1}-" + FileNameFor(document, ".svg", entry.Name), text = SvgExporter.ApplyTheme(entry.Svg, _themes.Drawing(document.MockupTheme)) }).ToArray();
+        await module.InvokeVoidAsync("downloadTextZip", cancellationToken, FileNameFor(document, "-svg.zip"), (object)files);
     }
 
     /// <summary>
@@ -94,7 +63,6 @@ public sealed partial class DocumentFileService : IAsyncDisposable
     {
         var module = await ModuleAsync(cancellationToken).ConfigureAwait(false);
         var text = await module.InvokeAsync<string?>("pickTextFile", cancellationToken, ".json").ConfigureAwait(false);
-
         return text is null ? null : DraftlineJson.Read(text);
     }
 
@@ -106,24 +74,19 @@ public sealed partial class DocumentFileService : IAsyncDisposable
     public static string FileNameFor(DraftDocument document, string extension, string? layerName = null)
     {
         ArgumentNullException.ThrowIfNull(document);
-
-        return string.IsNullOrWhiteSpace(layerName)
-            ? Slug(document.Name) + extension
-            : Slug(document.Name) + "-" + Slug(layerName) + extension;
+        return string.IsNullOrWhiteSpace(layerName) ? Slug(document.Name) + extension : Slug(document.Name) + "-" + Slug(layerName) + extension;
     }
 
     /// <summary>A name that is safe everywhere: letters, digits, single dashes between them.</summary>
     private static string Slug(string name)
     {
         var builder = new StringBuilder();
-
         foreach (var character in name.Trim())
         {
             builder.Append(char.IsLetterOrDigit(character) ? character : '-');
         }
 
         var slug = builder.ToString().Trim('-');
-
         while (slug.Contains("--", StringComparison.Ordinal))
         {
             slug = slug.Replace("--", "-", StringComparison.Ordinal);
@@ -132,10 +95,15 @@ public sealed partial class DocumentFileService : IAsyncDisposable
         return string.IsNullOrEmpty(slug) ? "draftline" : slug;
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
-        if (_exportModule is not null) { await _exportModule.DisposeAsync(); _exportModule = null; }
+        if (_exportModule is not null)
+        {
+            await _exportModule.DisposeAsync();
+            _exportModule = null;
+        }
+
         if (_module is not null)
         {
             await _module.DisposeAsync().ConfigureAwait(false);
@@ -143,7 +111,5 @@ public sealed partial class DocumentFileService : IAsyncDisposable
         }
     }
 
-    private async Task<IJSObjectReference> ModuleAsync(CancellationToken cancellationToken) =>
-        _module ??= await _js.InvokeAsync<IJSObjectReference>("import", cancellationToken, ModulePath)
-            .ConfigureAwait(false);
+    private async Task<IJSObjectReference> ModuleAsync(CancellationToken cancellationToken) => _module ??= await _js.InvokeAsync<IJSObjectReference>("import", cancellationToken, ModulePath).ConfigureAwait(false);
 }

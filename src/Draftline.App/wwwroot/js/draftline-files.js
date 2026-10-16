@@ -1,4 +1,9 @@
+import { buildZip } from './draftline-zip.js';
 // Files in and out of the editor.
+export function downloadTextZip(fileName, files) {
+    const encoder = new TextEncoder();
+    download(fileName, 'application/zip', buildZip(files.map(file => ({name:file.name, bytes:encoder.encode(file.text)}))));
+}
 //
 // A download is a Blob behind a link the browser clicks for us, and choosing a file is an input the
 // person clicks. Both are browser gestures with no equivalent on the C# side, which is why they live

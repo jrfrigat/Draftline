@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 
 namespace Draftline.App.Model;
-
 /// <summary>
 /// One wireframe: the sheet it is drawn on and the blocks on it.
 ///
@@ -19,46 +18,36 @@ public sealed class DraftDocument
     /// 2 - blocks carry data: a value, a hint and a second line, and a list row may carry a value.
     /// 3 - a table carries columns and rows.
     /// 4 - a wireframe carries screens, and a block may point at another one.
-    /// </summary>
     /// 5 - authored component states. 6 - tab panel content and block membership.
-    // 7: per-component data. 8: extended palette, canvas organization and reusable assets. 9: document theme.
+    /// 7 - per-component data. 8 - extended palette, canvas organization and reusable assets. 9 - document theme.
+    /// </summary>
     public const int CurrentSchemaVersion = 9;
-
     /// <summary>A sheet in pixels, as a new screen starts.</summary>
     public const double DefaultCanvasWidth = 960;
-
     /// <summary>A sheet in pixels, as a new screen starts.</summary>
     public const double DefaultCanvasHeight = 640;
-
     /// <summary>Version of the format this document is written in.</summary>
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
-
     /// <summary>Identity of the document; the browser's project list is keyed by it.</summary>
     public string Id { get; set; } = Guid.NewGuid().ToString("n");
-
     /// <summary>What the person called this wireframe.</summary>
     public string Name { get; set; } = "Без имени";
-
     /// <summary>The grid the canvas snaps to, in pixels; 1 means no grid.</summary>
     public int GridSize { get; set; } = CanvasGeometry.DefaultGridSize;
-
     /// <summary>The screens of this wireframe, in the order they are listed.</summary>
     public List<DraftLayer> Layers { get; set; } = new();
     public List<ComponentDefinition> Components { get; set; } = new();
     public MockupThemeSelection MockupTheme { get; set; } = new();
-
     /// <summary>The screen a preview opens on; empty means the first one.</summary>
     public string StartLayerId { get; set; } = string.Empty;
-
     /// <summary>When the wireframe was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-
     /// <summary>When it was last changed.</summary>
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>
     /// The sheet of a file written before screens existed. It is read, migrated into the first screen by
-    /// <see cref="Normalize"/>, and never written again: a current file carries screens only.
+    /// <see cref = "Normalize"/>, and never written again: a current file carries screens only.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public double CanvasWidth { get; set; }
@@ -74,26 +63,25 @@ public sealed class DraftDocument
     /// <summary>An empty wireframe with a name and one screen to draw on.</summary>
     public static DraftDocument CreateNew(string name)
     {
-        var document = new DraftDocument { Name = string.IsNullOrWhiteSpace(name) ? "Без имени" : name };
+        var document = new DraftDocument
+        {
+            Name = string.IsNullOrWhiteSpace(name) ? "Без имени" : name
+        };
         var layer = DraftLayer.Create("Экран 1");
-
         document.Layers.Add(layer);
         document.StartLayerId = layer.Id;
-
         return document;
     }
 
     /// <summary>The screen with this identity, or null.</summary>
-    public DraftLayer? FindLayer(string? id) =>
-        string.IsNullOrEmpty(id) ? null : Layers.FirstOrDefault(layer => layer.Id == id);
-
+    public DraftLayer? FindLayer(string? id) => string.IsNullOrEmpty(id) ? null : Layers.FirstOrDefault(layer => layer.Id == id);
     /// <summary>The screen a preview opens on: the one named as the start, or the first there is.</summary>
     public DraftLayer StartLayer => FindLayer(StartLayerId) ?? Layers[0];
 
     /// <summary>Marks a screen as the one a preview opens on.</summary>
     public void SetStartLayer(string id)
     {
-        if (FindLayer(id) is not null)
+        if (FindLayer(id)is not null)
         {
             StartLayerId = id;
         }
@@ -114,15 +102,13 @@ public sealed class DraftDocument
     /// </summary>
     public bool RemoveLayer(string id)
     {
-        if (Layers.Count <= 1 || FindLayer(id) is not { } layer)
+        if (Layers.Count <= 1 || FindLayer(id)is not { } layer)
         {
             return false;
         }
 
         Layers.Remove(layer);
-
         ClearMissingTransitions();
-
         if (StartLayerId == id)
         {
             StartLayerId = Layers[0].Id;
@@ -133,14 +119,10 @@ public sealed class DraftDocument
 
     /// <summary>Every block of every screen - what a count, an export or a migration walks.</summary>
     public IEnumerable<WireframeElement> AllElements => Layers.SelectMany(layer => layer.Elements);
-
     /// <summary>Every stored screen version, including inactive alternatives.</summary>
-    public IEnumerable<List<WireframeElement>> ScreenElementLists => Layers.SelectMany(layer =>
-        new[] { layer.Elements }.Concat(layer.Alternates.Select(alternate => alternate.Elements)));
-
+    public IEnumerable<List<WireframeElement>> ScreenElementLists => Layers.SelectMany(layer => new[] { layer.Elements }.Concat(layer.Alternates.Select(alternate => alternate.Elements)));
     /// <summary>All stored blocks, including reusable sources and inactive alternatives.</summary>
-    public IEnumerable<WireframeElement> StoredElements => ScreenElementLists.SelectMany(elements => elements)
-        .Concat(Components.SelectMany(component => component.Elements));
+    public IEnumerable<WireframeElement> StoredElements => ScreenElementLists.SelectMany(elements => elements).Concat(Components.SelectMany(component => component.Elements));
 
     private void ClearMissingTransitions()
     {
@@ -152,8 +134,10 @@ public sealed class DraftDocument
                 element.Transition = TransitionKind.None;
                 element.TargetLayerId = "";
             }
+
             foreach (var row in NavItems.Rows(element.ChoiceItems))
-                if (!ids.Contains(row.Item.TargetLayerId)) row.Item.TargetLayerId = "";
+                if (!ids.Contains(row.Item.TargetLayerId))
+                    row.Item.TargetLayerId = "";
         }
     }
 
@@ -162,7 +146,6 @@ public sealed class DraftDocument
 
     /// <summary>Notes that the document was written to just now.</summary>
     public void Touch() => UpdatedAt = DateTimeOffset.UtcNow;
-
     /// <summary>A deep copy: every screen and every block in it is a copy of its own.</summary>
     public DraftDocument Clone() => new()
     {
@@ -177,7 +160,6 @@ public sealed class DraftDocument
         CreatedAt = CreatedAt,
         UpdatedAt = UpdatedAt
     };
-
     /// <summary>
     /// Makes a document usable, whoever wrote it: a file typed by hand, a file from an older version,
     /// a document that lost a field on the way. Missing identities are filled in, the sheet is given
@@ -186,13 +168,13 @@ public sealed class DraftDocument
     /// </summary>
     public void Normalize()
     {
-        MockupTheme??=new();MockupTheme.Normalize();
+        MockupTheme ??= new();
+        MockupTheme.Normalize();
         var legacyTabHeaders = SchemaVersion < 6;
         SchemaVersion = CurrentSchemaVersion;
         Id = string.IsNullOrWhiteSpace(Id) ? Guid.NewGuid().ToString("n") : Id;
         Name = string.IsNullOrWhiteSpace(Name) ? "Без имени" : Name.Trim();
         GridSize = GridSize > 0 ? GridSize : CanvasGeometry.DefaultGridSize;
-
         if (CreatedAt == default)
         {
             CreatedAt = DateTimeOffset.UtcNow;
@@ -207,13 +189,20 @@ public sealed class DraftDocument
         Layers.RemoveAll(layer => layer is null);
         Components ??= new();
         var componentIds = new HashSet<string>();
-        Components.RemoveAll(c=>c is null);
-        foreach(var component in Components)
+        Components.RemoveAll(c => c is null);
+        foreach (var component in Components)
         {
-            if(string.IsNullOrWhiteSpace(component.Id) || !componentIds.Add(component.Id))component.Id=Guid.NewGuid().ToString("n");
-            component.Name=string.IsNullOrWhiteSpace(component.Name)?"Компонент":component.Name.Trim();
-            var template=DraftLayer.Create("Component");template.CanvasWidth=100000;template.CanvasHeight=100000;template.Elements=component.Elements??new();template.Normalize();
-            component.Elements=template.Elements;foreach(var e in component.Elements)ComponentDefinition.Detach(e);
+            if (string.IsNullOrWhiteSpace(component.Id) || !componentIds.Add(component.Id))
+                component.Id = Guid.NewGuid().ToString("n");
+            component.Name = string.IsNullOrWhiteSpace(component.Name) ? "Компонент" : component.Name.Trim();
+            var template = DraftLayer.Create("Component");
+            template.CanvasWidth = 100000;
+            template.CanvasHeight = 100000;
+            template.Elements = component.Elements ?? new();
+            template.Normalize();
+            component.Elements = template.Elements;
+            foreach (var e in component.Elements)
+                ComponentDefinition.Detach(e);
         }
 
         // A file written before screens existed kept its blocks on the document itself. Those blocks
@@ -229,7 +218,6 @@ public sealed class DraftDocument
         }
 
         var identities = new HashSet<string>(StringComparer.Ordinal);
-
         foreach (var layer in Layers)
         {
             // The size an older file named belongs to the screen it had, so a screen that arrives
@@ -246,12 +234,11 @@ public sealed class DraftDocument
 
             if (legacyTabHeaders)
             {
-                foreach (var tabs in (layer.Elements ?? new List<WireframeElement>()).Where(element => element is not null && element.Kind == WireframeKind.Tabs &&
-                             element.Height <= TabPanels.HeaderHeight))
+                foreach (var tabs in (layer.Elements ?? new List<WireframeElement>()).Where(element => element is not null && element.Kind == WireframeKind.Tabs && element.Height <= TabPanels.HeaderHeight))
                     tabs.Height = ElementDefaults.SizeOf(WireframeKind.Tabs).Height;
             }
-            layer.Normalize();
 
+            layer.Normalize();
             if (!identities.Add(layer.Id))
             {
                 layer.Id = Guid.NewGuid().ToString("n");
@@ -259,7 +246,7 @@ public sealed class DraftDocument
             }
         }
 
-        if (FindLayer(StartLayerId) is null)
+        if (FindLayer(StartLayerId)is null)
         {
             StartLayerId = Layers[0].Id;
         }
@@ -271,8 +258,8 @@ public sealed class DraftDocument
             if (element.ComponentKey.Length > 0 && (!Components.Any(component => component.Id == element.ComponentKey) || element.InstanceKey.Length == 0))
                 ComponentDefinition.Detach(element);
         }
-        ClearMissingTransitions();
 
+        ClearMissingTransitions();
         // The members an older file used are emptied, so writing this document back carries screens only.
         CanvasWidth = 0;
         CanvasHeight = 0;

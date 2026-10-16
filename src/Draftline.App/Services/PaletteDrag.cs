@@ -1,7 +1,6 @@
 using Draftline.App.Model;
 
 namespace Draftline.App.Services;
-
 /// <summary>
 /// The block the palette is being dragged out of it right now.
 ///
@@ -17,10 +16,8 @@ public sealed class PaletteDrag
 
     /// <summary>The palette has picked a block up.</summary>
     public void Start(WireframeKind kind) => Kind = kind;
-
     /// <summary>The drag ended without a drop - the palette says so when the gesture is over.</summary>
     public void End() => Kind = null;
-
     /// <summary>What was being dragged, and forgets it.</summary>
     public WireframeKind? Take()
     {

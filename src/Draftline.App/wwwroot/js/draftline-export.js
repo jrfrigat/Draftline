@@ -1,3 +1,4 @@
+import { buildZip } from './draftline-zip.js';
 // Offline image/PDF export. The authored SVG is the only drawing source.
 function save(name, blob) {
     const url = URL.createObjectURL(blob);
@@ -25,8 +26,14 @@ async function raster(page, type) {
     } finally { URL.revokeObjectURL(url); canvas.width = canvas.height = 0; }
 }
 
-export async function exportPng(pages) {
-    for (const page of pages) { const result = await raster(page, 'image/png'); save(page.fileName, new Blob([result.bytes], {type:'image/png'})); }
+export async function exportPng(pages, archiveName = 'screens-png.zip') {
+    const files = [];
+    for (const page of pages) {
+        const result = await raster(page, 'image/png');
+        if (pages.length === 1) { save(page.fileName, new Blob([result.bytes], {type:'image/png'})); return; }
+        files.push({name:page.fileName, bytes:result.bytes});
+    }
+    save(archiveName, new Blob([buildZip(files)], {type:'application/zip'}));
 }
 
 const encoder = new TextEncoder();
