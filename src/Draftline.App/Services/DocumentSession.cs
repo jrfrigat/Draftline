@@ -317,6 +317,9 @@ public sealed partial class DocumentSession
     public void Open(DraftDocument document)
     {
         ArgumentNullException.ThrowIfNull(document);
+        _gestureBefore = null;
+        _gestureChanged = false;
+        _gestureLabel = null;
 
         Document = document;
         _currentLayerId = document.StartLayer.Id;
@@ -338,6 +341,7 @@ public sealed partial class DocumentSession
     public void Edit(string label, Action<DraftDocument> change, bool trackComponents = true)
     {
         ArgumentNullException.ThrowIfNull(change);
+        if (IsGestureRunning) EndGesture();
 
         var before = Document.Clone();
         change(Document);
@@ -462,6 +466,7 @@ public sealed partial class DocumentSession
     /// <summary>Steps back one change. False when there is nothing to undo.</summary>
     public bool Undo()
     {
+        if (IsGestureRunning) return false;
         var entry = _history.Undo(Document);
         if (entry is null)
         {
@@ -484,6 +489,7 @@ public sealed partial class DocumentSession
     /// <summary>Steps forward again into an undone change. False when there is nothing to redo.</summary>
     public bool Redo()
     {
+        if (IsGestureRunning) return false;
         var entry = _history.Redo(Document);
         if (entry is null)
         {
@@ -536,6 +542,7 @@ public sealed partial class DocumentSession
     /// </summary>
     public void BeginGesture(string label)
     {
+        if (IsGestureRunning) return;
         _gestureBefore = Document.Clone();
         _gestureLabel = label;
         _gestureChanged = false;
@@ -548,6 +555,7 @@ public sealed partial class DocumentSession
     public void Preview(Action<DraftDocument> change)
     {
         ArgumentNullException.ThrowIfNull(change);
+        if (!IsGestureRunning) return;
 
         change(Document);
         ElementGroups.Normalize(CurrentLayer);

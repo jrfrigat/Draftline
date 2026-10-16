@@ -246,6 +246,7 @@
     [JSInvokable]
     public void OnPointerDown(double x, double y, bool additive)
     {
+        if (Session.IsGestureRunning) return;
         // A handle of the selected block wins over everything under the pointer: it is small, it is
         // deliberate, and it is drawn on top of whatever it belongs to.
         if (CanResize && Session.SelectionBounds is { } selectedBounds && CanvasInteraction.HandleAt(selectedBounds, x, y, (_coarse ? 22 : 6) / _zoom) is { } handle)
@@ -320,9 +321,9 @@
                 _verticalGuide = _horizontalGuide = null;
                 if (!free)
                 {
-                    var moving = ElementGroups.Bounds(_dragOrigins.Select(pair =>
+                    var moving = ElementGroups.Bounds(_dragOrigins.Where(pair => Session.CurrentLayer.Find(pair.Key) is not null).Select(pair =>
                     {
-                        var e = Session.CurrentLayer.Find(pair.Key)!.Clone();
+                        var e = Session.CurrentLayer.Find(pair.Key)?.Clone() ?? new WireframeElement();
                         e.X = pair.Value.X + deltaX; e.Y = pair.Value.Y + deltaY;
                         return ElementGeometry.DrawingBounds(e);
                     }));
@@ -447,6 +448,7 @@
     [JSInvokable]
     public bool OnKey(string key, bool shift)
     {
+        if (Session.IsGestureRunning) return false;
         var step = CanvasInteraction.NudgeStep(Session.Document.GridSize, shift);
 
         switch (key)
