@@ -158,6 +158,8 @@
     private bool _wasPreviewing;
     private (bool Blocks, bool Sides) _beforePreview;
     private IJSObjectReference? _viewportModule;
+    private IJSObjectReference? _lifecycleModule;
+    private DotNetObjectReference<Home>? _lifecycleReference;
 
     /// <summary>Whether the block shelf is folded to its rail.</summary>
     private bool _blocksFolded;
@@ -182,6 +184,12 @@
         Session.Changed -= OnSessionChanged;
         Autosave.Changed -= OnSaveChanged;
         if (_viewportModule is not null) await _viewportModule.DisposeAsync();
+        if (_lifecycleModule is not null)
+        {
+            await _lifecycleModule.InvokeVoidAsync("detach");
+            await _lifecycleModule.DisposeAsync();
+        }
+        _lifecycleReference?.Dispose();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -220,7 +228,20 @@
         }
 
         _ready = true;
+        _lifecycleModule = await Js.InvokeAsync<IJSObjectReference>("import", "./js/draftline-lifecycle.js");
+        _lifecycleReference = DotNetObjectReference.Create(this);
+        await _lifecycleModule.InvokeVoidAsync("attach", _lifecycleReference);
+        await UpdateDirtyWarning();
         StateHasChanged();
+    }
+
+    [JSInvokable] public Task<bool> SaveBeforeHide() => Autosave.FlushAsync();
+
+    private async Task UpdateDirtyWarning()
+    {
+        if (_lifecycleModule is null) return;
+        try { await _lifecycleModule.InvokeVoidAsync("setDirty", Session.IsDirty); }
+        catch (JSException) { /* The page may already be closing. */ }
     }
 
     private void OnSaveChanged() => InvokeAsync(StateHasChanged);
@@ -316,9 +337,10 @@
         // An imported wireframe is written into this browser straight away: it arrived from a file, and
         // until it is saved the editor is holding something the project list does not know about.
         var imported = await Catalog.PrepareImportAsync(result.Document);
-        Session.Open(imported);
+        if (!await Autosave.FlushAsync()) { _notice = Autosave.Message; return; }
         await Catalog.SaveAsync(imported);
         await Catalog.RememberLastAsync(imported.Id);
+        Session.Open(imported);
         Session.MarkSaved("Загружено из файла: " + imported.Name);
 
         _notice = null;
@@ -326,6 +348,7 @@
 
     private void OnSessionChanged()
     {
+        _ = UpdateDirtyWarning();
         if (Session.IsPreviewing != _wasPreviewing)
         {
             if (Session.IsPreviewing)

@@ -299,6 +299,7 @@ public sealed partial class DocumentSession
 
     /// <summary>True while the document holds changes the storage has not written yet.</summary>
     public bool IsDirty { get; private set; }
+    public long EditVersion { get; private set; }
 
     /// <summary>What the last change was. The shell shows it beside the save state.</summary>
     public string Status { get; private set; } = "Новый макет";
@@ -324,6 +325,7 @@ public sealed partial class DocumentSession
         _selection.Clear();
         IsDirty = false;
         Status = "Открыт макет: " + document.Name;
+        EditVersion++;
 
         Changed?.Invoke();
     }
@@ -346,6 +348,7 @@ public sealed partial class DocumentSession
         _history.Record(before, label);
 
         IsDirty = true;
+        EditVersion++;
         Status = label;
 
         Changed?.Invoke();
@@ -471,6 +474,7 @@ public sealed partial class DocumentSession
         // Undoing is a change like any other: it leaves the document different from what the storage
         // last wrote, so the document is dirty again and the status says what was undone.
         IsDirty = true;
+        EditVersion++;
         Status = entry.Status;
 
         Changed?.Invoke();
@@ -489,6 +493,7 @@ public sealed partial class DocumentSession
         Document = entry.Document;
         PruneSelection();
         IsDirty = true;
+        EditVersion++;
         Status = entry.Status;
 
         Changed?.Invoke();
@@ -550,6 +555,7 @@ public sealed partial class DocumentSession
 
         _gestureChanged = true;
         IsDirty = true;
+        EditVersion++;
 
         Changed?.Invoke();
     }

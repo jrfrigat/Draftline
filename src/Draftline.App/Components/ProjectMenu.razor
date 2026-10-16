@@ -2,6 +2,7 @@
 @inject ProjectCatalog Catalog
 @inject DocumentSession Session
 @inject IDialogService Dialog
+@inject AutosaveService Autosave
 
 @* The project's own strip: the name of what is open, the list of what this browser holds, and the one
    word the storage has to say about the last change.
@@ -126,6 +127,7 @@
 
     private async Task NewProjectAsync()
     {
+        if (!await SaveBeforeSwitch()) return;
         var document = DraftDocument.CreateNew(await Catalog.SuggestNameAsync());
 
         Show(document);
@@ -140,6 +142,7 @@
 
     private async Task OpenProject(string id)
     {
+        if (!await SaveBeforeSwitch()) return;
         var result = await Catalog.LoadAsync(id);
 
         if (result.Document is null)
@@ -172,6 +175,7 @@
             return;
         }
 
+        if (!await SaveBeforeSwitch()) return;
         await Catalog.DeleteAsync(id);
         _projects = await Catalog.ListAsync();
 
@@ -189,5 +193,12 @@
     {
         Session.Open(document);
         _nameDraft = document.Name;
+    }
+
+    private async Task<bool> SaveBeforeSwitch()
+    {
+        if (await Autosave.FlushAsync()) return true;
+        _notice = "Не удалось сохранить текущий макет. " + Autosave.Message;
+        return false;
     }
 }

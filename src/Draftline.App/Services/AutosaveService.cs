@@ -41,6 +41,7 @@ public sealed class AutosaveService : IDisposable
 
     private CancellationTokenSource? _pending;
     private bool _disposed;
+    private readonly SemaphoreSlim _writes = new(1, 1);
 
     /// <summary>Autosave for a session, writing through a catalog.</summary>
     public AutosaveService(DocumentSession session, ProjectCatalog catalog, TimeSpan? delay = null)
@@ -64,7 +65,17 @@ public sealed class AutosaveService : IDisposable
     /// <summary>Writes right now, whatever the delay was waiting for.</summary>
     public async Task<bool> FlushAsync(CancellationToken cancellationToken = default)
     {
-        var document = _session.Document;
+        CancelPending();
+        await _writes.WaitAsync(cancellationToken);
+        try { return await WriteAsync(cancellationToken); }
+        finally { _writes.Release(); }
+    }
+
+    private async Task<bool> WriteAsync(CancellationToken cancellationToken)
+    {
+        if (!_session.IsDirty) return true;
+        var version = _session.EditVersion;
+        var document = _session.Document.Clone();
 
         State = AutosaveState.Saving;
         Message = "Сохраняется…";
@@ -80,7 +91,14 @@ public sealed class AutosaveService : IDisposable
 
             // Telling the session is what stops the loop: a document that was just written is not
             // dirty any more, and the write itself must not look like another change.
-            _session.MarkSaved(Message);
+            if (_session.Document.Id == document.Id && _session.EditVersion == version)
+                _session.MarkSaved(Message);
+            else
+            {
+                State = AutosaveState.Pending;
+                Message = "Есть несохранённые изменения";
+                Schedule();
+            }
             Changed?.Invoke();
             return true;
         }
@@ -134,8 +152,7 @@ public sealed class AutosaveService : IDisposable
 
     private void Schedule()
     {
-        _pending?.Cancel();
-        _pending?.Dispose();
+        CancelPending();
 
         var source = new CancellationTokenSource();
         _pending = source;
@@ -151,12 +168,21 @@ public sealed class AutosaveService : IDisposable
 
             if (!cancellationToken.IsCancellationRequested)
             {
-                await FlushAsync(cancellationToken).ConfigureAwait(false);
+                await _writes.WaitAsync(cancellationToken);
+                try { await WriteAsync(cancellationToken); }
+                finally { _writes.Release(); }
             }
         }
         catch (OperationCanceledException)
         {
             // Another change arrived first: its own write will carry this one with it.
         }
+    }
+
+    private void CancelPending()
+    {
+        _pending?.Cancel();
+        _pending?.Dispose();
+        _pending = null;
     }
 }
