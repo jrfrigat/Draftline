@@ -2,7 +2,7 @@
 @inject DocumentSession Session
 
 @* The properties of the selected block.
-   
+
    Everything here goes through the session's Edit, so a change made in this panel is a change the
    history can undo and the autosave will write - this is a form over the document, never a second
    editor beside it. Fields update when they lose focus rather than on every keystroke: otherwise one
@@ -15,47 +15,8 @@ else
 {
     <div class="df-inspector">
         <p class="df-inspector__kind">@ElementDefaults.NameOf(element.Kind)</p>
-        <FlareCheckbox Value="@element.Locked" ValueChanged="@((bool value)=>Session.LockSelection(value))">Положение заблокировано</FlareCheckbox>
-        <FlareCheckbox Value="@element.Hidden" ValueChanged="@((bool value)=>Session.SetHidden(Session.Selection,value))">Скрыт на холсте и при экспорте</FlareCheckbox>
-        <TabPanelInspector Element="element" />
-        <TreeInspector Element="element" />
-        <FormInspector Element="element" />
-        <NavInspector Element="element" />
-        <TableInspector Element="element" />
-        <RangeInspector Element="element" />
-        <ImageInspector @key="@($"image-{element.Id}")" Element="element" />
-        <IconInspector @key="@($"icon-{element.Id}")" Element="element" />
-
-        @if (ElementState.HasAvailability(element.Kind))
-        {
-            <p class="df-hint">Состояние</p>
-            @if (ElementState.HasChoice(element.Kind))
-            {
-                <FlareSelect Label="@(element.Kind == WireframeKind.Tabs ? "Активная вкладка" : "Выбранный пункт")"
-                             Size="FieldSize.Xs" Value="@ElementState.Index(element).ToString()"
-                             ValueChanged="@((string? value) => SetSelectedIndex(element, value))">
-                    @if (element.Kind != WireframeKind.Tabs)
-                    {
-                        <option value="-1">Не выбран</option>
-                    }
-                    @for (var index = 0; index < ElementState.Items(element).Count; index++)
-                    {
-                        <option value="@index">@(index + 1). @ElementDefaults.SplitOption(ElementState.Items(element)[index]).Label</option>
-                    }
-                </FlareSelect>
-            }
-            @if (ElementState.HasDisclosure(element.Kind))
-            {
-                <FlareCheckbox Value="@ElementState.IsExpanded(element)"
-                               ValueChanged="@((bool value) => SetExpanded(element, value))">Раскрыт</FlareCheckbox>
-            }
-            <FlareCheckbox Value="@element.Disabled"
-                           ValueChanged="@((bool value) => Apply(element, "Доступность изменена", target => target.Disabled = value))">
-                Недоступен
-            </FlareCheckbox>
-            <FlareDivider />
-        }
-
+        <FlareAccordion AllowMultiple="true">
+            <FlareAccordionPanel Header="Положение и размер" @bind-Expanded="_geometryExpanded">
         <div class="df-inspector__pair">
             <FlareNumericField Label="X" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.X"
@@ -79,6 +40,10 @@ else
             <FlareNumericField Label="Поворот, °" Size="FieldSize.Xs" Step="15" Disabled="@(!Session.CanTransformSelection)" Value="@element.Rotation"
                                ValueChanged="@((double? value) => Session.RotateElement(element.Id, value ?? 0))" />
         }
+        <FlareCheckbox Value="@element.Locked" ValueChanged="@((bool value)=>Session.LockSelection(value))">Положение заблокировано</FlareCheckbox>
+        <FlareCheckbox Value="@element.Hidden" ValueChanged="@((bool value)=>Session.SetHidden(Session.Selection,value))">Скрыт на холсте и при экспорте</FlareCheckbox>
+            </FlareAccordionPanel>
+            <FlareAccordionPanel Header="Содержимое" @bind-Expanded="_contentExpanded">
         @if (ElementDefaults.IsTextual(element.Kind))
         {
             <TextEditorField @key="element.Id" Label="@(element.Kind == WireframeKind.Button ? "Подпись кнопки" : "Текст")"
@@ -113,12 +78,14 @@ else
                             ValueChanged="@((string? value) => SetSecondaryText(element, value))" />
         }
 
-        @if (ElementDefaults.HasCheck(element.Kind))
-        {
-            <FlareCheckbox Value="@element.Checked" ValueChanged="@((bool value) => SetChecked(element, value))">
-                Отмечено
-            </FlareCheckbox>
-        }
+        <TabPanelInspector Element="element" />
+        <TreeInspector Element="element" />
+
+        <NavInspector Element="element" />
+        <TableInspector Element="element" />
+        <RangeInspector Element="element" />
+        <ImageInspector @key="@($"image-{element.Id}")" Element="element" />
+        <IconInspector @key="@($"icon-{element.Id}")" Element="element" />
 
         @if (ElementDefaults.HasRows(element.Kind) && element.Kind != WireframeKind.Tree)
         {
@@ -140,6 +107,48 @@ else
 
         <FlareDivider />
 
+            </FlareAccordionPanel>
+            <FlareAccordionPanel Header="Состояние" @bind-Expanded="_stateExpanded">
+                <FormInspector Element="element" />
+        @if (ElementState.HasAvailability(element.Kind))
+        {
+
+            @if (ElementState.HasChoice(element.Kind))
+            {
+                <FlareSelect Label="@(element.Kind == WireframeKind.Tabs ? "Активная вкладка" : "Выбранный пункт")"
+                             Size="FieldSize.Xs" Value="@ElementState.Index(element).ToString()"
+                             ValueChanged="@((string? value) => SetSelectedIndex(element, value))">
+                    @if (element.Kind != WireframeKind.Tabs)
+                    {
+                        <option value="-1">Не выбран</option>
+                    }
+                    @for (var index = 0; index < ElementState.Items(element).Count; index++)
+                    {
+                        <option value="@index">@(index + 1). @ElementDefaults.SplitOption(ElementState.Items(element)[index]).Label</option>
+                    }
+                </FlareSelect>
+            }
+            @if (ElementState.HasDisclosure(element.Kind))
+            {
+                <FlareCheckbox Value="@ElementState.IsExpanded(element)"
+                               ValueChanged="@((bool value) => SetExpanded(element, value))">Раскрыт</FlareCheckbox>
+            }
+            <FlareCheckbox Value="@element.Disabled"
+                           ValueChanged="@((bool value) => Apply(element, "Доступность изменена", target => target.Disabled = value))">
+                Недоступен
+            </FlareCheckbox>
+            <FlareDivider />
+        }
+
+        @if (ElementDefaults.HasCheck(element.Kind))
+        {
+            <FlareCheckbox Value="@element.Checked" ValueChanged="@((bool value) => SetChecked(element, value))">
+                Отмечено
+            </FlareCheckbox>
+        }
+
+            </FlareAccordionPanel>
+            <FlareAccordionPanel Header="Переход" @bind-Expanded="_transitionExpanded">
         @if (Session.Document.Layers.Count > 1)
         {
             <FlareSelect Label="Переход при нажатии" Size="FieldSize.Xs"
@@ -162,10 +171,13 @@ else
         }
 
 
+            </FlareAccordionPanel>
+        </FlareAccordion>
     </div>
 }
 
 @code {
+    private bool _geometryExpanded = true, _contentExpanded = true, _stateExpanded, _transitionExpanded;
 
     /// <inheritdoc />
     protected override void OnInitialized() => Session.Changed += OnStateChanged;

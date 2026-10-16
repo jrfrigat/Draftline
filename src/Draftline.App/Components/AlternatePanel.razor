@@ -1,21 +1,34 @@
 @inject DocumentSession Session
 @implements IDisposable
-<div class="df-component-library">
+<div class="df-alternate-panel">
     <FlareTextField Label="Название варианта" Size="FieldSize.Xs" Value="@_name" ValueChanged="@((string? value)=>_name=value??"")" />
-    <button type="button" @onclick="@(()=>Session.CreateAlternate(_name))">Сохранить новый вариант</button>
-    <button type="button" disabled="@(Session.CurrentLayer.CurrentAlternateId.Length==0)" @onclick="Session.SaveCurrentAlternate">Обновить текущий вариант</button>
+    <FlareButton OnClick="@(()=>Session.CreateAlternate(_name))">Сохранить новый вариант</FlareButton>
+    <FlareButton Disabled="@(Session.CurrentLayer.CurrentAlternateId.Length==0)" OnClick="Session.SaveCurrentAlternate">Обновить текущий вариант</FlareButton>
     <p class="df-hint">При переключении правки текущего варианта сохраняются.</p>
     @foreach(var alternate in Session.CurrentLayer.Alternates)
     {
         <div class="df-alternate" @key="alternate.Id">
-            <button type="button" aria-pressed="@(alternate.Id==Session.CurrentLayer.CurrentAlternateId)" @onclick="@(()=>Session.SwitchAlternate(alternate.Id))">@alternate.Name</button>
-            <button type="button" aria-label="@($"Переименовать вариант {alternate.Name}")" @onclick="@(()=>Session.RenameAlternate(alternate.Id,_name))">Имя</button>
-            <button type="button" aria-label="@($"Удалить вариант {alternate.Name}")" @onclick="@(()=>Session.DeleteAlternate(alternate.Id))">Удалить</button>
+            @if (_renamingId == alternate.Id)
+            {
+                <FlareTextField Label="Новое имя варианта" Size="FieldSize.Xs" Value="@_renameDraft" ValueChanged="@((string? value) => _renameDraft = value ?? "")" />
+                <FlareButton OnClick="SaveName">Сохранить имя</FlareButton>
+                <FlareButton Variant="ButtonVariant.Text" OnClick="() => _renamingId = null">Отмена</FlareButton>
+            }
+            else
+            {
+                <FlareButton aria-pressed="@(alternate.Id==Session.CurrentLayer.CurrentAlternateId)" OnClick="@(()=>Session.SwitchAlternate(alternate.Id))">@alternate.Name</FlareButton>
+                <FlareButton Variant="ButtonVariant.Text" aria-label="@($"Переименовать вариант {alternate.Name}")" OnClick="@(()=>BeginRename(alternate))">Имя</FlareButton>
+                <FlareButton Variant="ButtonVariant.Text" aria-label="@($"Удалить вариант {alternate.Name}")" OnClick="@(()=>Session.DeleteAlternate(alternate.Id))">Удалить</FlareButton>
+            }
         </div>
     }
 </div>
 @code {
     private string _name="Вариант";
+    private string? _renamingId;
+    private string _renameDraft = "";
+    private void BeginRename(ScreenAlternate alternate) { _renamingId = alternate.Id; _renameDraft = alternate.Name; }
+    private void SaveName() { if (_renamingId is { } id) Session.RenameAlternate(id, _renameDraft); _renamingId = null; }
     protected override void OnInitialized()=>Session.Changed+=Refresh;
     private void Refresh()=>InvokeAsync(StateHasChanged);
     public void Dispose()=>Session.Changed-=Refresh;

@@ -3,18 +3,18 @@
 
 <div class="df-component-library">
     <FlareTextField Label="Название компонента" Size="FieldSize.Xs" Value="@_name" ValueChanged="@((string? value)=>_name=value??"")" />
-    <button type="button" disabled="@(Session.Selection.Count==0)" @onclick="@(()=>Session.CreateComponent(_name))">Создать из выделения</button>
+    <FlareButton Variant="ButtonVariant.Text" Disabled="@(Session.Selection.Count==0)" OnClick="@(()=>Session.CreateComponent(_name))">Создать из выделения</FlareButton>
     @if(Session.SelectedInstanceKey.Length>0)
     {
         <p class="df-hint">Экземпляр: @Session.Document.Components.FirstOrDefault(c=>c.Id==Session.Members().FirstOrDefault()?.ComponentKey)?.Name</p>
-        <button type="button" @onclick="Session.UpdateComponentFromSelection">Обновить основу из экземпляра</button>
-        <button type="button" @onclick="Session.ResetComponentOverrides">Сбросить правки экземпляра</button>
-        <button type="button" @onclick="Session.DetachComponent">Отделить от основы</button>
+        <FlareButton Variant="ButtonVariant.Text" OnClick="Session.UpdateComponentFromSelection">Обновить основу из экземпляра</FlareButton>
+        <FlareButton Variant="ButtonVariant.Text" OnClick="Session.ResetComponentOverrides">Сбросить правки экземпляра</FlareButton>
+        <FlareButton Variant="ButtonVariant.Text" OnClick="Session.DetachComponent">Отделить от основы</FlareButton>
     }
     @if(Session.Document.Components.Count==0){<p class="df-hint">Выделите блоки и сохраните их как компонент.</p>}
     @foreach(var component in Session.Document.Components)
     {
-        <div class="df-component-library__item" @key="component.Id"><span>@component.Name</span><button type="button" aria-label="@($"Вставить компонент {component.Name}")" @onclick="@(()=>Session.InsertComponent(component.Id))">Вставить</button><button type="button" aria-label="@($"Копировать компонент {component.Name}")" @onclick="@(()=>Session.CopyComponent(component.Id))">Копировать</button></div>
+        <div class="df-component-library__item" @key="component.Id"><span>@component.Name</span><FlareButton Variant="ButtonVariant.Text" aria-label="@($"Вставить компонент {component.Name}")" OnClick="@(()=>Session.InsertComponent(component.Id))">Вставить</FlareButton><FlareButton Variant="ButtonVariant.Text" aria-label="@($"Копировать компонент {component.Name}")" OnClick="@(()=>Session.CopyComponent(component.Id))">Копировать</FlareButton></div>
     }
 </div>
 @code {

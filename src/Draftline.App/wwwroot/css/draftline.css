@@ -1357,3 +1357,7 @@ body {
     .df-ribbon > .flare-ribbon__tabs { padding-inline-start:108px; flex-wrap:wrap; }
     .df-ribbon .flare-ribbon__group { width:100%; }
 }
+
+.df-alternate-panel { display:flex; flex-direction:column; gap:8px; }
+.df-alternate { display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
+.df-inspector > .flare-accordion { width:100%; }
