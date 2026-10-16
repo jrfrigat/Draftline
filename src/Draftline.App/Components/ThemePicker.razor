@@ -3,15 +3,18 @@
 @inject ThemeCoordinator Themes
 @implements IDisposable
 <div class="df-theme-fields">
-    <FlareSelect Variant="InputVariant.Outlined" Label="@(Editor?"Тема конструктора":"Тема макета")" Size="FieldSize.Xs" Value="@(Editor?Themes.Editor.CurrentTheme.Id:Session.Document.MockupTheme.ThemeId)" ValueChanged="@((string? value)=>Change("theme",value))">
-        @if(!Editor){<option value="wireframe">Черновой макет</option>}
-        <option value="@(Editor?"draftline-fluent2":"fluent2")">Fluent UI 2</option>
-        <option value="@(Editor?"draftline-md3e":"md3-expressive")">Material Design 3 Expressive</option>
-    </FlareSelect>
-    <FlareSelect Variant="InputVariant.Outlined" Label="@(Editor?"Палитра конструктора":"Палитра макета")" Size="FieldSize.Xs" Value="@(Editor?Themes.Editor.CurrentPalette.Id:Session.Document.MockupTheme.PaletteId)" ValueChanged="@((string? value)=>Change("palette",value))" Disabled="@(!Editor && Session.Document.MockupTheme.ThemeId=="wireframe")">
+    @if (!Editor)
+    {
+        <FlareSelect Variant="InputVariant.Outlined" Label="Тема макета" Size="FieldSize.Xs" Value="@Session.Document.MockupTheme.ThemeId" ValueChanged="@((string? value)=>Change("theme",value))">
+            <option value="wireframe">Черновой макет</option>
+            <option value="fluent2">Fluent UI 2</option>
+            <option value="md3-expressive">Material Design 3 Expressive</option>
+        </FlareSelect>
+    }
+    <FlareSelect Variant="InputVariant.Outlined" Label="@(Editor?"Палитра Draftline":"Палитра макета")" Size="FieldSize.Xs" Value="@(Editor?Themes.Editor.CurrentPalette.Id:Session.Document.MockupTheme.PaletteId)" ValueChanged="@((string? value)=>Change("palette",value))" Disabled="@(!Editor && Session.Document.MockupTheme.ThemeId=="wireframe")">
         <option value="fluent-blue">Синяя</option><option value="fluent-excel">Зелёная</option><option value="fluent-teams">Фиолетовая</option>
     </FlareSelect>
-    <FlareSelect Variant="InputVariant.Outlined" Label="@(Editor?"Режим конструктора":"Режим макета")" Size="FieldSize.Xs" Value="@(Editor?Themes.Editor.Mode.ToString().ToLowerInvariant():Session.Document.MockupTheme.Mode)" ValueChanged="@((string? value)=>Change("mode",value))" Disabled="@(!Editor && Session.Document.MockupTheme.ThemeId=="wireframe")">
+    <FlareSelect Variant="InputVariant.Outlined" Label="@(Editor?"Режим Draftline":"Режим макета")" Size="FieldSize.Xs" Value="@(Editor?Themes.Editor.Mode.ToString().ToLowerInvariant():Session.Document.MockupTheme.Mode)" ValueChanged="@((string? value)=>Change("mode",value))" Disabled="@(!Editor && Session.Document.MockupTheme.ThemeId=="wireframe")">
         <option value="light">Светлый</option><option value="dark">Тёмный</option><option value="auto">Как в системе</option>
     </FlareSelect>
 </div>
@@ -25,8 +28,7 @@
         if(value is null)return;
         if(Editor)
         {
-            if(axis=="theme")await Themes.Editor.SetThemeAsync(value);
-            else if(axis=="palette")await Themes.Editor.SetPaletteAsync(value);
+            if(axis=="palette")await Themes.Editor.SetPaletteAsync(value);
             else await Themes.Editor.SetModeAsync(ThemeCoordinator.EditorMode(value));
         }
         else Session.Edit("Тема макета изменена",_=>{var selection=Session.Document.MockupTheme;if(axis=="theme")selection.ThemeId=value;else if(axis=="palette")selection.PaletteId=value;else selection.Mode=value;selection.Normalize();});

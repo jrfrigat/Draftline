@@ -3,7 +3,6 @@ using Flare.Abstractions.Tokens;
 using Flare.Theme.FluentUI2;
 using Flare.Theme.FluentUI2.Tokens;
 using Flare.Theming;
-using Flare.Theme.MaterialDesign3Expressive;
 
 namespace Draftline.App.Theming;
 /// <summary>
@@ -39,18 +38,4 @@ public static class DraftlineTheme
         return new FlareThemeBuilder("draftline-fluent2", "Draftline - Fluent UI 2", design).WithBase(new FluentUI2Theme()).Build();
     }
 
-    /// <summary>Material's design tokens with the same edge-to-edge editor layout.</summary>
-    public static ITheme BuildExpressive()
-    {
-        var theme = new MaterialDesign3ExpressiveTheme();
-        var design = theme.Design with
-        {
-            Layout = theme.Design.Layout with
-            {
-                ContentPadding = "0",
-                ContentPaddingMobile = "0"
-            }
-        };
-        return new FlareThemeBuilder("draftline-md3e", "Draftline - Material Design 3 Expressive", design).WithBase(theme).Build();
-    }
 }

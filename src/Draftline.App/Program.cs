@@ -27,7 +27,6 @@ builder.Services.AddFlare(options =>
 builder.Services.AddFlareIde();
 builder.Services.AddFlareTheme(new FluentUI2Theme());
 builder.Services.AddFlareTheme(new MaterialDesign3ExpressiveTheme());
-builder.Services.AddFlareTheme(DraftlineTheme.BuildExpressive());
 builder.Services.AddScoped<ThemeCoordinator>();
 // The editor's state, one per browser session: the open wireframe, what is selected on it, and the
 // history behind it. Everything that draws or changes a wireframe reads this same object.

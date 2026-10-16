@@ -23,11 +23,16 @@ public sealed class ThemeCoordinator : IAsyncDisposable
         Editor.OnThemeChanged += RootChanged;
     }
 
-    private Task RootChanged()
+    private async Task RootChanged()
     {
+        // Drawing themes must never replace the application's design system.
+        if (Editor.CurrentTheme.Id != "draftline-fluent2")
+        {
+            await Editor.SetThemeAsync("draftline-fluent2");
+            return;
+        }
         _drawings.Clear();
         Changed?.Invoke();
-        return Task.CompletedTask;
     }
 
     public Task InitializeAsync() => _initialization ??= InitializeCore();
