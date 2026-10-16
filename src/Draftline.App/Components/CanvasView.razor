@@ -10,12 +10,18 @@
 <div class="df-canvas-host">
     @if (Session.EditingGroupId.Length > 0)
     { <div class="df-group-breadcrumb"><span>Редактирование группы</span><button type="button" @onclick="() => Session.LeaveGroup()">Выйти из группы (Esc)</button></div> }
-    <div class="df-sheet" @ref="_sheet" tabindex="0" style="@SheetStyle">
+    <p id="df-canvas-help" class="df-visually-hidden">Ctrl и стрелки выбирают блоки. Стрелки перемещают выделение. F2 меняет текст. Delete удаляет. Escape снимает выделение.</p>
+    <div id="df-canvas" class="df-sheet" @ref="_sheet" tabindex="0" style="@SheetStyle"
+         role="listbox" aria-label="@("Холст: " + Session.CurrentLayer.Name)" aria-multiselectable="true"
+         aria-describedby="df-canvas-help" aria-activedescendant="@(Session.Selection.FirstOrDefault() is { } active ? "df-option-" + active : null)">
         @{ var drawOrder = 0; }
         @foreach (var element in TabPanels.Visible(Session.CurrentLayer))
         {
+            <div id="@("df-option-" + element.Id)" role="option" aria-selected="@Session.Selection.Contains(element.Id)"
+                 aria-label="@(ElementDefaults.NameOf(element.Kind) + ": " + element.DisplayText + (element.Locked ? ", положение заблокировано" : ""))">
             <WireframeElementView Element="element" DrawingOrder="@(drawOrder++)" Authoring="true" TabSelected="@(index => Session.SelectTab(element.Id, index))"
                                   TreeSelected="@(index => Session.SelectTreeNode(element.Id, index))" Edited="@(action => Session.Edit("Меню изменено", _ => action(element)))" />
+            </div>
         }
 
         @if (Session.SelectionBounds is { } selectionBounds)
@@ -44,6 +50,7 @@
             </div>
         }
     </div>
+    <p class="df-visually-hidden" role="status" aria-live="polite">@SelectionDescription</p>
 
     @if (Session.CurrentLayer.Elements.Count == 0)
     {
@@ -72,6 +79,21 @@
     private double? _verticalGuide, _horizontalGuide;
     private int _searchNavigation;
     private bool CanResize => Session.CanTransformSelection && Session.Members().All(e => e.Rotation == 0);
+    private string SelectionDescription => Session.Selected is { } selected
+        ? $"{ElementDefaults.NameOf(selected.Kind)}: {selected.DisplayText}. X {Number(selected.X)}, Y {Number(selected.Y)}. Размер {Number(selected.Width)} на {Number(selected.Height)}."
+        : $"Выбрано блоков: {Session.Selection.Count}";
+
+    [JSInvokable]
+    public async Task SelectAdjacent(bool previous)
+    {
+        if (Session.IsGestureRunning) return;
+        var blocks = TabPanels.Visible(Session.CurrentLayer).ToList();
+        if (blocks.Count == 0) return;
+        var index = blocks.FindIndex(element => Session.Selection.Contains(element.Id));
+        index = index < 0 ? (previous ? blocks.Count - 1 : 0) : (index + (previous ? -1 : 1) + blocks.Count) % blocks.Count;
+        Session.Select(blocks[index].Id);
+        if (_module is not null) await _module.InvokeVoidAsync("scrollToElement", blocks[index].Id);
+    }
 
     /// <summary>Opens direct text editing for the block under the double click.</summary>
     [JSInvokable]

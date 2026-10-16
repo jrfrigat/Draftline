@@ -6,6 +6,10 @@
 @inject IJSRuntime Js
 
 <PageTitle>@Session.Document.Name — Draftline</PageTitle>
+<nav class="df-skip-links" aria-label="Быстрый переход">
+    <a href="#df-canvas">К холсту</a>
+    <a href="#df-properties">К свойствам</a>
+</nav>
 
 @* The editor on Flare's IDE shell: the ribbon carries the document's actions, the panels dock at the
    sides, the sheet owns the middle and the status line says what is open and what just happened. The
@@ -77,9 +81,11 @@
     </Ribbon>
 
     <LeftToolPanel>
+        <section aria-label="Палитра блоков">
         <FlareToolPanel Title="Блоки" Position="ToolPanelPosition.Left">
             <BlockPalette AddRequested="AddBlock" />
         </FlareToolPanel>
+        </section>
     </LeftToolPanel>
 
     <ChildContent>
@@ -97,6 +103,7 @@
     </ChildContent>
 
     <RightToolPanel>
+        <section id="df-properties" tabindex="-1" aria-label="Свойства и экраны">
         @* These panels own their expanded state independently. Registering both as the IDE layout's
            right tool panel makes their different titles continuously invalidate the same region. *@
         <FlareAccordion AllowMultiple="true">
@@ -116,6 +123,7 @@
                 <AlternatePanel />
             </FlareAccordionPanel>
         </FlareAccordion>
+        </section>
     </RightToolPanel>
 
     <StatusBar>

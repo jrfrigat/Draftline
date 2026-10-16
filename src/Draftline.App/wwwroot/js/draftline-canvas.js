@@ -179,6 +179,10 @@ function onKeyDown(event) {
     if (!dotNet || isTyping(event.target)) {
         return;
     }
+    if ((event.ctrlKey || event.metaKey) && event.key.startsWith('Arrow') && canvas?.contains(event.target)) {
+        event.preventDefault();
+        return dotNet.invokeMethodAsync('SelectAdjacent', event.key === 'ArrowLeft' || event.key === 'ArrowUp');
+    }
     if (event.target.closest('[role="tab"]')) {
         if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) event.preventDefault();
         return;

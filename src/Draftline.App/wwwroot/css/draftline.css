@@ -1329,3 +1329,9 @@ body {
 .df-themed .df-preview-input, .df-themed .df-preview-area { color:var(--df-ink); background:transparent; }
 .df-themed .df-preview-input:focus-visible, .df-themed .df-preview-area:focus-visible { outline:2px solid var(--df-primary); outline-offset:1px; }
 .df-themed .df-button.df-state-button:focus-visible { outline-color:var(--df-on-primary); }
+
+.df-visually-hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.df-skip-links { position:fixed; top:0; left:0; z-index:10000; }
+.df-skip-links a { position:absolute; transform:translateY(-150%); white-space:nowrap; padding:12px; background:var(--flare-color-surface,#fff); color:var(--flare-color-on-surface,#111); }
+.df-skip-links a:focus { position:relative; display:inline-block; transform:none; outline:3px solid var(--flare-color-primary,#0f6cbd); }
+.df-sheet:focus-visible, #df-properties:focus-visible { outline:3px solid var(--flare-color-primary,#0f6cbd); outline-offset:3px; }
