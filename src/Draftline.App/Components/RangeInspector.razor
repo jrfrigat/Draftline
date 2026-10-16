@@ -6,10 +6,10 @@
 @if (Element.Kind is WireframeKind.Slider or WireframeKind.Stepper)
 {
     <div class="df-inspector__pair">
-    <FlareNumericField Class="df-inspector__number" Label="Минимум" Size="FieldSize.Xs" Value="@Element.Minimum" ValueChanged="@((double? value) => Change(e => e.Minimum = value ?? 0))" />
-    <FlareNumericField Class="df-inspector__number" Label="Максимум" Size="FieldSize.Xs" Value="@Element.Maximum" ValueChanged="@((double? value) => Change(e => e.Maximum = value ?? 100))" />
+    <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="Минимум" Size="FieldSize.Xs" Value="@Element.Minimum" ValueChanged="@((double? value) => Change(e => e.Minimum = value ?? 0))" />
+    <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="Максимум" Size="FieldSize.Xs" Value="@Element.Maximum" ValueChanged="@((double? value) => Change(e => e.Maximum = value ?? 100))" />
     </div>
-    <FlareNumericField Class="df-inspector__number" Label="Шаг" Size="FieldSize.Xs" Min="0.000001" Value="@Element.Step" ValueChanged="@((double? value) => Change(e => e.Step = value ?? 1))" />
+    <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="Шаг" Size="FieldSize.Xs" Min="0.000001" Value="@Element.Step" ValueChanged="@((double? value) => Change(e => e.Step = value ?? 1))" />
 }
 @if (Element.Kind is WireframeKind.Slider or WireframeKind.Divider or WireframeKind.Arrow or WireframeKind.Scrollbar or WireframeKind.Splitter)
 {
@@ -17,8 +17,8 @@
 }
 @if (Element.Kind == WireframeKind.Calendar)
 {
-    <FlareTextField Label="Месяц (ГГГГ-ММ)" Size="FieldSize.Xs" Value="@Element.CalendarMonth" ValueChanged="@((string? value) => Change(e => { e.CalendarMonth = value ?? ""; CalendarState.Normalize(e); }))" />
-    <FlareTextField Label="Выбранная дата (ГГГГ-ММ-ДД)" Size="FieldSize.Xs" Value="@Element.SelectedDate" ValueChanged="@((string? value) => Change(e => CalendarState.SetDate(e, value)))" />
+    <FlareTextField Variant="InputVariant.Outlined" Label="Месяц (ГГГГ-ММ)" Size="FieldSize.Xs" Value="@Element.CalendarMonth" ValueChanged="@((string? value) => Change(e => { e.CalendarMonth = value ?? ""; CalendarState.Normalize(e); }))" />
+    <FlareTextField Variant="InputVariant.Outlined" Label="Выбранная дата (ГГГГ-ММ-ДД)" Size="FieldSize.Xs" Value="@Element.SelectedDate" ValueChanged="@((string? value) => Change(e => CalendarState.SetDate(e, value)))" />
 }
 @code {
     /// <summary>The selected range, calendar or divider.</summary>

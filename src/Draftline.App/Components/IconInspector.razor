@@ -1,7 +1,7 @@
 @inject DocumentSession Session
 @if (WireframeIcons.Supports(Element.Kind))
 {
-    <FlareTextField Label="Найти иконку" Size="FieldSize.Xs" Immediate="true" Value="@_query" ValueChanged="@((string? value)=>_query=value??"")" />
+    <FlareTextField Variant="InputVariant.Outlined" Label="Найти иконку" Size="FieldSize.Xs" Immediate="true" Value="@_query" ValueChanged="@((string? value)=>_query=value??"")" />
     <div class="df-icon-catalog" aria-label="Иконки">
         <button type="button" title="Без иконки" @onclick="@(()=>Assign(""))">—</button>
         @foreach(var icon in WireframeIcons.All.Where(i=>i.Name.Contains(_query,StringComparison.OrdinalIgnoreCase)||i.Key.Contains(_query,StringComparison.OrdinalIgnoreCase)))

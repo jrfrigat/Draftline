@@ -5,12 +5,12 @@
 }
 @if (Element.Kind == WireframeKind.Radio)
 {
-    <FlareTextField Label="Группа переключателей" Size="FieldSize.Xs" Value="@Element.RadioGroup" ValueChanged="SetGroup"
+    <FlareTextField Variant="InputVariant.Outlined" Label="Группа переключателей" Size="FieldSize.Xs" Value="@Element.RadioGroup" ValueChanged="SetGroup"
                     HelperText="Одинаковое имя на экране — один выбранный вариант." />
 }
 @if (FormState.HasVisualState(Element.Kind))
 {
-    <FlareSelect Label="Внешнее состояние" Size="FieldSize.Xs" Value="@Element.VisualState.ToString()"
+    <FlareSelect Variant="InputVariant.Outlined" Label="Внешнее состояние" Size="FieldSize.Xs" Value="@Element.VisualState.ToString()"
                  ValueChanged="@((string? value) => SetVisual(value))">
         <option value="Normal">Обычное</option>
         <option value="Focused">В фокусе</option>
@@ -20,7 +20,7 @@
 }
 @if (FormState.HasFeedback(Element.Kind))
 {
-    <FlareTextField Label="Пояснение / сообщение об ошибке" Size="FieldSize.Xs" Value="@Element.FeedbackText" ValueChanged="SetFeedback" />
+    <FlareTextField Variant="InputVariant.Outlined" Label="Пояснение / сообщение об ошибке" Size="FieldSize.Xs" Value="@Element.FeedbackText" ValueChanged="SetFeedback" />
 }
 @code {
     /// <summary>The selected form control.</summary>

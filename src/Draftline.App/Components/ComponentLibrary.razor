@@ -2,7 +2,7 @@
 @implements IDisposable
 
 <div class="df-component-library">
-    <FlareTextField Label="Название компонента" Size="FieldSize.Xs" Value="@_name" ValueChanged="@((string? value)=>_name=value??"")" />
+    <FlareTextField Variant="InputVariant.Outlined" Label="Название компонента" Size="FieldSize.Xs" Value="@_name" ValueChanged="@((string? value)=>_name=value??"")" />
     <FlareButton Variant="ButtonVariant.Text" Disabled="@(Session.Selection.Count==0)" OnClick="@(()=>Session.CreateComponent(_name))">Создать из выделения</FlareButton>
     @if(Session.SelectedInstanceKey.Length>0)
     {

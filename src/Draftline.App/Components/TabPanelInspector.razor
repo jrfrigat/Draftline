@@ -2,9 +2,9 @@
 
 @if (TabPanels.IsContainer(Element.Kind))
 {
-    <FlareTextField Label="Название контейнера" Size="FieldSize.Xs" Value="@Element.Text"
+    <FlareTextField Variant="InputVariant.Outlined" Label="Название контейнера" Size="FieldSize.Xs" Value="@Element.Text"
                     ValueChanged="Rename" />
-    <FlareTextArea @key="@(Element.Id + "/" + TabPanels.Index(Element))"
+    <FlareTextArea Variant="InputVariant.Outlined" @key="@(Element.Id + "/" + TabPanels.Index(Element))"
                    Label="@($"Содержимое панели «{ElementDefaults.SplitOption(ElementState.Items(Element)[TabPanels.Index(Element)]).Label}»")"
                    Size="FieldSize.Xs" Value="@TabPanels.Content(Element)" ValueChanged="SetContent" />
     <p class="df-hint">Выберите заголовок на холсте. Блок из палитры добавится в открытую панель.
@@ -12,7 +12,7 @@
 }
 else if (Session.CurrentLayer.Elements.Any(e => TabPanels.IsContainer(e.Kind)))
 {
-    <FlareSelect Label="Контейнер" Size="FieldSize.Xs" Value="@Element.ParentTabsId" ValueChanged="@((string? value) => SetParent(value))">
+    <FlareSelect Variant="InputVariant.Outlined" Label="Контейнер" Size="FieldSize.Xs" Value="@Element.ParentTabsId" ValueChanged="@((string? value) => SetParent(value))">
         <option value="">На холсте</option>
         @foreach (var tabs in Session.CurrentLayer.Elements.Where(e => TabPanels.IsContainer(e.Kind)))
         {
@@ -21,7 +21,7 @@ else if (Session.CurrentLayer.Elements.Any(e => TabPanels.IsContainer(e.Kind)))
     </FlareSelect>
     @if (TabPanels.Parent(Session.CurrentLayer, Element) is { } parent)
     {
-        <FlareSelect Label="Панель блока" Size="FieldSize.Xs" Value="@Element.ParentTabIndex.ToString()" ValueChanged="@((string? value) => SetIndex(value))">
+        <FlareSelect Variant="InputVariant.Outlined" Label="Панель блока" Size="FieldSize.Xs" Value="@Element.ParentTabIndex.ToString()" ValueChanged="@((string? value) => SetIndex(value))">
             @for (var i = 0; i < ElementState.Items(parent).Count; i++)
             {
                 <option value="@i">@(i + 1). @ElementDefaults.SplitOption(ElementState.Items(parent)[i]).Label</option>

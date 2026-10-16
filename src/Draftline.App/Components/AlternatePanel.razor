@@ -1,7 +1,7 @@
 @inject DocumentSession Session
 @implements IDisposable
 <div class="df-alternate-panel">
-    <FlareTextField Label="Название варианта" Size="FieldSize.Xs" Value="@_name" ValueChanged="@((string? value)=>_name=value??"")" />
+    <FlareTextField Variant="InputVariant.Outlined" Label="Название варианта" Size="FieldSize.Xs" Value="@_name" ValueChanged="@((string? value)=>_name=value??"")" />
     <FlareButton OnClick="@(()=>Session.CreateAlternate(_name))">Сохранить новый вариант</FlareButton>
     <FlareButton Disabled="@(Session.CurrentLayer.CurrentAlternateId.Length==0)" OnClick="Session.SaveCurrentAlternate">Обновить текущий вариант</FlareButton>
     <p class="df-hint">При переключении правки текущего варианта сохраняются.</p>
@@ -10,7 +10,7 @@
         <div class="df-alternate" @key="alternate.Id">
             @if (_renamingId == alternate.Id)
             {
-                <FlareTextField Label="Новое имя варианта" Size="FieldSize.Xs" Value="@_renameDraft" ValueChanged="@((string? value) => _renameDraft = value ?? "")" />
+                <FlareTextField Variant="InputVariant.Outlined" Label="Новое имя варианта" Size="FieldSize.Xs" Value="@_renameDraft" ValueChanged="@((string? value) => _renameDraft = value ?? "")" />
                 <FlareButton OnClick="SaveName">Сохранить имя</FlareButton>
                 <FlareButton Variant="ButtonVariant.Text" OnClick="() => _renamingId = null">Отмена</FlareButton>
             }

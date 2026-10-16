@@ -1,7 +1,7 @@
 @inject DocumentSession Session
 @if (Element.Kind == WireframeKind.Tree)
 {
-    <FlareTextArea Label="Структура дерева: два пробела — уровень вложенности" Size="FieldSize.Xs"
+    <FlareTextArea Variant="InputVariant.Outlined" Label="Структура дерева: два пробела — уровень вложенности" Size="FieldSize.Xs"
                    Value="@TreeState.Structure(Element)" ValueChanged="SetStructure" />
     @foreach (var index in Enumerable.Range(0, Element.TreeDepths.Count))
     {

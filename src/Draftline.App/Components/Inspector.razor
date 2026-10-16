@@ -18,26 +18,26 @@ else
         <FlareAccordion AllowMultiple="true">
             <FlareAccordionPanel Header="Положение и размер" @bind-Expanded="_geometryExpanded">
         <div class="df-inspector__pair">
-            <FlareNumericField Class="df-inspector__number" Label="X" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
+            <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="X" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.X"
                                ValueChanged="@((double? value) => SetX(element, value))" />
-            <FlareNumericField Class="df-inspector__number" Label="Y" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
+            <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="Y" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.Y"
                                ValueChanged="@((double? value) => SetY(element, value))" />
         </div>
 
         <div class="df-inspector__pair">
-            <FlareNumericField Class="df-inspector__number" Label="Ширина" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
+            <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="Ширина" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.Width"
                                ValueChanged="@((double? value) => SetWidth(element, value))" />
-            <FlareNumericField Class="df-inspector__number" Label="Высота" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
+            <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="Высота" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.Height"
                                ValueChanged="@((double? value) => SetHeight(element, value))" />
         </div>
 
         @if (!TabPanels.IsContainer(element.Kind))
         {
-            <FlareNumericField Class="df-inspector__number" Label="Поворот, °" Size="FieldSize.Xs" Step="15" Disabled="@(!Session.CanTransformSelection)" Value="@element.Rotation"
+            <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="Поворот, °" Size="FieldSize.Xs" Step="15" Disabled="@(!Session.CanTransformSelection)" Value="@element.Rotation"
                                ValueChanged="@((double? value) => Session.RotateElement(element.Id, value ?? 0))" />
         }
         <FlareCheckbox Size="FieldSize.Sm" Value="@element.Locked" ValueChanged="@((bool value)=>Session.LockSelection(value))">Положение заблокировано</FlareCheckbox>
@@ -51,7 +51,7 @@ else
             <p class="df-hint">Двойной щелчок по блоку или F2 — изменить текст. Enter — применить.</p>
 
             <div class="df-inspector__pair">
-                <FlareNumericField Class="df-inspector__number" Label="Масштаб текста" Size="FieldSize.Xs" Min="0.5" Max="4" Step="0.5"
+                <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="Масштаб текста" Size="FieldSize.Xs" Min="0.5" Max="4" Step="0.5"
                                    Value="@element.FontScale"
                                    ValueChanged="@((double? value) => SetFontScale(element, value))" />
                 <FlareCheckbox Size="FieldSize.Sm" Value="@element.Bold" ValueChanged="@((bool value) => SetBold(element, value))">
@@ -62,18 +62,18 @@ else
 
         @if (ElementDefaults.AcceptsValue(element.Kind))
         {
-            <FlareTextField Label="Значение" Size="FieldSize.Xs"
+            <FlareTextField Variant="InputVariant.Outlined" Label="Значение" Size="FieldSize.Xs"
                             Value="@element.Value"
                             ValueChanged="@((string? value) => SetValue(element, value))" />
 
-            <FlareTextField Label="Подсказка" Size="FieldSize.Xs"
+            <FlareTextField Variant="InputVariant.Outlined" Label="Подсказка" Size="FieldSize.Xs"
                             Value="@element.Placeholder"
                             ValueChanged="@((string? value) => SetPlaceholder(element, value))" />
         }
 
         @if (ElementDefaults.AcceptsSecondaryText(element.Kind))
         {
-            <FlareTextField Label="Вторая строка" Size="FieldSize.Xs"
+            <FlareTextField Variant="InputVariant.Outlined" Label="Вторая строка" Size="FieldSize.Xs"
                             Value="@element.SecondaryText"
                             ValueChanged="@((string? value) => SetSecondaryText(element, value))" />
         }
@@ -89,18 +89,18 @@ else
 
         @if (ElementDefaults.HasRows(element.Kind) && element.Kind != WireframeKind.Tree)
         {
-            <FlareTextArea Label="Пункты, по одному в строке; значение после знака =" Size="FieldSize.Xs"
+            <FlareTextArea Variant="InputVariant.Outlined" Label="Пункты, по одному в строке; значение после знака =" Size="FieldSize.Xs"
                            Value="@OptionsText(element)"
                            ValueChanged="@((string? value) => SetOptions(element, value))" />
         }
 
         @if (element.Kind == WireframeKind.DataGrid)
         {
-            <FlareTextArea Label="Колонки, по одной в строке" Size="FieldSize.Xs"
+            <FlareTextArea Variant="InputVariant.Outlined" Label="Колонки, по одной в строке" Size="FieldSize.Xs"
                            Value="@ColumnsText(element)"
                            ValueChanged="@((string? value) => SetColumns(element, value))" />
 
-            <FlareTextArea Label="Строки: ячейки через |" Size="FieldSize.Xs"
+            <FlareTextArea Variant="InputVariant.Outlined" Label="Строки: ячейки через |" Size="FieldSize.Xs"
                            Value="@RowsText(element)"
                            ValueChanged="@((string? value) => SetRows(element, value))" />
         }
@@ -115,7 +115,7 @@ else
 
             @if (ElementState.HasChoice(element.Kind))
             {
-                <FlareSelect Label="@(element.Kind == WireframeKind.Tabs ? "Активная вкладка" : "Выбранный пункт")"
+                <FlareSelect Variant="InputVariant.Outlined" Label="@(element.Kind == WireframeKind.Tabs ? "Активная вкладка" : "Выбранный пункт")"
                              Size="FieldSize.Xs" Value="@ElementState.Index(element).ToString()"
                              ValueChanged="@((string? value) => SetSelectedIndex(element, value))">
                     @if (element.Kind != WireframeKind.Tabs)
@@ -151,7 +151,7 @@ else
             <FlareAccordionPanel Header="Переход" @bind-Expanded="_transitionExpanded">
         @if (Session.Document.Layers.Count > 1)
         {
-            <FlareSelect Label="Переход при нажатии" Size="FieldSize.Xs"
+            <FlareSelect Variant="InputVariant.Outlined" Label="Переход при нажатии" Size="FieldSize.Xs"
                          Value="@element.TargetLayerId"
                          ValueChanged="@((string? value) => Session.SetTransition(element, value, IsDialog(element)))">
                 <option value="">Нет</option>
