@@ -98,7 +98,7 @@ public sealed class ProjectCatalog
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        await _storage.SetAsync(DocumentKeyPrefix + document.Id, DraftlineJson.Serialize(document), cancellationToken)
+        await _storage.SetAsync(DocumentKeyPrefix + document.Id, DraftlineJson.Serialize(document, indented: false), cancellationToken)
             .ConfigureAwait(false);
 
         var list = (await ListAsync(cancellationToken).ConfigureAwait(false)).ToList();

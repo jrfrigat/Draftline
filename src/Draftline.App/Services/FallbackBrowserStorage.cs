@@ -63,7 +63,7 @@ public sealed class FallbackBrowserStorage : IBrowserStorage
     {
         if (_hasPersistentStorage is null)
         {
-            _hasPersistentStorage = _persistent is LocalStorageBrowserStorage localStorage
+            _hasPersistentStorage = _persistent is IndexedDbBrowserStorage localStorage
                 ? await localStorage.ProbeAsync(cancellationToken).ConfigureAwait(false)
                 : true;
         }

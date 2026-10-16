@@ -44,7 +44,7 @@ builder.Services.AddScoped<PaletteDrag>();
 // has not - a private window should cost the person the writing, not the editor. Registered as both
 // its own type and the interface, because the shell has to be able to ask which of the two it got.
 builder.Services.AddSingleton(sp => new FallbackBrowserStorage(
-    new LocalStorageBrowserStorage(sp.GetRequiredService<IJSRuntime>())));
+    new IndexedDbBrowserStorage(sp.GetRequiredService<IJSRuntime>())));
 builder.Services.AddSingleton<IBrowserStorage>(sp => sp.GetRequiredService<FallbackBrowserStorage>());
 builder.Services.AddSingleton<ProjectCatalog>();
 

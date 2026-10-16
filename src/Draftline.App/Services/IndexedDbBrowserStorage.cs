@@ -3,15 +3,15 @@ using Microsoft.JSInterop;
 namespace Draftline.App.Services;
 
 /// <summary>
-/// The app's storage as the browser keeps it: localStorage, reached through the small JavaScript
+/// The app's storage as the browser keeps it: IndexedDB, reached through the small JavaScript
 /// module in wwwroot/js/draftline-storage.js.
 ///
 /// The module answers rather than throws where it can - a browser that forbids storage or a write
 /// that does not fit becomes a message this class turns into <see cref="BrowserStorageException"/>,
-/// which is the one thing the layer above has to handle. When localStorage is not there at all, the
+/// which is the one thing the layer above has to handle. When IndexedDB is not there at all, the
 /// caller can fall back to <see cref="InMemoryBrowserStorage"/> and the editor still opens.
 /// </summary>
-public sealed class LocalStorageBrowserStorage : IBrowserStorage, IAsyncDisposable
+public sealed class IndexedDbBrowserStorage : IBrowserStorage, IAsyncDisposable
 {
     private const string ModulePath = "./js/draftline-storage.js";
 
@@ -19,10 +19,10 @@ public sealed class LocalStorageBrowserStorage : IBrowserStorage, IAsyncDisposab
     private IJSObjectReference? _module;
 
     /// <summary>Storage over the given JavaScript runtime.</summary>
-    public LocalStorageBrowserStorage(IJSRuntime js) => _js = js;
+    public IndexedDbBrowserStorage(IJSRuntime js) => _js = js;
 
     /// <summary>
-    /// True when the browser has no usable localStorage and the app is running on memory instead -
+    /// True when the browser has no usable IndexedDB and the app is running on memory instead -
     /// what the shell tells the person once, so nobody wonders why a reload lost the work.
     /// </summary>
     public bool IsVolatile { get; private set; }

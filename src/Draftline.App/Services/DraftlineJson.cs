@@ -39,15 +39,18 @@ public static class DraftlineJson
     /// Writes a document as JSON. The copy is normalized first, so a file that goes out is always a
     /// canonical one: identities filled in, blocks inside the sheet, schema version stated.
     /// </summary>
-    public static string Serialize(DraftDocument document)
+    public static string Serialize(DraftDocument document, bool indented = true)
     {
         ArgumentNullException.ThrowIfNull(document);
 
         var canonical = document.Clone();
         canonical.Normalize();
 
-        return JsonSerializer.Serialize(canonical, DraftlineJsonContext.Default.DraftDocument);
+        var context = indented ? DraftlineJsonContext.Default : CompactContext;
+        return JsonSerializer.Serialize(canonical, context.DraftDocument);
     }
+
+    private static readonly DraftlineJsonContext CompactContext = new(new JsonSerializerOptions(DraftlineJsonContext.Default.Options) { WriteIndented = false });
 
     /// <summary>Reads a document, or explains why it could not be read.</summary>
     public static DocumentReadResult Read(string json)
