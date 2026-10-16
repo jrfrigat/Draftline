@@ -67,7 +67,7 @@ public sealed class ProjectCatalog
 
             return list is null
                 ? Array.Empty<ProjectSummary>()
-                : list.Where(line => !string.IsNullOrWhiteSpace(line.Id))
+                : list.Where(line => line is not null && !string.IsNullOrWhiteSpace(line.Id))
                     .OrderByDescending(line => line.UpdatedAt)
                     .ToList();
         }

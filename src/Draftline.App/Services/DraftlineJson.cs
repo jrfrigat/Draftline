@@ -52,6 +52,15 @@ public static class DraftlineJson
     /// <summary>Reads a document, or explains why it could not be read.</summary>
     public static DocumentReadResult Read(string json)
     {
+        try { return ReadCore(json); }
+        catch (Exception exception)
+        {
+            return DocumentReadResult.Failed("Не удалось прочитать макет: " + exception.Message);
+        }
+    }
+
+    private static DocumentReadResult ReadCore(string json)
+    {
         if (string.IsNullOrWhiteSpace(json))
         {
             return DocumentReadResult.Failed("Файл пуст.");

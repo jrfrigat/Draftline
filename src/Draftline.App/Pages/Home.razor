@@ -201,13 +201,17 @@
                 _notice = result?.Error;
                 var fresh = DraftDocument.CreateNew(await Catalog.SuggestNameAsync());
                 Session.Open(fresh);
-                await Catalog.SaveAsync(fresh);
-                await Catalog.RememberLastAsync(fresh.Id);
+                if (result is null)
+                {
+                    await Catalog.SaveAsync(fresh);
+                    await Catalog.RememberLastAsync(fresh.Id);
+                }
             }
         }
-        catch (BrowserStorageException exception)
+        catch (Exception exception)
         {
             _notice = "Не удалось открыть сохранённый макет: " + exception.Message;
+            Session.Open(DraftDocument.CreateNew("Восстановление"));
         }
 
         _ready = true;

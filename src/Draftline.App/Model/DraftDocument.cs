@@ -189,6 +189,7 @@ public sealed class DraftDocument
         }
 
         Layers ??= new List<DraftLayer>();
+        Layers.RemoveAll(layer => layer is null);
         Components ??= new();
         var componentIds = new HashSet<string>();
         Components.RemoveAll(c=>c is null);
@@ -230,7 +231,7 @@ public sealed class DraftDocument
 
             if (legacyTabHeaders)
             {
-                foreach (var tabs in (layer.Elements ?? new List<WireframeElement>()).Where(element => element.Kind == WireframeKind.Tabs &&
+                foreach (var tabs in (layer.Elements ?? new List<WireframeElement>()).Where(element => element is not null && element.Kind == WireframeKind.Tabs &&
                              element.Height <= TabPanels.HeaderHeight))
                     tabs.Height = ElementDefaults.SizeOf(WireframeKind.Tabs).Height;
             }

@@ -90,15 +90,17 @@ public sealed class DraftLayer
         if(!Alternates.Any(a=>a.Id==CurrentAlternateId))CurrentAlternateId="";
         Id = string.IsNullOrWhiteSpace(Id) ? Guid.NewGuid().ToString("n") : Id;
         Name = string.IsNullOrWhiteSpace(Name) ? "Экран" : Name.Trim();
-        CanvasWidth = CanvasWidth > 0 ? CanvasWidth : DraftDocument.DefaultCanvasWidth;
-        CanvasHeight = CanvasHeight > 0 ? CanvasHeight : DraftDocument.DefaultCanvasHeight;
+        CanvasWidth = SheetSize(CanvasWidth, DraftDocument.DefaultCanvasWidth);
+        CanvasHeight = SheetSize(CanvasHeight, DraftDocument.DefaultCanvasHeight);
         Elements ??= new List<WireframeElement>();
+        Elements.RemoveAll(element => element is null);
 
         var identities = new HashSet<string>(StringComparer.Ordinal);
         var order = 1;
 
         foreach (var element in InDrawOrder())
         {
+            NormalizeCollections(element);
             if (string.IsNullOrWhiteSpace(element.Id) || !identities.Add(element.Id))
             {
                 element.Id = Guid.NewGuid().ToString("n");
@@ -144,6 +146,38 @@ public sealed class DraftLayer
         TabPanels.Normalize(this);
         ElementGroups.Normalize(this);
         FormState.Normalize(this);
+    }
+
+    public const double MaximumCanvasSize = 16384;
+    private static double SheetSize(double value, double fallback) =>
+        double.IsFinite(value) && value > 0 ? Math.Clamp(value, 1, MaximumCanvasSize) : fallback;
+
+    private static void NormalizeCollections(WireframeElement element)
+    {
+        element.Options = (element.Options ?? new()).Where(value => value is not null).ToList();
+        element.Columns = (element.Columns ?? new()).Select(value => value ?? "").ToList();
+        element.TabContents = (element.TabContents ?? new()).Select(value => value ?? "").ToList();
+        element.Rows = (element.Rows ?? new()).Where(row => row is not null)
+            .Select(row => row.Select(value => value ?? "").ToList()).ToList();
+        element.GroupPath ??= new();
+        element.TreeDepths ??= new();
+        element.ExpandedNodes ??= new();
+        element.ChoiceItems ??= new();
+        NormalizeChoices(element.ChoiceItems, 0);
+        element.ParentTabsId ??= "";
+        element.RadioGroup ??= "";
+        element.FeedbackText ??= "";
+    }
+
+    private static void NormalizeChoices(List<NavItem> items, int depth)
+    {
+        items.RemoveAll(item => item is null);
+        foreach (var item in items)
+        {
+            item.Label ??= ""; item.Value ??= ""; item.TargetLayerId ??= ""; item.Url ??= "";
+            item.Children ??= new();
+            if (depth >= 16) item.Children.Clear(); else NormalizeChoices(item.Children, depth + 1);
+        }
     }
 
     private static void NormalizeRows(WireframeElement element)
