@@ -10,7 +10,10 @@ public static partial class SvgExporter
         if (e.Kind == WireframeKind.Select)
         {
             Box(svg, x, y, e.Width, e.Height, Paper);
-            Text(svg, x + 6, y + e.Height / 2 + 4, ElementState.DisplayChoice(e), size, "400", 1);
+            // Keep long values inside the field, leaving room for the trailing arrow.
+            svg.Append($"<svg x=\"{Number(x + 6)}\" y=\"{Number(y)}\" width=\"{Number(Math.Max(0, e.Width - 30))}\" height=\"{Number(e.Height)}\" overflow=\"hidden\">");
+            Text(svg, 0, e.Height / 2 + 4, ElementState.DisplayChoice(e), size, "400", 1);
+            svg.Append("</svg>");
             Text(svg, x + e.Width - 16, y + e.Height / 2 + 4, ElementState.IsExpanded(e) ? "▴" : "▾", size, "400", 1);
             if (ElementState.IsExpanded(e))
                 DrawChoiceRows(svg, e, NavItems.Rows(items).ToList(), x, y + e.Height, e.Width, size);

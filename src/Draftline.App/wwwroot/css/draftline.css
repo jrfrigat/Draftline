@@ -1208,6 +1208,8 @@ body {
 .df-el--disabled { opacity: 0.45; }
 .df-el--select.df-el--open { overflow: visible; }
 .df-select__head { display: flex; align-items: center; gap: 0.4rem; width: 100%; height: 100%; }
+.df-select__head > span:first-child { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.df-select__head > span[aria-hidden="true"] { flex: 0 0 auto; margin-left: auto; }
 .df-select__options {
     position: absolute; top: 100%; left: -1px; width: calc(100% + 2px);
     box-sizing: border-box; display: flex; flex-direction: column;
