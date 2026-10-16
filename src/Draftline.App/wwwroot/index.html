@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-ln2TlIy4F2HVHj2dWs3kF6b/Ftq6xzg9mHCTrbfMO60='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Draftline</title>
     <base href="/" />
@@ -12,7 +13,7 @@
     <!-- What the browser's own chrome wears, and what the PWA is called once installed. -->
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="draftline.svg" />
-    <link rel="apple-touch-icon" href="draftline.svg" />
+    <link rel="apple-touch-icon" href="draftline-180.png" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14161b" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f7fb" />
 
@@ -44,8 +45,8 @@
     <div id="app"></div>
 
     <div id="blazor-error-ui">
-        Draftline не смог запуститься. <a href="." class="reload">Перезагрузить</a>
-        <span class="dismiss">×</span>
+        Произошла ошибка. Если редактор отвечает, выгрузите JSON перед перезагрузкой. <a href="." class="reload">Перезагрузить</a>
+        <button type="button" class="dismiss" aria-label="Закрыть сообщение об ошибке">×</button>
     </div>
 
     <script src="_framework/blazor.webassembly.js"></script>
