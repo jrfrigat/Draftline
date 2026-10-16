@@ -8,6 +8,7 @@
    grabbed, what it does, what gets selected - is made here in C#, where the document lives. That is
    why this component is the only place that knows the canvas has gestures at all. *@
 <div class="df-canvas-host">
+    @if (_placementNotice is not null) { <p role="status">@_placementNotice</p> }
     @if (Session.EditingGroupId.Length > 0)
     { <div class="df-group-breadcrumb"><span>Редактирование группы</span><button type="button" @onclick="() => Session.LeaveGroup()">Выйти из группы (Esc)</button></div> }
     <p id="df-canvas-help" class="df-visually-hidden">Ctrl и стрелки выбирают блоки. Стрелки перемещают выделение. F2 меняет текст. Delete удаляет. Escape снимает выделение.</p>
@@ -74,7 +75,7 @@
     private Dictionary<string, Rect> _dragOrigins = new(StringComparer.Ordinal);
     private Rect? _marquee;
     private string _cursor = "default";
-    private int _cascade;
+    private string? _placementNotice;
     private string? _editingId;
     private double? _verticalGuide, _horizontalGuide;
     private int _searchNavigation;
@@ -124,32 +125,31 @@
     /// </summary>
     public void AddCascade(WireframeKind kind)
     {
+        _placementNotice = null;
         var selected = Session.Selected;
         var parent = selected is not null && TabPanels.IsContainer(selected.Kind) ? selected :
             selected is null ? null : TabPanels.Parent(Session.CurrentLayer, selected);
+        var (width, height) = ElementDefaults.SizeOf(kind);
+        Rect area;
+        IEnumerable<WireframeElement> siblings;
         if (!TabPanels.IsContainer(kind) && parent is not null)
         {
             var panel = TabPanels.PanelBounds(parent);
             var textHeight = string.IsNullOrWhiteSpace(TabPanels.Content(parent)) ? 0 :
                 TabPanels.Content(parent).Split('\n').Length * 18 + 8;
-            var siblings = Session.CurrentLayer.Elements.Where(element => element.ParentTabsId == parent.Id &&
-                element.ParentTabIndex == TabPanels.Index(parent)).ToList();
-            var nextY = siblings.Count == 0 ? panel.Y + 12 + textHeight :
-                siblings.Max(element => element.Bounds.Bottom) + 8;
-            var (_, blockHeight) = ElementDefaults.SizeOf(kind);
-            nextY = Math.Min(nextY, Math.Max(panel.Y + 12, panel.Bottom - blockHeight - 12));
-            Session.Add(kind, parent.X + 12, nextY, parent.Id);
-            return;
+            area = new(panel.X + 12, panel.Y + 12 + textHeight, Math.Max(0, panel.Width - 24), Math.Max(0, panel.Height - 24 - textHeight));
+            siblings = Session.CurrentLayer.Elements.Where(element => !element.Hidden && element.ParentTabsId == parent.Id &&
+                element.ParentTabIndex == TabPanels.Index(parent));
         }
-        var (width, height) = ElementDefaults.SizeOf(kind);
-        var step = Session.Document.GridSize > 1 ? Session.Document.GridSize * 3 : 24;
-        var offset = _cascade * step;
-        _cascade = (_cascade + 1) % 8;
-
-        var x = Math.Min(48 + offset, Math.Max(0, Session.CurrentLayer.CanvasWidth - width));
-        var y = Math.Min(48 + offset, Math.Max(0, Session.CurrentLayer.CanvasHeight - height));
-
-        Session.Add(kind, x, y);
+        else
+        {
+            parent = null;
+            area = new(16, 16, Math.Max(0, Session.CurrentLayer.CanvasWidth - 32), Math.Max(0, Session.CurrentLayer.CanvasHeight - 32));
+            siblings = TabPanels.Visible(Session.CurrentLayer);
+        }
+        var space = CanvasGeometry.FreeSpace(area, width, height, siblings.OrderBy(e => e.ZIndex).Select(e => e.Bounds), Session.Document.GridSize);
+        if (space is { } free) { _searchNavigation = -1; Session.Add(kind, free.X, free.Y, parent?.Id); }
+        else { _placementNotice = "Нет свободного места для блока. Увеличьте экран или освободите место."; StateHasChanged(); }
     }
 
     /// <inheritdoc />

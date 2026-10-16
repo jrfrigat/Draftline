@@ -43,6 +43,32 @@ public static class CanvasGeometry
     /// <summary>The smallest a block may be dragged down to.</summary>
     public const double MinimumSize = 8;
 
+    /// <summary>Finds a grid-aligned rectangle with breathing room, or no rectangle when the area is full.</summary>
+    public static Rect? FreeSpace(Rect area, double width, double height, IEnumerable<Rect> occupied, int grid)
+    {
+        var blocks = occupied.ToList();
+        var step = Math.Max(1, grid);
+        const double gap = 8;
+        bool Fits(Rect r) => r.X >= area.X && r.Y >= area.Y && r.Right <= area.Right && r.Bottom <= area.Bottom &&
+            blocks.All(b => r.Right + gap <= b.X || r.X >= b.Right + gap || r.Bottom + gap <= b.Y || r.Y >= b.Bottom + gap);
+        Rect Candidate(double x, double y) => new(Snap(x, step), Snap(y, step), width, height);
+        if (blocks.Count > 0)
+        {
+            var last = blocks[^1];
+            var below = Candidate(last.X, last.Bottom + gap);
+            if (Fits(below)) return below;
+            var right = Candidate(last.Right + gap, last.Y);
+            if (Fits(right)) return right;
+        }
+        for (var y = Math.Ceiling(area.Y / step) * step; y + height <= area.Bottom; y += step)
+            for (var x = Math.Ceiling(area.X / step) * step; x + width <= area.Right; x += step)
+            {
+                var candidate = new Rect(x, y, width, height);
+                if (Fits(candidate)) return candidate;
+            }
+        return null;
+    }
+
     /// <summary>
     /// Rounds a coordinate to the grid. A grid of 1 (or less) rounds to whole pixels instead.
     /// Rounding goes away from zero: half a step lands on the next grid line, which is what a hand
