@@ -20,7 +20,7 @@ public sealed class AutosaveSwitchTests
     }
 
     [Fact]
-    public async Task A_write_in_flight_does_not_mark_newer_edits_saved()
+    public async Task Flush_drains_newer_edits_before_a_project_switch()
     {
         var storage = new DelayedStorage();
         var session = new DocumentSession();
@@ -31,9 +31,9 @@ public sealed class AutosaveSwitchTests
         session.Rename("Во время записи");
         storage.Release.SetResult();
         Assert.True(await pending);
-        Assert.True(session.IsDirty);
-        Assert.Equal(AutosaveState.Pending, save.State);
-        Assert.Equal("До записи", DraftlineJson.Read((await storage.Inner.GetAsync(ProjectCatalog.DocumentKeyPrefix + session.Document.Id, TestContext.Current.CancellationToken))!).Document!.Name);
+        Assert.False(session.IsDirty);
+        Assert.Equal(AutosaveState.Saved, save.State);
+        Assert.Equal("Во время записи", DraftlineJson.Read((await storage.Inner.GetAsync(ProjectCatalog.DocumentKeyPrefix + session.Document.Id, TestContext.Current.CancellationToken))!).Document!.Name);
     }
 
     private sealed class DelayedStorage : IBrowserStorage

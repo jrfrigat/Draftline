@@ -5,6 +5,10 @@
    where the block goes. Both exist because both are how people work, and neither is a mode. *@
 <div class="df-palette">
     <FlareTextField Label="Найти блок" Immediate="true" Size="FieldSize.Xs" Value="@_query" ValueChanged="@((string? value) => _query = value ?? "")" />
+    @if (!ElementDefaults.Sections.SelectMany(section => section.Kinds).Any(Matches))
+    {
+        <p class="df-hint" role="status">Ничего не найдено. Измените запрос.</p>
+    }
     @foreach (var (title, kinds) in ElementDefaults.Sections)
     {
         @if (!kinds.Any(Matches)) { continue; }

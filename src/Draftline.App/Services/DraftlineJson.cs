@@ -52,9 +52,9 @@ public static class DraftlineJson
         {
             return ReadCore(json);
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            return DocumentReadResult.Failed("Не удалось прочитать макет: " + exception.Message);
+            return DocumentReadResult.Failed("Не удалось прочитать макет. Выберите другой JSON-файл Draftline.");
         }
     }
 
@@ -70,9 +70,9 @@ public static class DraftlineJson
         {
             parsed = JsonDocument.Parse(json);
         }
-        catch (JsonException exception)
+        catch (JsonException)
         {
-            return DocumentReadResult.Failed("Это не макет Draftline: " + exception.Message);
+            return DocumentReadResult.Failed("В файле некорректный JSON. Выберите файл макета Draftline.");
         }
 
         using (parsed)
@@ -91,9 +91,9 @@ public static class DraftlineJson
         {
             document = JsonSerializer.Deserialize(json, DraftlineJsonContext.Default.DraftDocument);
         }
-        catch (JsonException exception)
+        catch (JsonException)
         {
-            return DocumentReadResult.Failed("Это не макет Draftline: " + exception.Message);
+            return DocumentReadResult.Failed("Данные файла не соответствуют формату макета Draftline.");
         }
 
         if (document is null)

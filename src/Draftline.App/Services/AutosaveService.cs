@@ -58,7 +58,14 @@ public sealed class AutosaveService : IDisposable
         await _writes.WaitAsync(cancellationToken);
         try
         {
-            return await WriteAsync(cancellationToken);
+            var documentId = _session.Document.Id;
+            do
+            {
+                if (!await WriteAsync(cancellationToken)) return false;
+                if (_session.Document.Id != documentId) return false;
+            }
+            while (_session.IsDirty);
+            return true;
         }
         finally
         {

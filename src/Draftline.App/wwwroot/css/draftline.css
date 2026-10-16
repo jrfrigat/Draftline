@@ -60,7 +60,7 @@ body {
 .draftline-splash-mark i {
     width: 0.6rem;
     height: 0.6rem;
-    background: var(--flare-color-primary, #7c3aed);
+    background: var(--flare-color-primary, #0f6cbd);
     animation: draftline-splash-pulse 900ms ease-in-out infinite alternate;
 }
 
@@ -1367,3 +1367,9 @@ body {
 .df-block-list__row button:not(.df-block-list__name), .df-layers__action, .df-document-search__header button { min-width:32px; min-height:32px; display:inline-grid; place-items:center; }
 .df-palette__section, .df-ribbon .flare-ribbon__group-label { font-size:12px; }
 .df-status { font-size:max(12px,.78rem); }
+
+.df-preview-brand { display:flex; align-items:center; gap:8px; padding:6px 12px; font-weight:600; }
+.df-editor--preview .flare-ide-layout__panel--left, .df-editor--preview .flare-ide-layout__panel--right,
+.df-editor--preview .flare-ide-layout__rail, .df-editor--preview .flare-ide-layout__resizer { display:none !important; }
+.df-layer-notice { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.df-editor-host { display:contents; }

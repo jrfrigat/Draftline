@@ -19,6 +19,7 @@
    While the wireframe is being previewed both panel regions fold to their rails: the same "the
    constructor is off" the preview promises, done by the frame's own means, and the view comes back on
    the way out. *@
+<div class="@(Session.IsPreviewing ? "df-editor-host df-editor--preview" : "df-editor-host")">
 <FlareIdeLayout id="df-editor" LeftPanelWidth="14rem"
                 RightPanelWidth="18rem"
                 LeftCollapsed="_blocksFolded"
@@ -26,6 +27,8 @@
                 RightCollapsed="_sidesFolded"
                 RightCollapsedChanged="SetSidesFolded">
     <Ribbon>
+        @if (!Session.IsPreviewing)
+        {
         <div class="df-ribbon-shell">
             <div class="df-ribbon-brand">
                 <img src="draftline.svg" alt="" width="20" height="20" />
@@ -53,7 +56,7 @@
                 <FlareRibbonGroup Label="Обмен">
                     <FlareRibbonButton Label="Экспорт SVG" Tooltip="Открытый экран как рисунок"
                                        Disabled="@(Session.Document.TotalElements == 0)" OnClick="ExportSvg" />
-                    <FlareRibbonButton Label="Все экраны в SVG" Tooltip="Каждый экран отдельным файлом"
+                    <FlareRibbonButton Label="Все экраны в SVG" Tooltip="Все экраны в одном ZIP-архиве SVG"
                                        Disabled="@(Session.Document.Layers.Count < 2)" OnClick="ExportAllSvg" />
                     <FlareRibbonButton Label="Экспорт PNG" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, false))" />
                     <FlareRibbonButton Label="Все экраны в PNG" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, true))" />
@@ -81,6 +84,11 @@
             </FlareRibbonTab>
         </FlareRibbon>
         </div>
+        }
+        else
+        {
+            <div class="df-preview-brand"><img src="draftline.svg" width="20" height="20" alt="" />Draftline</div>
+        }
     </Ribbon>
 
     <LeftToolPanel>
@@ -153,6 +161,7 @@
         </div>
     </StatusBar>
 </FlareIdeLayout>
+</div>
 
 @code {
     [Inject]

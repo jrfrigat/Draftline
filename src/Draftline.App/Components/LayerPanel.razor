@@ -5,6 +5,13 @@
    shelf they stand on: which one is open, which one a preview starts from, and which of them lead
    somewhere. The blocks themselves live on the sheet; this is only the list. *@
 <div class="df-layers">
+    @if (_removedName is not null && Session.EditVersion == _deleteVersion)
+    {
+        <div class="df-layer-notice" role="status">
+            <span>Экран «@_removedName» удалён.</span>
+            <FlareButton Variant="ButtonVariant.Text" OnClick="UndoDelete">Отменить удаление</FlareButton>
+        </div>
+    }
     <div class="df-layers__head">
         <FlareButton Variant="ButtonVariant.Text" OnClick="@(() => Session.AddLayer())">Добавить экран</FlareButton>
     </div>
@@ -58,7 +65,7 @@
                 {
                     <button type="button" class="df-layers__action" title="Удалить экран"
                             aria-label="@($"Удалить экран {item.Name}")"
-                            @onclick="() => Session.RemoveLayer(item.Id)">
+                            @onclick="() => RemoveLayer(item)">
                         <FlareIconView Value="FlareIcons.Delete" Size="1rem" />
                     </button>
                 }
@@ -69,6 +76,19 @@
 
 @code {
     private string? _renamingId;
+    private string? _removedName;
+    private long _deleteVersion;
+    private void RemoveLayer(DraftLayer layer)
+    {
+        if (!Session.RemoveLayer(layer.Id)) return;
+        _removedName = layer.Name;
+        _deleteVersion = Session.EditVersion;
+    }
+    private void UndoDelete()
+    {
+        if (Session.EditVersion == _deleteVersion) Session.Undo();
+        _removedName = null;
+    }
 
     protected override void OnInitialized() => Session.Changed += OnChanged;
     public void Dispose() => Session.Changed -= OnChanged;
