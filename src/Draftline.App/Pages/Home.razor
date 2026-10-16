@@ -129,7 +129,12 @@
                     Выбрано: @Session.Selection.Count · Стрелки / Ctrl+D / Delete
                 </span>
             }
-            <span class="df-status__note" role="status">@(_notice ?? Autosave.Message)</span>
+            <span class="df-status__note" role="status">@Autosave.Message</span>
+            @if (_notice is not null)
+            {
+                <span role="status">@_notice</span>
+                <button type="button" aria-label="Скрыть уведомление" @onclick="() => _notice = null">×</button>
+            }
             @if (Storage.IsVolatile)
             {
                 <span role="status">Временное хранилище: выгрузите JSON до закрытия вкладки</span>
@@ -256,7 +261,13 @@
     }
 
     /// <summary>The whole sheet as a drawing. One block on its own is exported from the inspector.</summary>
-    private Task ExportSvg() => Files.DownloadSvgAsync(Session.Document, Session.CurrentLayer);
+    private Task ExportSvg() => FileOperation(() => Files.DownloadSvgAsync(Session.Document, Session.CurrentLayer), "SVG подготовлен");
+
+    private async Task FileOperation(Func<Task> action, string success)
+    {
+        try { await action(); _notice = success; }
+        catch (Exception exception) { _notice = "Операция с файлом не выполнена: " + exception.Message; }
+    }
 
     private bool _exporting;
     private async Task ExportDrawing(bool pdf, bool all)
@@ -268,20 +279,26 @@
             await Files.DownloadDrawingAsync(Session.Document, all ? Session.Document.Layers : new[] { Session.CurrentLayer }, pdf);
             _notice = pdf ? "PDF подготовлен" : "PNG подготовлен";
         }
-        catch (JSException) { _notice = "Не удалось экспортировать макет. Попробуйте меньший размер экрана."; }
+        catch (Exception) { _notice = "Не удалось экспортировать макет. Попробуйте меньший размер экрана."; }
         finally { _exporting = false; }
     }
 
-    private Task ExportJson() => Files.DownloadJsonAsync(Session.Document);
+    private Task ExportJson() => FileOperation(() => Files.DownloadJsonAsync(Session.Document), "JSON подготовлен");
 
     /// <summary>Every screen of the wireframe, one file each.</summary>
-    private Task ExportAllSvg() => Files.DownloadAllSvgAsync(Session.Document);
+    private Task ExportAllSvg() => FileOperation(() => Files.DownloadAllSvgAsync(Session.Document), "SVG всех экранов подготовлены");
 
     /// <summary>
     /// Takes a wireframe out of a file. A file that is not a wireframe is an ordinary answer to asking
     /// for one, so its reason is shown beside the buttons rather than thrown at the person.
     /// </summary>
     private async Task ImportJson()
+    {
+        try { await ImportJsonCore(); }
+        catch (Exception exception) { _notice = "Не удалось импортировать макет: " + exception.Message; }
+    }
+
+    private async Task ImportJsonCore()
     {
         var result = await Files.ImportAsync();
 

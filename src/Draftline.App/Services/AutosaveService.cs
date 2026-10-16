@@ -84,7 +84,14 @@ public sealed class AutosaveService : IDisposable
             Changed?.Invoke();
             return true;
         }
-        catch (BrowserStorageException exception)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            State = AutosaveState.Pending;
+            Message = "Есть несохранённые изменения";
+            Changed?.Invoke();
+            return false;
+        }
+        catch (Exception exception)
         {
             State = AutosaveState.Failed;
             Message = "Не сохранилось: " + exception.Message;
