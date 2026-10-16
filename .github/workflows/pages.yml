@@ -1,0 +1,57 @@
+name: Publish to GitHub Pages
+
+# Publishes the editor to https://<owner>.github.io/<repo>/. Draftline has no backend, so the static
+# build is the whole application. One-time setup: Settings -> Pages -> Source: "GitHub Actions".
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A newer push replaces an older run instead of queueing behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      # A project Pages site is served from /<repo>/, so the app has to know its base path. This MUST
+      # happen BEFORE publish: index.html is listed in service-worker-assets.js with its hash, and
+      # rewriting the published copy would make the offline cache refuse it. The repository keeps "/"
+      # so `dotnet run` is unaffected. Same rule as Alva and the Flare gallery.
+      - name: Point the app at the Pages sub-path
+        run: |
+          base="/${GITHUB_REPOSITORY#*/}/"
+          sed -i "s#<base href=\"/\" />#<base href=\"${base}\" />#" src/Draftline.App/wwwroot/index.html
+          grep -q "<base href=\"${base}\" />" src/Draftline.App/wwwroot/index.html
+      - name: Publish
+        run: dotnet publish src/Draftline.App/Draftline.App.csproj -c Release -o dist
+      - name: Add the static-host shims
+        run: |
+          site="dist/wwwroot"
+          # Pages has no SPA fallback: a deep link is answered with 404.html, which is the app itself.
+          # Copied after publish on purpose, so it stays out of the service worker's asset list.
+          cp "$site/index.html" "$site/404.html"
+          # Jekyll would drop _framework/ and _content/ if Pages were ever pointed back at a branch.
+          touch "$site/.nojekyll"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/wwwroot
+      - id: deploy
+        uses: actions/deploy-pages@v4

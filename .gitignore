@@ -21,3 +21,11 @@
 # Agent scaffolding, for the same reason .claude/ and .cline/ are ignored: Aiko writes it.
 /.cursor/
 /.zcode/
+
+# IDE state and local working material: artifacts/ holds generated mockups, benchmarks and screenshots
+# that stay on this machine.
+.vs/
+.idea/
+*.suo
+artifacts/
+*.log

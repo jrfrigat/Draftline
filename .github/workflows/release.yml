@@ -1,0 +1,37 @@
+name: Release
+
+# Runs when a version tag is pushed, e.g. v0.4.0: builds and tests the solution, publishes the static
+# site and attaches it to a GitHub Release as a zip that any static host can serve from its root.
+on:
+  push:
+    tags: [ 'v*' ]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # create the GitHub Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - run: dotnet restore Draftline.slnx
+      - run: dotnet build Draftline.slnx -c Release --no-restore -warnaserror
+      - run: dotnet test --solution Draftline.slnx -c Release --no-build
+      - name: Publish the static site
+        run: |
+          dotnet publish src/Draftline.App/Draftline.App.csproj -c Release -o dist
+          cp dist/wwwroot/index.html dist/wwwroot/404.html
+          (cd dist/wwwroot && zip -qr "../../draftline-${GITHUB_REF_NAME}.zip" .)
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" "draftline-${GITHUB_REF_NAME}.zip" --generate-notes --title "${GITHUB_REF_NAME}"
