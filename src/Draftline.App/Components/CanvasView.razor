@@ -8,11 +8,19 @@
    grabbed, what it does, what gets selected - is made here in C#, where the document lives. That is
    why this component is the only place that knows the canvas has gestures at all. *@
 <div class="df-canvas-host">
+    <div class="df-canvas-toolbar" role="toolbar" aria-label="Масштаб и навигация холста">
+        <button type="button" aria-label="Уменьшить масштаб" @onclick="() => ZoomBy(-.1)">−</button>
+        <output aria-live="polite">@Math.Round(_zoom * 100)%</output>
+        <button type="button" aria-label="Увеличить масштаб" @onclick="() => ZoomBy(.1)">+</button>
+        <button type="button" @onclick="ResetZoom">100%</button>
+        <button type="button" @onclick="FitWidth">По ширине</button>
+        <button type="button" aria-pressed="@_hand" @onclick="ToggleHand">Рука</button>
+    </div>
     @if (_placementNotice is not null) { <p role="status">@_placementNotice</p> }
     @if (Session.EditingGroupId.Length > 0)
     { <div class="df-group-breadcrumb"><span>Редактирование группы</span><button type="button" @onclick="() => Session.LeaveGroup()">Выйти из группы (Esc)</button></div> }
     <p id="df-canvas-help" class="df-visually-hidden">Ctrl и стрелки выбирают блоки. Стрелки перемещают выделение. F2 меняет текст. Delete удаляет. Escape снимает выделение.</p>
-    <div id="df-canvas" class="df-sheet" @ref="_sheet" tabindex="0" style="@SheetStyle"
+    <div id="df-canvas" class="@("df-sheet" + (_hand ? " df-sheet--hand" : ""))" @ref="_sheet" tabindex="0" style="@SheetStyle"
          role="listbox" aria-label="@("Холст: " + Session.CurrentLayer.Name)" aria-multiselectable="true"
          aria-describedby="df-canvas-help" aria-activedescendant="@(Session.Selection.FirstOrDefault() is { } active ? "df-option-" + active : null)">
         @{ var drawOrder = 0; }
@@ -76,6 +84,28 @@
     private Rect? _marquee;
     private string _cursor = "default";
     private string? _placementNotice;
+    private double _zoom = 1;
+    private bool _hand, _coarse, _fitWidth;
+    private void SetZoom(double value) { if (!Session.IsGestureRunning) _zoom = Math.Clamp(value, .1, 2); }
+    private void ResetZoom() { _fitWidth = false; SetZoom(1); }
+    [JSInvokable] public void ZoomBy(double delta) { _fitWidth = false; SetZoom(_zoom + delta); StateHasChanged(); }
+    [JSInvokable] public void OnViewportChanged(double width)
+    {
+        if (!_fitWidth) return;
+        SetZoom(width / Session.CurrentLayer.CanvasWidth);
+        StateHasChanged();
+    }
+    private async Task FitWidth()
+    {
+        _fitWidth = true;
+        if (_module is not null) SetZoom(await _module.InvokeAsync<double>("availableWidth") / Session.CurrentLayer.CanvasWidth);
+    }
+    private async Task ToggleHand()
+    {
+        if (Session.IsGestureRunning) return;
+        _hand = !_hand;
+        if (_module is not null) await _module.InvokeVoidAsync("setHand", _hand);
+    }
     private string? _editingId;
     private double? _verticalGuide, _horizontalGuide;
     private int _searchNavigation;
@@ -174,6 +204,9 @@
         _self = DotNetObjectReference.Create(this);
 
         await _module.InvokeVoidAsync("attach", _sheet, _self);
+        _coarse = await _module.InvokeAsync<bool>("isCoarsePointer");
+        if (_coarse) { _hand = true; await _module.InvokeVoidAsync("setHand", true); }
+        if (_coarse || await _module.InvokeAsync<bool>("isCompactViewport")) { await FitWidth(); StateHasChanged(); }
         _attached = true;
     }
 
@@ -215,7 +248,7 @@
     {
         // A handle of the selected block wins over everything under the pointer: it is small, it is
         // deliberate, and it is drawn on top of whatever it belongs to.
-        if (CanResize && Session.SelectionBounds is { } selectedBounds && CanvasInteraction.HandleAt(selectedBounds, x, y) is { } handle)
+        if (CanResize && Session.SelectionBounds is { } selectedBounds && CanvasInteraction.HandleAt(selectedBounds, x, y, (_coarse ? 22 : 6) / _zoom) is { } handle)
         {
             _gesture = CanvasGesture.Resize;
             _handle = handle;
@@ -508,6 +541,7 @@
     private string SheetStyle =>
         $"width:{Number(Session.CurrentLayer.CanvasWidth)}px;" +
         $"height:{Number(Session.CurrentLayer.CanvasHeight)}px;" +
+        $"zoom:{Number(_zoom)};--df-zoom:{Number(_zoom)};" +
         $"cursor:{_cursor};";
 
     private static string RectStyle(Rect rect) =>

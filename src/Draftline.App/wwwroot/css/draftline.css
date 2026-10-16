@@ -1335,3 +1335,11 @@ body {
 .df-skip-links a { position:absolute; transform:translateY(-150%); white-space:nowrap; padding:12px; background:var(--flare-color-surface,#fff); color:var(--flare-color-on-surface,#111); }
 .df-skip-links a:focus { position:relative; display:inline-block; transform:none; outline:3px solid var(--flare-color-primary,#0f6cbd); }
 .df-sheet:focus-visible, #df-properties:focus-visible { outline:3px solid var(--flare-color-primary,#0f6cbd); outline-offset:3px; }
+
+.df-canvas-toolbar { position:sticky; top:0; left:0; z-index:100001; display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:6px; margin-bottom:8px; background:var(--flare-color-surface,#fff); color:var(--flare-color-on-surface,#111); border:1px solid var(--flare-color-outline,#888); }
+.df-canvas-toolbar button { min-height:32px; min-width:32px; font:inherit; }
+.df-sheet--hand { touch-action:pan-x pan-y pinch-zoom; cursor:grab !important; }
+@media (pointer:coarse) {
+    .df-handle { width:calc(44px / var(--df-zoom,1)); height:calc(44px / var(--df-zoom,1)); margin:calc(-22px / var(--df-zoom,1)) 0 0 calc(-22px / var(--df-zoom,1)); }
+    .df-canvas-toolbar button { min-height:44px; min-width:44px; }
+}

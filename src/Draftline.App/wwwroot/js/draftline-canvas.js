@@ -8,6 +8,16 @@
 let canvas = null;
 let dotNet = null;
 let activePointer = null;
+let hand = false, pan = null;
+let viewportObserver = null;
+export function isCoarsePointer() { return window.matchMedia('(pointer: coarse)').matches; }
+export function setHand(value) { hand = value; }
+export function availableWidth() { return Math.max(100, canvas?.parentElement.clientWidth - 28); }
+function onWheel(event) {
+    if (!event.ctrlKey && !event.metaKey) return;
+    event.preventDefault();
+    dotNet?.invokeMethodAsync('ZoomBy', event.deltaY < 0 ? .1 : -.1);
+}
 
 // Initial editor layout only; the person's panel choices take over after startup.
 export function isCompactViewport() {
@@ -26,6 +36,8 @@ export function attach(element, reference) {
 
     canvas = element;
     dotNet = reference;
+    viewportObserver = new ResizeObserver(() => dotNet?.invokeMethodAsync('OnViewportChanged', availableWidth()));
+    viewportObserver.observe(canvas.parentElement);
 
     canvas.addEventListener('pointerdown', onPointerDown);
     canvas.addEventListener('pointermove', onPointerMove);
@@ -34,12 +46,14 @@ export function attach(element, reference) {
     canvas.addEventListener('dragover', onDragOver);
     canvas.addEventListener('drop', onDrop);
     canvas.addEventListener('dblclick', onDoubleClick);
+    canvas.addEventListener('wheel', onWheel, {passive:false});
     document.addEventListener('keydown', onKeyDown);
 }
 
 // Takes everything away again, so navigating between pages does not leave listeners behind that
 // point at a component the app has already thrown out.
 export function detach() {
+    viewportObserver?.disconnect(); viewportObserver = null;
     if (canvas) {
         canvas.removeEventListener('pointerdown', onPointerDown);
         canvas.removeEventListener('pointermove', onPointerMove);
@@ -48,6 +62,7 @@ export function detach() {
         canvas.removeEventListener('dragover', onDragOver);
         canvas.removeEventListener('drop', onDrop);
         canvas.removeEventListener('dblclick', onDoubleClick);
+        canvas.removeEventListener('wheel', onWheel);
     }
 
     document.removeEventListener('keydown', onKeyDown);
@@ -55,6 +70,7 @@ export function detach() {
     canvas = null;
     dotNet = null;
     activePointer = null;
+    hand = false; pan = null;
 }
 
 // Where the pointer is, in the sheet's own pixels. The difference between the two rectangles is the
@@ -62,7 +78,8 @@ export function detach() {
 // sheet sits inside a scrolling host.
 function pointOf(event) {
     const rect = canvas.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    return { x: (event.clientX - rect.left) * canvas.offsetWidth / rect.width,
+        y: (event.clientY - rect.top) * canvas.offsetHeight / rect.height };
 }
 
 function onPointerDown(event) {
@@ -74,6 +91,13 @@ function onPointerDown(event) {
         return;
     }
     if (event.target.closest('input, textarea, button, .df-inline-editor')) return;
+    if (hand) {
+        if (event.pointerType === 'touch') return; // Native scrolling and pinch navigation in hand mode.
+        const host = canvas.parentElement;
+        pan = {x:event.clientX,y:event.clientY,left:host.scrollLeft,top:host.scrollTop};
+        canvas.setPointerCapture?.(event.pointerId); activePointer = event.pointerId;
+        event.preventDefault(); return;
+    }
 
     // Capture keeps the events coming while the pointer is outside the sheet - dragging a block off
     // the edge is exactly the moment a drag used to be lost.
@@ -89,13 +113,20 @@ function onPointerDown(event) {
 }
 
 function onDoubleClick(event) {
-    if (!canvas || !dotNet || event.target.closest('input, textarea, .df-inline-editor')) return;
+    if (!canvas || !dotNet || hand || event.target.closest('input, textarea, .df-inline-editor')) return;
     const point = pointOf(event);
     dotNet.invokeMethodAsync('OnEditText', point.x, point.y);
 }
 
 function onPointerMove(event) {
     if (!canvas || !dotNet) {
+        return;
+    }
+    if (hand) {
+        if (pan && activePointer === event.pointerId) {
+            canvas.parentElement.scrollLeft = pan.left - (event.clientX - pan.x);
+            canvas.parentElement.scrollTop = pan.top - (event.clientY - pan.y);
+        }
         return;
     }
 
@@ -130,6 +161,7 @@ function onPointerUp(event) {
     }
 
     activePointer = null;
+    if (hand) { pan = null; return; }
 
     const point = pointOf(event);
     dotNet.invokeMethodAsync('OnPointerUp', point.x, point.y);

@@ -73,11 +73,11 @@ public static class CanvasInteraction
     }
 
     /// <summary>The handle under a point, or null when the point is not on one.</summary>
-    public static ResizeHandle? HandleAt(Rect bounds, double x, double y)
+    public static ResizeHandle? HandleAt(Rect bounds, double x, double y, double radius = HandleRadius)
     {
         foreach (var (handle, handleX, handleY) in HandlesOf(bounds))
         {
-            if (Math.Abs(x - handleX) <= HandleRadius && Math.Abs(y - handleY) <= HandleRadius)
+            if (Math.Abs(x - handleX) <= radius && Math.Abs(y - handleY) <= radius)
             {
                 return handle;
             }
