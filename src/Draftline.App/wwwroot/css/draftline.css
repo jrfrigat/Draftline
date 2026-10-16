@@ -620,6 +620,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    --flare-accordion-body-padding-block: 8px;
+    --flare-accordion-body-padding-inline: 8px;
 }
 
 .df-inspector__kind {
@@ -631,10 +633,18 @@ body {
 /* Geometry comes in pairs, because x and y are one thought when you are placing a block. */
 .df-inspector__pair {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0.4rem;
     align-items: end;
 }
+
+.df-inspector .flare-input { min-width: 0; max-width: 100%; }
+.df-inspector .df-inspector__number { width: 9rem; }
+.df-inspector__pair > .df-inspector__number { width: 100%; }
+.df-inspector .flare-input__label { white-space: normal; }
+.df-inspector .flare-input__field { min-height: 32px; }
+.df-inspector .flare-checkbox { min-height: 32px; }
+.df-inspector textarea { width: 100%; min-height: 5rem; box-sizing: border-box; }
 
 /* A notice that came from a file: it belongs beside the buttons that produced it. */
 .df-toolbar__notice {
@@ -1375,3 +1385,13 @@ body {
 .df-editor--preview .flare-ide-layout__rail, .df-editor--preview .flare-ide-layout__resizer { display:none !important; }
 .df-layer-notice { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
 .df-editor-host { display:contents; }
+
+.df-ribbon-command { min-width: 32px; min-height: 32px; padding: 6px; gap: 5px; }
+.df-ribbon-command svg { flex: 0 0 20px; }
+.df-ribbon-command > .flare-button__label { display: inline-flex; align-items: center; gap: 5px; }
+.df-ribbon-command__caption { font-size: 12px; white-space: nowrap; }
+@media (pointer: coarse) {
+    .df-ribbon-command { min-width: 44px; min-height: 44px; }
+    .df-inspector .flare-input__field { min-height: 44px; }
+    .df-inspector .flare-checkbox { min-height: 44px; }
+}

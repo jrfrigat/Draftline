@@ -7,7 +7,7 @@
     {
         @if (TreeState.IsBranch(Element, index))
         {
-            <FlareCheckbox Value="@Element.ExpandedNodes.Contains(index)" ValueChanged="@((bool open) => SetOpen(index, open))">
+            <FlareCheckbox Size="FieldSize.Sm" Value="@Element.ExpandedNodes.Contains(index)" ValueChanged="@((bool open) => SetOpen(index, open))">
                 Раскрыт: @ElementDefaults.SplitOption(ElementState.Items(Element)[index]).Label
             </FlareCheckbox>
         }

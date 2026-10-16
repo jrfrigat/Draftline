@@ -14,11 +14,8 @@
                     Label="Макет"
                     Value="@_nameDraft"
                     ValueChanged="OnNameTyped" />
-    <FlareButton Variant="ButtonVariant.Text"
-                 Disabled="@(string.IsNullOrWhiteSpace(_nameDraft))"
-                 OnClick="Rename">
-        Переименовать
-    </FlareButton>
+    <RibbonCommand Label="Переименовать макет" Icon="rename"
+                   Disabled="@(string.IsNullOrWhiteSpace(_nameDraft))" OnClick="Rename" />
 
     <FlarePopover Open="@_menuOpen"
                   OpenChanged="SetMenuOpen"

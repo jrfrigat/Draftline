@@ -1,17 +1,19 @@
 @inject DocumentSession Session
 @if (Element.Kind == WireframeKind.Progress)
 {
-    <FlareCheckbox Value="@Element.Indeterminate" ValueChanged="@((bool value) => Session.Edit("Состояние прогресса изменено", _ => Element.Indeterminate = value))">Неопределённый прогресс</FlareCheckbox>
+    <FlareCheckbox Size="FieldSize.Sm" Value="@Element.Indeterminate" ValueChanged="@((bool value) => Session.Edit("Состояние прогресса изменено", _ => Element.Indeterminate = value))">Неопределённый прогресс</FlareCheckbox>
 }
 @if (Element.Kind is WireframeKind.Slider or WireframeKind.Stepper)
 {
-    <FlareNumericField Label="Минимум" Size="FieldSize.Xs" Value="@Element.Minimum" ValueChanged="@((double? value) => Change(e => e.Minimum = value ?? 0))" />
-    <FlareNumericField Label="Максимум" Size="FieldSize.Xs" Value="@Element.Maximum" ValueChanged="@((double? value) => Change(e => e.Maximum = value ?? 100))" />
-    <FlareNumericField Label="Шаг" Size="FieldSize.Xs" Min="0.000001" Value="@Element.Step" ValueChanged="@((double? value) => Change(e => e.Step = value ?? 1))" />
+    <div class="df-inspector__pair">
+    <FlareNumericField Class="df-inspector__number" Label="Минимум" Size="FieldSize.Xs" Value="@Element.Minimum" ValueChanged="@((double? value) => Change(e => e.Minimum = value ?? 0))" />
+    <FlareNumericField Class="df-inspector__number" Label="Максимум" Size="FieldSize.Xs" Value="@Element.Maximum" ValueChanged="@((double? value) => Change(e => e.Maximum = value ?? 100))" />
+    </div>
+    <FlareNumericField Class="df-inspector__number" Label="Шаг" Size="FieldSize.Xs" Min="0.000001" Value="@Element.Step" ValueChanged="@((double? value) => Change(e => e.Step = value ?? 1))" />
 }
 @if (Element.Kind is WireframeKind.Slider or WireframeKind.Divider or WireframeKind.Arrow or WireframeKind.Scrollbar or WireframeKind.Splitter)
 {
-    <FlareCheckbox Value="@Element.Vertical" Disabled="@(!Session.CanTransformSelection)" ValueChanged="@((bool value) => SetVertical(value))">Вертикальный</FlareCheckbox>
+    <FlareCheckbox Size="FieldSize.Sm" Value="@Element.Vertical" Disabled="@(!Session.CanTransformSelection)" ValueChanged="@((bool value) => SetVertical(value))">Вертикальный</FlareCheckbox>
 }
 @if (Element.Kind == WireframeKind.Calendar)
 {

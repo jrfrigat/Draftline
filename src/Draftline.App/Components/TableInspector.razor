@@ -13,7 +13,7 @@
         <option value="-1">Исходный порядок</option>
         @foreach (var index in Enumerable.Range(0, Element.Columns.Count)) { <option value="@index">@Element.Columns[index]</option> }
     </FlareSelect>
-    <FlareCheckbox Value="@Element.SortDescending" ValueChanged="@((bool value) => Session.Edit("Порядок сортировки изменён", _ => Element.SortDescending = value))">По убыванию</FlareCheckbox>
+    <FlareCheckbox Size="FieldSize.Sm" Value="@Element.SortDescending" ValueChanged="@((bool value) => Session.Edit("Порядок сортировки изменён", _ => Element.SortDescending = value))">По убыванию</FlareCheckbox>
 }
 @code {
     /// <summary>The selected table.</summary>

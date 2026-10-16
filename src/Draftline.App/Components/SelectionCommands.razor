@@ -3,45 +3,45 @@
 @implements IDisposable
 
 <FlareRibbonGroup Label="Буфер">
-    <FlareRibbonButton Label="Копировать" Tooltip="Копировать блоки (Ctrl+C)" Disabled="@SelectionDisabled" OnClick="@(() => Session.CopySelection())" />
-    <FlareRibbonButton Label="Вырезать" Tooltip="Вырезать блоки (Ctrl+X)" Disabled="@SelectionDisabled" OnClick="@(() => Session.CutSelection())" />
-    <FlareRibbonButton Label="Вставить" Tooltip="Вставить блоки (Ctrl+V)" Disabled="@(Session.IsPreviewing || !Session.CanPaste)" OnClick="@(() => Session.PasteSelection())" />
+    <RibbonCommand Label="Копировать" Icon="copy" Tooltip="Копировать блоки (Ctrl+C)" Disabled="@SelectionDisabled" OnClick="@(() => Session.CopySelection())" />
+    <RibbonCommand Label="Вырезать" Icon="cut" Tooltip="Вырезать блоки (Ctrl+X)" Disabled="@SelectionDisabled" OnClick="@(() => Session.CutSelection())" />
+    <RibbonCommand Label="Вставить" Icon="paste" Tooltip="Вставить блоки (Ctrl+V)" Disabled="@(Session.IsPreviewing || !Session.CanPaste)" OnClick="@(() => Session.PasteSelection())" />
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Блок">
-    <FlareRibbonButton Label="@(Session.Members().Any(e => e.Locked) ? "Разблокировать" : "Заблокировать")" Disabled="@SelectionDisabled" OnClick="@(() => Session.LockSelection(!Session.Members().Any(e => e.Locked)))" />
-    <FlareRibbonButton Label="Скрыть" Disabled="@SelectionDisabled" OnClick="Session.HideSelection" />
-    <FlareRibbonButton Label="Дублировать" Tooltip="Копия выбранного блока (Ctrl+D)"
+    <RibbonCommand Label="@(Session.Members().Any(e => e.Locked) ? "Разблокировать" : "Заблокировать")" Icon="@(Session.Members().Any(e => e.Locked) ? "unlock" : "lock")" Pressed="@(Session.Members().Any(e => e.Locked))" Disabled="@SelectionDisabled" OnClick="@(() => Session.LockSelection(!Session.Members().Any(e => e.Locked)))" />
+    <RibbonCommand Label="Скрыть" Icon="hide" Disabled="@SelectionDisabled" OnClick="Session.HideSelection" />
+    <RibbonCommand Label="Дублировать" Icon="copy" Tooltip="Копия выбранного блока (Ctrl+D)"
                        Disabled="@SelectionDisabled" OnClick="Duplicate" />
-    <FlareRibbonButton Label="Удалить" Tooltip="Удалить выделенные блоки (Delete)"
+    <RibbonCommand Label="Удалить" Icon="delete" Tooltip="Удалить выделенные блоки (Delete)"
                        Disabled="@SelectionDisabled" OnClick="Remove" />
-    <FlareRibbonButton Label="SVG блока" Tooltip="Выделенные блоки в SVG"
+    <RibbonCommand Label="SVG блока" Icon="download" Caption="SVG" Tooltip="Выделенные блоки в SVG"
                        Disabled="@SelectionDisabled" OnClick="Export" />
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Группа">
-    <FlareRibbonButton Label="Сгруппировать" Disabled="@(Session.IsPreviewing || Session.Selection.Count < 2)" OnClick="Session.GroupSelected" />
-    <FlareRibbonButton Label="Разгруппировать" Disabled="@(Session.IsPreviewing || Session.SelectedGroupId.Length == 0)" OnClick="Session.UngroupSelected" />
-    <FlareRibbonButton Label="Войти в группу" Disabled="@(Session.IsPreviewing || Session.SelectedGroupId.Length == 0)" OnClick="@(() => Session.EnterGroup())" />
+    <RibbonCommand Label="Сгруппировать" Icon="group" Disabled="@(Session.IsPreviewing || Session.Selection.Count < 2)" OnClick="Session.GroupSelected" />
+    <RibbonCommand Label="Разгруппировать" Icon="ungroup" Disabled="@(Session.IsPreviewing || Session.SelectedGroupId.Length == 0)" OnClick="Session.UngroupSelected" />
+    <RibbonCommand Label="Войти в группу" Icon="enter" Disabled="@(Session.IsPreviewing || Session.SelectedGroupId.Length == 0)" OnClick="@(() => Session.EnterGroup())" />
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Выравнивание по холсту">
-    @foreach (var (alignment, caption) in Alignments)
+    @foreach (var (alignment, caption, icon) in Alignments)
     {
         var target = alignment;
-        <FlareRibbonButton Label="@caption" Tooltip="@($"{caption} относительно холста")"
+        <RibbonCommand Label="@caption" Icon="@icon" Tooltip="@($"{caption} относительно холста")"
                            Disabled="@(!Session.CanTransformSelection || Session.IsPreviewing)" OnClick="@(() => Align(target))" />
     }
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Размер">
-    <FlareRibbonButton Label="Равные интервалы по горизонтали" Disabled="@(Session.IsPreviewing || !Session.CanDistribute)" OnClick="@(() => Session.DistributeSelection(true))" />
-    <FlareRibbonButton Label="Равные интервалы по вертикали" Disabled="@(Session.IsPreviewing || !Session.CanDistribute)" OnClick="@(() => Session.DistributeSelection(false))" />
-    <FlareRibbonButton Label="Во всю ширину" Tooltip="Растянуть блок по ширине холста"
+    <RibbonCommand Label="Равные интервалы по горизонтали" Icon="distribute-h" Disabled="@(Session.IsPreviewing || !Session.CanDistribute)" OnClick="@(() => Session.DistributeSelection(true))" />
+    <RibbonCommand Label="Равные интервалы по вертикали" Icon="distribute-v" Disabled="@(Session.IsPreviewing || !Session.CanDistribute)" OnClick="@(() => Session.DistributeSelection(false))" />
+    <RibbonCommand Label="Во всю ширину" Icon="width" Tooltip="Растянуть блок по ширине холста"
                        Disabled="@SingleDisabled" OnClick="@(() => Align(ElementAlignment.MatchWidth))" />
-    <FlareRibbonButton Label="Во всю высоту" Tooltip="Растянуть блок по высоте холста"
+    <RibbonCommand Label="Во всю высоту" Icon="height" Tooltip="Растянуть блок по высоте холста"
                        Disabled="@SingleDisabled" OnClick="@(() => Align(ElementAlignment.MatchHeight))" />
 </FlareRibbonGroup>
 <FlareRibbonGroup Label="Порядок">
-    <FlareRibbonButton Label="На передний план" Tooltip="Поверх остальных блоков"
+    <RibbonCommand Label="На передний план" Icon="front" Tooltip="Поверх остальных блоков"
                        Disabled="@SelectionDisabled" OnClick="Session.BringSelectedToFront" />
-    <FlareRibbonButton Label="На задний план" Tooltip="Позади остальных блоков"
+    <RibbonCommand Label="На задний план" Icon="back" Tooltip="Позади остальных блоков"
                        Disabled="@SelectionDisabled" OnClick="Session.SendSelectedToBack" />
 </FlareRibbonGroup>
 
@@ -53,14 +53,14 @@
     private bool SingleDisabled => Session.IsPreviewing || Session.Selected is null || !Session.CanTransformSelection;
     private bool SelectionDisabled => Session.IsPreviewing || Session.Selection.Count == 0;
 
-    private static readonly (ElementAlignment Alignment, string Caption)[] Alignments =
+    private static readonly (ElementAlignment Alignment, string Caption, string Icon)[] Alignments =
     {
-        (ElementAlignment.Left, "Влево"),
-        (ElementAlignment.CenterHorizontally, "По центру горизонтально"),
-        (ElementAlignment.Right, "Вправо"),
-        (ElementAlignment.Top, "Вверх"),
-        (ElementAlignment.CenterVertically, "По центру вертикально"),
-        (ElementAlignment.Bottom, "Вниз")
+        (ElementAlignment.Left, "Влево", "left"),
+        (ElementAlignment.CenterHorizontally, "По центру горизонтально", "center-h"),
+        (ElementAlignment.Right, "Вправо", "right"),
+        (ElementAlignment.Top, "Вверх", "top"),
+        (ElementAlignment.CenterVertically, "По центру вертикально", "center-v"),
+        (ElementAlignment.Bottom, "Вниз", "bottom")
     };
 
     private void Duplicate() => Session.DuplicateSelected();

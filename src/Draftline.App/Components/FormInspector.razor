@@ -1,7 +1,7 @@
 @inject DocumentSession Session
 @if (Element.Kind == WireframeKind.Checkbox)
 {
-    <FlareCheckbox Value="@Element.Indeterminate" ValueChanged="@((bool value) => Session.SetCheck(Element.Id, false, value))">Промежуточное состояние</FlareCheckbox>
+    <FlareCheckbox Size="FieldSize.Sm" Value="@Element.Indeterminate" ValueChanged="@((bool value) => Session.SetCheck(Element.Id, false, value))">Промежуточное состояние</FlareCheckbox>
 }
 @if (Element.Kind == WireframeKind.Radio)
 {

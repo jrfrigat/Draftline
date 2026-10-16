@@ -10,7 +10,7 @@
         }
     </div>
     @if (Element.Kind==WireframeKind.Button && Element.IconKey.Length>0)
-    { <FlareCheckbox Value="@Element.IconOnly" ValueChanged="@((bool value)=>Session.Edit("Подпись иконки изменена",_=>Element.IconOnly=value))">Только иконка</FlareCheckbox> }
+    { <FlareCheckbox Size="FieldSize.Sm" Value="@Element.IconOnly" ValueChanged="@((bool value)=>Session.Edit("Подпись иконки изменена",_=>Element.IconOnly=value))">Только иконка</FlareCheckbox> }
 }
 @code {
     [Parameter,EditorRequired] public WireframeElement Element{get;set;}=null!;

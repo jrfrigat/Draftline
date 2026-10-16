@@ -40,10 +40,10 @@
                     <ProjectMenu Ready="_ready" />
                 </FlareRibbonGroup>
                 <FlareRibbonGroup Label="Правка">
-                    <FlareRibbonButton Label="Найти в макете" Tooltip="Поиск по макету (Ctrl+F)" Disabled="Session.IsPreviewing" OnClick="Session.ShowSearch" />
-                    <FlareRibbonButton Label="Отменить" Tooltip="Шаг назад"
+                    <RibbonCommand Label="Найти в макете" Icon="search" Tooltip="Поиск по макету (Ctrl+F)" Disabled="Session.IsPreviewing" OnClick="Session.ShowSearch" />
+                    <RibbonCommand Label="Отменить" Icon="undo" Tooltip="Шаг назад"
                                        Disabled="@(!Session.CanUndo)" OnClick="Undo" />
-                    <FlareRibbonButton Label="Повторить" Tooltip="Шаг вперёд"
+                    <RibbonCommand Label="Повторить" Icon="redo" Tooltip="Шаг вперёд"
                                        Disabled="@(!Session.CanRedo)" OnClick="Redo" />
                 </FlareRibbonGroup>
             </FlareRibbonTab>
@@ -54,16 +54,16 @@
 
             <FlareRibbonTab Title="Файл">
                 <FlareRibbonGroup Label="Обмен">
-                    <FlareRibbonButton Label="Экспорт SVG" Tooltip="Открытый экран как рисунок"
+                    <RibbonCommand Label="Экспорт SVG" Icon="download" Caption="SVG" Tooltip="Открытый экран как рисунок"
                                        Disabled="@(Session.Document.TotalElements == 0)" OnClick="ExportSvg" />
-                    <FlareRibbonButton Label="Все экраны в SVG" Tooltip="Все экраны в одном ZIP-архиве SVG"
+                    <RibbonCommand Label="Все экраны в SVG" Icon="download-all" Caption="SVG · все" Tooltip="Все экраны в одном ZIP-архиве SVG"
                                        Disabled="@(Session.Document.Layers.Count < 2)" OnClick="ExportAllSvg" />
-                    <FlareRibbonButton Label="Экспорт PNG" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, false))" />
-                    <FlareRibbonButton Label="Все экраны в PNG" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, true))" />
-                    <FlareRibbonButton Label="Экспорт PDF" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, false))" />
-                    <FlareRibbonButton Label="Все экраны в PDF" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, true))" />
-                    <FlareRibbonButton Label="Выгрузить JSON" Tooltip="Макет в файл" OnClick="ExportJson" />
-                    <FlareRibbonButton Label="Загрузить JSON" Tooltip="Макет из файла" OnClick="ImportJson" />
+                    <RibbonCommand Label="Экспорт PNG" Icon="download" Caption="PNG" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, false))" />
+                    <RibbonCommand Label="Все экраны в PNG" Icon="download-all" Caption="PNG · все" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, true))" />
+                    <RibbonCommand Label="Экспорт PDF" Icon="download" Caption="PDF" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, false))" />
+                    <RibbonCommand Label="Все экраны в PDF" Icon="download-all" Caption="PDF · все" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, true))" />
+                    <RibbonCommand Label="Выгрузить JSON" Icon="download" Caption="JSON" Tooltip="Макет в файл" OnClick="ExportJson" />
+                    <RibbonCommand Label="Загрузить JSON" Icon="upload" Caption="JSON" Tooltip="Макет из файла" OnClick="ImportJson" />
                 </FlareRibbonGroup>
             </FlareRibbonTab>
 
@@ -71,14 +71,14 @@
                 <FlareRibbonGroup Label="Оформление конструктора"><ThemePicker Editor="true" /></FlareRibbonGroup>
                 <FlareRibbonGroup Label="Оформление макета"><ThemePicker /></FlareRibbonGroup>
                 <FlareRibbonGroup Label="Режим">
-                    <FlareRibbonButton Label="@(Session.IsPreviewing ? "К редактору" : "Просмотр")"
+                    <RibbonCommand Label="@(Session.IsPreviewing ? "К редактору" : "Просмотр")" Icon="preview"
                                        Tooltip="Показать макет так, как его увидит человек"
                                        OnClick="TogglePreview" />
                 </FlareRibbonGroup>
                 <FlareRibbonGroup Label="Панели">
-                    <FlareRibbonButton Label="@(_blocksFolded ? "Показать блоки" : "Скрыть блоки")"
+                    <RibbonCommand Label="@(_blocksFolded ? "Показать блоки" : "Скрыть блоки")" Icon="panel-left" Pressed="@(!_blocksFolded)"
                                        Disabled="Session.IsPreviewing" OnClick="@(() => SetBlocksFolded(!_blocksFolded))" />
-                    <FlareRibbonButton Label="@(_sidesFolded ? "Показать свойства и экраны" : "Скрыть свойства и экраны")"
+                    <RibbonCommand Label="@(_sidesFolded ? "Показать свойства и экраны" : "Скрыть свойства и экраны")" Icon="panel-right" Pressed="@(!_sidesFolded)"
                                        Disabled="Session.IsPreviewing" OnClick="@(() => SetSidesFolded(!_sidesFolded))" />
                 </FlareRibbonGroup>
             </FlareRibbonTab>

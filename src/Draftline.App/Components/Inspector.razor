@@ -18,30 +18,30 @@ else
         <FlareAccordion AllowMultiple="true">
             <FlareAccordionPanel Header="Положение и размер" @bind-Expanded="_geometryExpanded">
         <div class="df-inspector__pair">
-            <FlareNumericField Label="X" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
+            <FlareNumericField Class="df-inspector__number" Label="X" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.X"
                                ValueChanged="@((double? value) => SetX(element, value))" />
-            <FlareNumericField Label="Y" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
+            <FlareNumericField Class="df-inspector__number" Label="Y" Size="FieldSize.Xs" Min="0" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.Y"
                                ValueChanged="@((double? value) => SetY(element, value))" />
         </div>
 
         <div class="df-inspector__pair">
-            <FlareNumericField Label="Ширина" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
+            <FlareNumericField Class="df-inspector__number" Label="Ширина" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.Width"
                                ValueChanged="@((double? value) => SetWidth(element, value))" />
-            <FlareNumericField Label="Высота" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
+            <FlareNumericField Class="df-inspector__number" Label="Высота" Size="FieldSize.Xs" Min="@CanvasGeometry.MinimumSize" Disabled="@(!Session.CanTransformSelection)"
                                Value="@element.Height"
                                ValueChanged="@((double? value) => SetHeight(element, value))" />
         </div>
 
         @if (!TabPanels.IsContainer(element.Kind))
         {
-            <FlareNumericField Label="Поворот, °" Size="FieldSize.Xs" Step="15" Disabled="@(!Session.CanTransformSelection)" Value="@element.Rotation"
+            <FlareNumericField Class="df-inspector__number" Label="Поворот, °" Size="FieldSize.Xs" Step="15" Disabled="@(!Session.CanTransformSelection)" Value="@element.Rotation"
                                ValueChanged="@((double? value) => Session.RotateElement(element.Id, value ?? 0))" />
         }
-        <FlareCheckbox Value="@element.Locked" ValueChanged="@((bool value)=>Session.LockSelection(value))">Положение заблокировано</FlareCheckbox>
-        <FlareCheckbox Value="@element.Hidden" ValueChanged="@((bool value)=>Session.SetHidden(Session.Selection,value))">Скрыт на холсте и при экспорте</FlareCheckbox>
+        <FlareCheckbox Size="FieldSize.Sm" Value="@element.Locked" ValueChanged="@((bool value)=>Session.LockSelection(value))">Положение заблокировано</FlareCheckbox>
+        <FlareCheckbox Size="FieldSize.Sm" Value="@element.Hidden" ValueChanged="@((bool value)=>Session.SetHidden(Session.Selection,value))">Скрыт на холсте и при экспорте</FlareCheckbox>
             </FlareAccordionPanel>
             <FlareAccordionPanel Header="Содержимое" @bind-Expanded="_contentExpanded">
         @if (ElementDefaults.IsTextual(element.Kind))
@@ -51,10 +51,10 @@ else
             <p class="df-hint">Двойной щелчок по блоку или F2 — изменить текст. Enter — применить.</p>
 
             <div class="df-inspector__pair">
-                <FlareNumericField Label="Масштаб текста" Size="FieldSize.Xs" Min="0.5" Max="4" Step="0.5"
+                <FlareNumericField Class="df-inspector__number" Label="Масштаб текста" Size="FieldSize.Xs" Min="0.5" Max="4" Step="0.5"
                                    Value="@element.FontScale"
                                    ValueChanged="@((double? value) => SetFontScale(element, value))" />
-                <FlareCheckbox Value="@element.Bold" ValueChanged="@((bool value) => SetBold(element, value))">
+                <FlareCheckbox Size="FieldSize.Sm" Value="@element.Bold" ValueChanged="@((bool value) => SetBold(element, value))">
                     Жирный
                 </FlareCheckbox>
             </div>
@@ -130,10 +130,10 @@ else
             }
             @if (ElementState.HasDisclosure(element.Kind))
             {
-                <FlareCheckbox Value="@ElementState.IsExpanded(element)"
+                <FlareCheckbox Size="FieldSize.Sm" Value="@ElementState.IsExpanded(element)"
                                ValueChanged="@((bool value) => SetExpanded(element, value))">Раскрыт</FlareCheckbox>
             }
-            <FlareCheckbox Value="@element.Disabled"
+            <FlareCheckbox Size="FieldSize.Sm" Value="@element.Disabled"
                            ValueChanged="@((bool value) => Apply(element, "Доступность изменена", target => target.Disabled = value))">
                 Недоступен
             </FlareCheckbox>
@@ -142,7 +142,7 @@ else
 
         @if (ElementDefaults.HasCheck(element.Kind))
         {
-            <FlareCheckbox Value="@element.Checked" ValueChanged="@((bool value) => SetChecked(element, value))">
+            <FlareCheckbox Size="FieldSize.Sm" Value="@element.Checked" ValueChanged="@((bool value) => SetChecked(element, value))">
                 Отмечено
             </FlareCheckbox>
         }
@@ -163,7 +163,7 @@ else
 
             @if (element.HasTransition)
             {
-                <FlareCheckbox Value="@IsDialog(element)"
+                <FlareCheckbox Size="FieldSize.Sm" Value="@IsDialog(element)"
                                ValueChanged="@((bool value) => Session.SetTransition(element, element.TargetLayerId, value))">
                     Открывать диалогом
                 </FlareCheckbox>
