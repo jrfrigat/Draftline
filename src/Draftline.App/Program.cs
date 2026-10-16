@@ -6,6 +6,7 @@ using Flare.Components.IDE;
 using Flare.Extensions;
 using Flare.Theme.FluentUI2;
 using Flare.Theme.MaterialDesign3Expressive;
+using Flare.Theme.OneC;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.JSInterop;
@@ -27,6 +28,7 @@ builder.Services.AddFlare(options =>
 builder.Services.AddFlareIde();
 builder.Services.AddFlareTheme(new FluentUI2Theme());
 builder.Services.AddFlareTheme(new MaterialDesign3ExpressiveTheme());
+builder.Services.AddFlareTheme(new OneCTheme());
 builder.Services.AddScoped<ThemeCoordinator>();
 // The editor's state, one per browser session: the open wireframe, what is selected on it, and the
 // history behind it. Everything that draws or changes a wireframe reads this same object.

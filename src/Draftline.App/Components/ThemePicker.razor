@@ -9,10 +9,18 @@
             <option value="wireframe">Черновой макет</option>
             <option value="fluent2">Fluent UI 2</option>
             <option value="md3-expressive">Material Design 3 Expressive</option>
+            <option value="onec">1С · Такси</option>
         </FlareSelect>
     }
     <FlareSelect Variant="InputVariant.Outlined" Label="@(Editor?"Палитра Draftline":"Палитра макета")" Size="FieldSize.Xs" Value="@(Editor?Themes.Editor.CurrentPalette.Id:Session.Document.MockupTheme.PaletteId)" ValueChanged="@((string? value)=>Change("palette",value))" Disabled="@(!Editor && Session.Document.MockupTheme.ThemeId=="wireframe")">
-        <option value="fluent-blue">Синяя</option><option value="fluent-excel">Зелёная</option><option value="fluent-teams">Фиолетовая</option>
+        @if (!Editor && Session.Document.MockupTheme.ThemeId == "onec")
+        {
+            <option value="onec-yellow">Жёлтая 1С</option>
+        }
+        else
+        {
+            <option value="fluent-blue">Синяя</option><option value="fluent-excel">Зелёная</option><option value="fluent-teams">Фиолетовая</option>
+        }
     </FlareSelect>
     <FlareSelect Variant="InputVariant.Outlined" Label="@(Editor?"Режим Draftline":"Режим макета")" Size="FieldSize.Xs" Value="@(Editor?Themes.Editor.Mode.ToString().ToLowerInvariant():Session.Document.MockupTheme.Mode)" ValueChanged="@((string? value)=>Change("mode",value))" Disabled="@(!Editor && Session.Document.MockupTheme.ThemeId=="wireframe")">
         <option value="light">Светлый</option><option value="dark">Тёмный</option><option value="auto">Как в системе</option>

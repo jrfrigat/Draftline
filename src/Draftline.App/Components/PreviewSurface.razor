@@ -4,7 +4,7 @@
    that lead somewhere actually leading there. A block that leads somewhere is a real button, so a
    wireframe can be walked with the keyboard as well as with a mouse - and the button is what carries
    the focus ring, which the drawing itself must not have. *@
-<div class="df-preview" @ref="_root" tabindex="0" @onkeydown="OnKeyDown">
+<div class="df-preview" @onkeydown="OnKeyDown">
     @if (Session.PreviewLayer is { } shown)
     {
         <div class="df-preview__bar">
@@ -16,7 +16,7 @@
 
             <span class="df-preview__name">@shown.Name</span>
             <span class="df-preview__spacer"></span>
-            <FlareButton Variant="ButtonVariant.Text" OnClick="@(()=>_themeSettingsOpen=!_themeSettingsOpen)">Тема макета</FlareButton>
+            <FlareButton @ref="_themeButton" Variant="ButtonVariant.Text" OnClick="@(()=>_themeSettingsOpen=!_themeSettingsOpen)">Тема макета</FlareButton>
 
             <FlareButton Variant="ButtonVariant.Text" OnClick="() => Session.ExitPreview()">
                 К редактору
@@ -67,7 +67,7 @@
 @code {
     // These copies live only while the preview is mounted. No Session.Edit or autosave sees them.
     private readonly Dictionary<string, WireframeElement> _states = new();
-    private ElementReference _root;
+    private FlareButton? _themeButton;
     private bool _themeSettingsOpen;
     private string? _focusedScreen;
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -75,7 +75,9 @@
         var screen = Session.PreviewLayerId + "/" + Session.IsDialogOpen;
         if (_focusedScreen == screen) return;
         _focusedScreen = screen;
-        await _root.FocusAsync(preventScroll: true);
+        // Focus a real control: a focusable ancestor steals focus on option mousedown,
+        // dismissing a non-searchable popup before its click can select the option.
+        if (_themeButton is not null) await _themeButton.FocusAsync();
     }
 
     private WireframeElement PreviewElement(DraftLayer layer, WireframeElement authored)

@@ -14,9 +14,11 @@ public sealed class MockupThemeSelection
     };
     public void Normalize()
     {
-        if (ThemeId is not ("wireframe" or "fluent2" or "md3-expressive"))
+        if (ThemeId is not ("wireframe" or "fluent2" or "md3-expressive" or "onec"))
             ThemeId = "wireframe";
-        if (PaletteId is not ("fluent-blue" or "fluent-excel" or "fluent-teams"))
+        if (ThemeId == "onec")
+            PaletteId = "onec-yellow";
+        else if (PaletteId is not ("fluent-blue" or "fluent-excel" or "fluent-teams"))
             PaletteId = "fluent-blue";
         if (Mode is not ("light" or "dark" or "auto"))
             Mode = "light";

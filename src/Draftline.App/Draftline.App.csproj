@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Flare.Theme.OneC\Flare.Theme.OneC.csproj" />
     <!-- Two workers, one path: the development one does nothing (a cache is the last thing a
          developer wants while typing), the published one is the offline shell the PWA promises. -->
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
