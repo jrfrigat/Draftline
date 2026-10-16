@@ -35,6 +35,21 @@
                 <span>Draftline</span>
             </div>
         <FlareRibbon Class="df-ribbon">
+            <FlareRibbonTab Title="Файл">
+                <FlareRibbonGroup Label="Обмен">
+                    <RibbonCommand Label="Экспорт SVG" Icon="download" Caption="SVG" Tooltip="Открытый экран как рисунок"
+                                       Disabled="@(Session.Document.TotalElements == 0)" OnClick="ExportSvg" />
+                    <RibbonCommand Label="Все экраны в SVG" Icon="download-all" Caption="SVG · все" Tooltip="Все экраны в одном ZIP-архиве SVG"
+                                       Disabled="@(Session.Document.Layers.Count < 2)" OnClick="ExportAllSvg" />
+                    <RibbonCommand Label="Экспорт PNG" Icon="download" Caption="PNG" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, false))" />
+                    <RibbonCommand Label="Все экраны в PNG" Icon="download-all" Caption="PNG · все" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, true))" />
+                    <RibbonCommand Label="Экспорт PDF" Icon="download" Caption="PDF" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, false))" />
+                    <RibbonCommand Label="Все экраны в PDF" Icon="download-all" Caption="PDF · все" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, true))" />
+                    <RibbonCommand Label="Выгрузить JSON" Icon="download" Caption="JSON" Tooltip="Макет в файл" OnClick="ExportJson" />
+                    <RibbonCommand Label="Загрузить JSON" Icon="upload" Caption="JSON" Tooltip="Макет из файла" OnClick="ImportJson" />
+                </FlareRibbonGroup>
+            </FlareRibbonTab>
+
             <FlareRibbonTab Title="Макет">
                 <FlareRibbonGroup Label="Документ">
                     <ProjectMenu Ready="_ready" />
@@ -52,20 +67,7 @@
                 <SelectionCommands />
             </FlareRibbonTab>
 
-            <FlareRibbonTab Title="Файл">
-                <FlareRibbonGroup Label="Обмен">
-                    <RibbonCommand Label="Экспорт SVG" Icon="download" Caption="SVG" Tooltip="Открытый экран как рисунок"
-                                       Disabled="@(Session.Document.TotalElements == 0)" OnClick="ExportSvg" />
-                    <RibbonCommand Label="Все экраны в SVG" Icon="download-all" Caption="SVG · все" Tooltip="Все экраны в одном ZIP-архиве SVG"
-                                       Disabled="@(Session.Document.Layers.Count < 2)" OnClick="ExportAllSvg" />
-                    <RibbonCommand Label="Экспорт PNG" Icon="download" Caption="PNG" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, false))" />
-                    <RibbonCommand Label="Все экраны в PNG" Icon="download-all" Caption="PNG · все" Disabled="_exporting" OnClick="@(() => ExportDrawing(false, true))" />
-                    <RibbonCommand Label="Экспорт PDF" Icon="download" Caption="PDF" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, false))" />
-                    <RibbonCommand Label="Все экраны в PDF" Icon="download-all" Caption="PDF · все" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, true))" />
-                    <RibbonCommand Label="Выгрузить JSON" Icon="download" Caption="JSON" Tooltip="Макет в файл" OnClick="ExportJson" />
-                    <RibbonCommand Label="Загрузить JSON" Icon="upload" Caption="JSON" Tooltip="Макет из файла" OnClick="ImportJson" />
-                </FlareRibbonGroup>
-            </FlareRibbonTab>
+
 
             <FlareRibbonTab Title="Вид">
                 <FlareRibbonGroup Label="Интерфейс Draftline · Fluent UI 2"><ThemePicker Editor="true" /></FlareRibbonGroup>
