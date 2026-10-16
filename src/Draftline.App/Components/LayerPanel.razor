@@ -44,7 +44,7 @@
                 @if (OutgoingTransitions(item) > 0)
                 {
                     <span class="df-layers__mark" title="Столько блоков ведут на другой экран">
-                        →@OutgoingTransitions(item)
+                        <WireframeIconView Key="arrow-right" />@OutgoingTransitions(item)
                     </span>
                 }
 

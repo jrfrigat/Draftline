@@ -10,9 +10,9 @@
                 @ElementDefaults.NameOf(element.Kind): @element.DisplayText
             </button>
             <button type="button" aria-label="@(element.Hidden ? "Показать блок" : "Скрыть блок")" title="@(element.Hidden ? "Показать блок" : "Скрыть блок")"
-                    @onclick="@(() => Session.SetHidden(new[] { element.Id }, !element.Hidden))">@(element.Hidden ? "◌" : "●")</button>
+                    @onclick="@(() => Session.SetHidden(new[] { element.Id }, !element.Hidden))"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>@if(element.Hidden){<path d="M3 3l18 18"/>}</svg></button>
             <button type="button" aria-label="@(element.Locked ? "Разблокировать положение" : "Заблокировать положение")" title="@(element.Locked ? "Разблокировать положение" : "Заблокировать положение")"
-                    @onclick="@(() => Session.SetLocked(new[] { element.Id }, !element.Locked))">@(element.Locked ? "🔒" : "◇")</button>
+                    @onclick="@(() => Session.SetLocked(new[] { element.Id }, !element.Locked))"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 10h14v11H5z M12 14v3"/><path d="@(element.Locked ? "M8 10V7a4 4 0 0 1 8 0v3" : "M8 10V7a4 4 0 0 1 8 0")"/></svg></button>
         </div>
     }
 </div>

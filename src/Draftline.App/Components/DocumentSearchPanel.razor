@@ -2,7 +2,7 @@
 @implements IDisposable
 
 <section class="df-document-search" aria-label="Поиск по макету" @onkeydown="KeyDown" @onkeydown:stopPropagation="true">
-    <div class="df-document-search__header"><label for="df-search-query">Поиск по макету</label><button type="button" @onclick="Session.CloseSearch" aria-label="Закрыть поиск">×</button></div>
+    <div class="df-document-search__header"><label for="df-search-query">Поиск по макету</label><button type="button" @onclick="Session.CloseSearch" aria-label="Закрыть поиск"><WireframeIconView Key="close" /></button></div>
     <input id="df-search-query" @ref="_input" type="search" value="@_query" @oninput="@(e=>_query=e.Value?.ToString()??"")" placeholder="Текст, значение, данные…" />
     @{var results=DocumentSearch.Find(Session.Document,_query);}
     @if(_query.Trim().Length>0)

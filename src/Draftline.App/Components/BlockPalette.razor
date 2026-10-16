@@ -15,7 +15,7 @@
             var item = kind;
             <div class="df-palette__row">
                 <button type="button" class="df-palette__button" @onclick="() => AddRequested.InvokeAsync(item)">
-                    <span class="df-palette__glyph" aria-hidden="true">@GlyphOf(item)</span>
+                    <span class="df-palette__glyph" aria-hidden="true"><WireframeIconView Key="@IconOf(item)" /></span>
                     <span class="df-palette__name">@ElementDefaults.NameOf(item)</span>
                 </button>
                 <span class="df-palette__grip"
@@ -23,7 +23,7 @@
                       title="Перетащите блок на холст"
                       @ondragstart="() => Palette.Start(item)"
                       @ondragend="Palette.End"
-                      aria-hidden="true">⠿</span>
+                      aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="8" cy="5" r="1.5"/><circle cx="16" cy="5" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="19" r="1.5"/><circle cx="16" cy="19" r="1.5"/></svg></span>
             </div>
         }
     }
@@ -36,38 +36,25 @@
     [Parameter, EditorRequired]
     public EventCallback<WireframeKind> AddRequested { get; set; }
 
-    /// <summary>
-    /// The little picture beside the name. They are text characters rather than icons on purpose: a
-    /// wireframe shelf should look like a key to the sheet, not like a toolbar of an app.
-    /// </summary>
-    private static string GlyphOf(WireframeKind kind) => kind switch
+    /// <summary>Local SVG symbols with a shared stroke and coordinate system.</summary>
+    private static string IconOf(WireframeKind kind) => kind switch
     {
-        WireframeKind.Panel => "▭",
-        WireframeKind.Text => "≡",
-        WireframeKind.Heading => "H",
-        WireframeKind.Button => "▢",
-        WireframeKind.TextField => "▬",
-        WireframeKind.TextArea => "☰",
-        WireframeKind.Checkbox => "☑",
-        WireframeKind.Radio => "◉",
-        WireframeKind.Select => "▼",
-        WireframeKind.List => "≣",
-        WireframeKind.Image => "⌧",
-        WireframeKind.Divider => "―",
-        WireframeKind.DataGrid => "▦",
-        WireframeKind.Tabs => "▤",
-        WireframeKind.MenuBar => "☰",
-        WireframeKind.Accordion => "≡",
-        WireframeKind.Tree => "⊞",
-        WireframeKind.Progress => "▰",
-        WireframeKind.Slider => "◧",
-        WireframeKind.Badge => "◈",
-        WireframeKind.Avatar => "◯",
-        WireframeKind.Calendar => "▩",
-        WireframeKind.Map => "⌖",
-        WireframeKind.Video => "▶",
-        WireframeKind.Breadcrumbs => "›",
-        WireframeKind.StatusBar => "▬",
-        _ => "▫"
+        WireframeKind.Text or WireframeKind.TextArea or WireframeKind.List or WireframeKind.MenuBar or WireframeKind.Accordion => "menu",
+        WireframeKind.Heading or WireframeKind.TextField or WireframeKind.RichTextEditor => "edit",
+        WireframeKind.Checkbox => "check",
+        WireframeKind.Radio or WireframeKind.Tooltip or WireframeKind.Popover => "info",
+        WireframeKind.Select or WireframeKind.Scrollbar => "arrow-down",
+        WireframeKind.Image or WireframeKind.Camera or WireframeKind.CoverFlow => "image",
+        WireframeKind.Divider or WireframeKind.Progress or WireframeKind.Slider => "minus",
+        WireframeKind.DataGrid or WireframeKind.Calendar or WireframeKind.DatePicker => "calendar",
+        WireframeKind.Tree or WireframeKind.Tabs => "folder",
+        WireframeKind.Badge or WireframeKind.Icon => "star",
+        WireframeKind.Avatar => "user",
+        WireframeKind.Map => "home",
+        WireframeKind.Video or WireframeKind.AudioPlayer => "play",
+        WireframeKind.Breadcrumbs or WireframeKind.Arrow or WireframeKind.SiteMap => "arrow-right",
+        WireframeKind.TimePicker => "clock",
+        WireframeKind.Stepper => "plus",
+        _ => "file"
     };
 }
