@@ -19,7 +19,7 @@
    While the wireframe is being previewed both panel regions fold to their rails: the same "the
    constructor is off" the preview promises, done by the frame's own means, and the view comes back on
    the way out. *@
-<div class="@(Session.IsPreviewing ? "df-editor-host df-editor--preview" : "df-editor-host")">
+<div class="@(Session.IsPreviewing ? "df-editor-host df-editor--preview" : "df-editor-host")" inert="@_importing" aria-busy="@_importing">
 <FlareIdeLayout id="df-editor" LeftPanelWidth="14rem"
                 RightPanelWidth="18rem"
                 LeftCollapsed="_blocksFolded"
@@ -46,7 +46,7 @@
                     <RibbonCommand Label="Экспорт PDF" Icon="download" Caption="PDF" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, false))" />
                     <RibbonCommand Label="Все экраны в PDF" Icon="download-all" Caption="PDF · все" Disabled="_exporting" OnClick="@(() => ExportDrawing(true, true))" />
                     <RibbonCommand Label="Выгрузить JSON" Icon="download" Caption="JSON" Tooltip="Макет в файл" OnClick="ExportJson" />
-                    <RibbonCommand Label="Загрузить JSON" Icon="upload" Caption="JSON" Tooltip="Макет из файла" OnClick="ImportJson" />
+                    <RibbonCommand Label="Загрузить JSON" Icon="upload" Caption="JSON" Tooltip="Макет из файла" Disabled="@(!_ready || _importing)" OnClick="ImportJson" />
                 </FlareRibbonGroup>
             </FlareRibbonTab>
 
@@ -164,6 +164,19 @@
     </StatusBar>
 </FlareIdeLayout>
 </div>
+
+@if (_importing)
+{
+    <div class="df-import-backdrop">
+        <section id="df-import-progress" class="df-import-progress" role="dialog" aria-modal="true" aria-labelledby="df-import-title" tabindex="-1">
+            <h2 id="df-import-title">Загрузка макета</h2>
+            <p role="status" aria-live="polite">@_importProgress.Stage</p>
+            <progress aria-label="@_importProgress.Stage" max="100" value="@_importProgress.Percent"></progress>
+            @if (_importProgress.Percent is { } percent) { <span>@percent %</span> }
+            <p class="df-import-progress__hint">Дождитесь завершения загрузки.</p>
+        </section>
+    </div>
+}
 
 @code {
     [Inject]
@@ -318,6 +331,8 @@
     }
 
     private bool _exporting;
+    private bool _importing;
+    private DocumentImportProgress _importProgress = new("Выбор файла");
     private async Task ExportDrawing(bool pdf, bool all)
     {
         if (_exporting) return;
@@ -342,13 +357,26 @@
     /// </summary>
     private async Task ImportJson()
     {
+        if (_importing) return;
+        _importing = true;
+        _importProgress = new("Выбор файла");
+        _notice = null;
         try { await ImportJsonCore(); }
+        catch (OutOfMemoryException) { _notice = "Недостаточно памяти для загрузки макета. Открытый проект сохранён; попробуйте закрыть другие вкладки."; }
         catch (Exception exception) { _notice = "Не удалось импортировать макет: " + exception.Message; }
+        finally { _importing = false; }
+    }
+
+    private async Task ReportImportProgress(DocumentImportProgress progress)
+    {
+        _importProgress = progress;
+        await InvokeAsync(StateHasChanged);
+        await Files.PaintImportProgressAsync();
     }
 
     private async Task ImportJsonCore()
     {
-        var result = await Files.ImportAsync();
+        var result = await Files.ImportAsync(ReportImportProgress);
 
         if (result is null)
         {
@@ -363,12 +391,17 @@
 
         // An imported wireframe is written into this browser straight away: it arrived from a file, and
         // until it is saved the editor is holding something the project list does not know about.
-        var imported = await Catalog.PrepareImportAsync(result.Document);
+        await ReportImportProgress(new("Подготовка проекта"));
+        var imported = await Catalog.PrepareOwnedImportAsync(result.Document);
+        Session.EndGesture();
+        await ReportImportProgress(new("Сохранение текущего проекта"));
         if (!await Autosave.FlushAsync()) { _notice = Autosave.Message; return; }
-        await Catalog.SaveAsync(imported);
-        await Catalog.RememberLastAsync(imported.Id);
+        await ReportImportProgress(new("Сохранение импортированного проекта"));
+        await Catalog.CommitImportAsync(imported);
+        await ReportImportProgress(new("Открытие макета"));
         Session.Open(imported);
         Session.MarkSaved("Загружено из файла: " + imported.Name);
+        await ReportImportProgress(new("Макет загружен"));
 
         _notice = null;
     }

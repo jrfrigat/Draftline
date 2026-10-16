@@ -16,6 +16,29 @@ public interface IBrowserStorage
     Task RemoveAsync(string key, CancellationToken cancellationToken = default);
     /// <summary>Every key the app's storage holds.</summary>
     Task<IReadOnlyList<string>> KeysAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Commit related entries together. Nontransactional adapters restore prior values on failure.</summary>
+    async Task SetManyAsync(IReadOnlyDictionary<string, string> entries, CancellationToken cancellationToken = default)
+    {
+        var before = new Dictionary<string, string?>();
+        foreach (var key in entries.Keys) before[key] = await GetAsync(key, cancellationToken);
+        var written = new List<string>();
+        try
+        {
+            foreach (var entry in entries)
+            {
+                await SetAsync(entry.Key, entry.Value, cancellationToken);
+                written.Add(entry.Key);
+            }
+        }
+        catch
+        {
+            foreach (var key in written.AsEnumerable().Reverse())
+                if (before[key] is { } value) await SetAsync(key, value, CancellationToken.None);
+                else await RemoveAsync(key, CancellationToken.None);
+            throw;
+        }
+    }
 }
 
 /// <summary>Storage refused a read or a write: the quota, a private window, or a browser that forbids it.</summary>

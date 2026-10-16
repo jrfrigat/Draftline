@@ -44,18 +44,40 @@ public sealed class ProjectCatalog
     /// <summary>An imported file never overwrites an existing project without consent.</summary>
     public async Task<DraftDocument> PrepareImportAsync(DraftDocument source)
     {
-        var document = source.Clone();
-        if (await _storage.GetAsync(DocumentKeyPrefix + document.Id)is not null || (await ListAsync()).Any(line => line.Id == document.Id))
+        return await PrepareOwnedImportAsync(source.Clone());
+    }
+
+    /// <summary>Adopts a freshly parsed import; the caller gives up ownership, avoiding a whole-document copy.</summary>
+    public async Task<DraftDocument> PrepareOwnedImportAsync(DraftDocument document)
+    {
+        var keys = (await _storage.KeysAsync()).ToHashSet(StringComparer.Ordinal);
+        var ids = (await ListAsync()).Select(line => line.Id).ToHashSet(StringComparer.Ordinal);
+        if (keys.Contains(DocumentKeyPrefix + document.Id) || ids.Contains(document.Id))
         {
             do
             {
                 document.Id = Guid.NewGuid().ToString("n");
             }
-            while (await _storage.GetAsync(DocumentKeyPrefix + document.Id)is not null);
+            while (keys.Contains(DocumentKeyPrefix + document.Id) || ids.Contains(document.Id));
             document.Name += " (копия)";
         }
 
         return document;
+    }
+
+    /// <summary>Commit a new import, its catalog row and last-open selection in one storage transaction.</summary>
+    public async Task CommitImportAsync(DraftDocument document, CancellationToken cancellationToken = default)
+    {
+        var list = (await ListAsync(cancellationToken)).ToList();
+        if (list.Any(entry => entry.Id == document.Id) || (await _storage.KeysAsync(cancellationToken)).Contains(DocumentKeyPrefix + document.Id))
+            throw new InvalidOperationException("Макет с таким идентификатором уже существует. Повторите импорт.");
+        list.Add(new ProjectSummary { Id = document.Id, Name = document.Name, UpdatedAt = document.UpdatedAt, ElementCount = document.TotalElements });
+        await _storage.SetManyAsync(new Dictionary<string, string>
+        {
+            [DocumentKeyPrefix + document.Id] = DraftlineJson.SerializeForStorage(document),
+            [IndexKey] = JsonSerializer.Serialize(list, ProjectCatalogJsonContext.Default.ListProjectSummary),
+            [LastOpenKey] = document.Id
+        }, cancellationToken);
     }
 
     /// <summary>The projects, most recently written first.</summary>

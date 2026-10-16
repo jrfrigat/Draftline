@@ -50,6 +50,13 @@ public sealed class IndexedDbBrowserStorage : IBrowserStorage, IAsyncDisposable
         }
     }
 
+    public async Task SetManyAsync(IReadOnlyDictionary<string, string> entries, CancellationToken cancellationToken = default)
+    {
+        var module = await ModuleAsync(cancellationToken);
+        var error = await module.InvokeAsync<string?>("setMany", cancellationToken, entries);
+        if (!string.IsNullOrEmpty(error)) throw new BrowserStorageException(error);
+    }
+
     /// <inheritdoc/>
     public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {

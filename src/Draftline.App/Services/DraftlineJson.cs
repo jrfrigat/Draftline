@@ -1,5 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json.Serialization.Metadata;
 using Draftline.App.Model;
 
 namespace Draftline.App.Services;
@@ -11,7 +14,7 @@ namespace Draftline.App.Services;
 /// see. This context is therefore the list of types a file may contain - one place to change when the
 /// document grows a field.
 /// </summary>
-[JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, DefaultIgnoreCondition = JsonIgnoreCondition.Never)]
+[JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, IgnoreReadOnlyProperties = true, DefaultIgnoreCondition = JsonIgnoreCondition.Never)]
 [JsonSerializable(typeof(DraftDocument))]
 [JsonSerializable(typeof(WireframeElement))]
 public sealed partial class DraftlineJsonContext : JsonSerializerContext
@@ -38,19 +41,43 @@ public static class DraftlineJson
         ArgumentNullException.ThrowIfNull(document);
         var canonical = document.Clone();
         canonical.Normalize();
-        var context = indented ? DraftlineJsonContext.Default : CompactContext;
-        return JsonSerializer.Serialize(canonical, context.DraftDocument);
+        return JsonSerializer.Serialize(canonical, indented ? ExportType : StorageType);
     }
 
-    private static readonly DraftlineJsonContext CompactContext = new(new JsonSerializerOptions(DraftlineJsonContext.Default.Options) { WriteIndented = false });
+    private static readonly JsonTypeInfo<DraftDocument> StorageType = WriteType(false);
+    private static readonly JsonTypeInfo<DraftDocument> ExportType = WriteType(true);
+    private static JsonTypeInfo<DraftDocument> WriteType(bool indented)
+    {
+        var options = new JsonSerializerOptions(DraftlineJsonContext.Default.Options)
+        {
+            WriteIndented = indented,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            TypeInfoResolver = DraftlineJsonContext.Default.WithAddedModifier(info =>
+            {
+                if (info.Type != typeof(WireframeElement)) return;
+                var defaults = new WireframeElement();
+                foreach (var property in info.Properties)
+                {
+                    var baseline = property.Get?.Invoke(defaults);
+                    // Compare with constructor defaults, not CLR zero: SelectedIndex defaults to -1,
+                    // so dropping an explicit zero would silently lose the selected option.
+                    property.ShouldSerialize = (_, value) => !Equals(value, baseline) &&
+                        !(value is System.Collections.ICollection { Count: 0 } && baseline is System.Collections.ICollection { Count: 0 });
+                }
+            })
+        };
+        return (JsonTypeInfo<DraftDocument>)options.GetTypeInfo(typeof(DraftDocument));
+    }
     /// <summary>Writes the trusted in-memory document without repeating import validation and decoding images.</summary>
-    public static string SerializeForStorage(DraftDocument document) => JsonSerializer.Serialize(document, CompactContext.DraftDocument);
+    public static string SerializeForStorage(DraftDocument document) => JsonSerializer.Serialize(document, StorageType);
     /// <summary>Reads a document, or explains why it could not be read.</summary>
     public static DocumentReadResult Read(string json)
     {
         try
         {
-            return ReadCore(json);
+            var result = Decode(Encoding.UTF8.GetBytes(json));
+            result.Document?.Normalize();
+            return result;
         }
         catch (Exception)
         {
@@ -58,32 +85,50 @@ public static class DraftlineJson
         }
     }
 
-    private static DocumentReadResult ReadCore(string json)
+    /// <summary>Read bytes without a full UTF16 string or a second JSON DOM in WebAssembly.</summary>
+    public static async Task<DocumentReadResult> ReadAsync(Stream stream, long length,
+        Func<DocumentImportProgress, Task> progress, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return DocumentReadResult.Failed("Файл пуст.");
-        }
-
-        JsonDocument parsed;
         try
         {
-            parsed = JsonDocument.Parse(json);
+            using var buffer = new MemoryStream(checked((int)length));
+            var chunk = new byte[64 * 1024];
+            int count;
+            await progress(new("Чтение файла", 0, length));
+            while ((count = await stream.ReadAsync(chunk, cancellationToken)) > 0)
+            {
+                await buffer.WriteAsync(chunk.AsMemory(0, count), cancellationToken);
+                await progress(new("Чтение файла", buffer.Length, length));
+            }
+            await progress(new("Проверка JSON"));
+            var result = Decode(buffer.GetBuffer().AsSpan(0, (int)buffer.Length));
+            if (result.Document is { } document)
+            {
+                await progress(new("Подготовка экранов", 0, document.Layers.Count));
+                await document.NormalizeAsync((done, total) => progress(new("Подготовка экранов", done, total)));
+            }
+            return result;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception)
+        {
+            return DocumentReadResult.Failed("Не удалось прочитать макет. Выберите другой JSON-файл Draftline.");
+        }
+    }
+
+    private static DocumentReadResult Decode(ReadOnlySpan<byte> json)
+    {
+        // UTF8 BOM is legal in a file, but Utf8JsonReader expects the first JSON token.
+        if (json.StartsWith(new byte[] { 0xef, 0xbb, 0xbf })) json = json[3..];
+        if (json.IsEmpty) return DocumentReadResult.Failed("Файл пуст.");
+        try
+        {
+            if (!LooksLikeAWireframe(json))
+                return DocumentReadResult.Failed("В файле нет описания макета Draftline.");
         }
         catch (JsonException)
         {
             return DocumentReadResult.Failed("В файле некорректный JSON. Выберите файл макета Draftline.");
-        }
-
-        using (parsed)
-        {
-            // A document with no recognizable field is not a wireframe that happens to be empty - it
-            // is another kind of file entirely, and saying so is more useful than opening an empty
-            // sheet and letting the person wonder where their work went.
-            if (!LooksLikeAWireframe(parsed.RootElement))
-            {
-                return DocumentReadResult.Failed("В файле нет описания макета Draftline.");
-            }
         }
 
         DraftDocument? document;
@@ -109,26 +154,24 @@ public static class DraftlineJson
             return DocumentReadResult.Failed($"Файл создан более новой версией Draftline (схема {document.SchemaVersion}, эта версия читает {DraftDocument.CurrentSchemaVersion}).");
         }
 
-        document.Normalize();
         return DocumentReadResult.Ok(document);
     }
 
     /// <summary>True when the JSON object carries at least one field a wireframe has.</summary>
-    private static bool LooksLikeAWireframe(JsonElement root)
+    private static bool LooksLikeAWireframe(ReadOnlySpan<byte> json)
     {
-        if (root.ValueKind != JsonValueKind.Object)
+        var reader = new Utf8JsonReader(json);
+        if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject) return false;
+        while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
         {
-            return false;
-        }
-
-        foreach (var property in root.EnumerateObject())
-        {
-            if (property.Name.Equals("schemaVersion", StringComparison.OrdinalIgnoreCase) || property.Name.Equals("elements", StringComparison.OrdinalIgnoreCase) || property.Name.Equals("canvasWidth", StringComparison.OrdinalIgnoreCase))
-            {
+            var name = reader.GetString();
+            if (name is not null && (name.Equals("schemaVersion", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("elements", StringComparison.OrdinalIgnoreCase) || name.Equals("layers", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("canvasWidth", StringComparison.OrdinalIgnoreCase)))
                 return true;
-            }
+            reader.Read();
+            reader.Skip();
         }
-
         return false;
     }
 }

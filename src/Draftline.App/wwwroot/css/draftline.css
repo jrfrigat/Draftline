@@ -1395,3 +1395,9 @@ body {
     .df-inspector .flare-input__field { min-height: 44px; }
     .df-inspector .flare-checkbox { min-height: 44px; }
 }
+/* Import is modal so edits and a second import cannot race the storage transaction. */
+.df-import-backdrop { position:fixed; inset:0; z-index:10000; display:grid; place-items:center; background:rgb(0 0 0 / .35); }
+.df-import-progress { width:min(26rem,calc(100vw - 2rem)); box-sizing:border-box; padding:1.5rem; border-radius:var(--flare-radius-lg,8px); color:var(--flare-color-on-surface,#242424); background:var(--flare-color-surface,#fff); box-shadow:0 8px 32px rgb(0 0 0 / .25); outline:none; }
+.df-import-progress h2 { margin:0 0 1rem; font-size:1.125rem; }
+.df-import-progress progress { width:100%; height:1rem; accent-color:var(--flare-color-primary,#0f6cbd); }
+.df-import-progress__hint { margin-bottom:0; font-size:.8125rem; opacity:.75; }

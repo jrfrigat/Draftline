@@ -65,6 +65,17 @@ export async function set(key, value) {
             'браузер не разрешил запись в хранилище: ' + (error?.message || 'неизвестная ошибка');
     }
 }
+export async function setMany(entries) {
+    try {
+        await transaction('readwrite', store => {
+            for (const [key, value] of Object.entries(entries)) store.put(value, key);
+        });
+        return null;
+    } catch (error) {
+        return error?.name === 'QuotaExceededError' ? 'в браузере закончилось место для макетов; выгрузите JSON' :
+            'браузер не разрешил запись в хранилище: ' + (error?.message || 'неизвестная ошибка');
+    }
+}
 export async function remove(key) {
     await transaction('readwrite', store => store.delete(key));
     try { localStorage.removeItem(key); } catch { }

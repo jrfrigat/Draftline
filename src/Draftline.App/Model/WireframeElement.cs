@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Draftline.App.Model;
 /// <summary>
 /// One block of a wireframe: where it sits, how big it is, what it says and how it is drawn.
@@ -139,6 +141,7 @@ public sealed class WireframeElement
     /// </summary>
     public bool ShowsHint => string.IsNullOrWhiteSpace(Value);
     /// <summary>The rows of a list or a dropdown, each split into its label and its value.</summary>
+    [JsonIgnore]
     public IEnumerable<(string Label, string Value)> OptionRows => Options.Select(ElementDefaults.SplitOption);
 
     /// <summary>True when the point falls inside the block.</summary>

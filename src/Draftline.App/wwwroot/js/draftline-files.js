@@ -28,7 +28,35 @@ export function download(fileName, contentType, text) {
 }
 
 // Asks the person for a file and answers its text, or null when they changed their mind.
-export function pickTextFile(accept) {
+export async function pickTextFile(accept) {
+    const file = await pickFile(accept);
+    return file ? file.text() : null;
+}
+
+// Blazor wraps a returned Blob into a stream reference itself and cannot wrap null, so the choice
+// and the file travel in two calls: whether a file was chosen, then the file.
+let pickedFile = null;
+export async function pickJsonFile() {
+    pickedFile = await pickFile('.json');
+    return pickedFile !== null;
+}
+
+export function takePickedFile() {
+    const file = pickedFile;
+    pickedFile = null;
+    return file;
+}
+
+// Let Blazor's rendered progress reach a frame before the next synchronous stage.
+export function paintImportProgress() {
+    document.getElementById('df-import-progress')?.focus({preventScroll:true});
+    return new Promise(resolve => {
+        requestAnimationFrame(() => setTimeout(resolve, 0));
+        setTimeout(resolve, 40); // Background tabs may not receive animation frames.
+    });
+}
+
+function pickFile(accept) {
     return new Promise(resolve => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -44,6 +72,7 @@ export function pickTextFile(accept) {
             }
 
             settled = true;
+            window.removeEventListener('focus', onFocus);
             input.remove();
             resolve(value);
         };
@@ -56,22 +85,21 @@ export function pickTextFile(accept) {
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = () => finish(typeof reader.result === 'string' ? reader.result : null);
-            reader.onerror = () => finish(null);
-            reader.readAsText(file);
+            finish(file);
         });
 
         // A cancelled picker does not always raise an event. The window coming back without a chosen
         // file is the only signal there is, and answering null then is what keeps the promise from
         // hanging for the rest of the session.
-        window.addEventListener('focus', () => {
+        const onFocus = () => {
             setTimeout(() => {
                 if (!input.files || input.files.length === 0) {
                     finish(null);
                 }
             }, 600);
-        }, { once: true });
+        };
+        window.addEventListener('focus', onFocus, { once: true });
+        input.addEventListener('cancel', () => finish(null), {once:true});
 
         input.click();
     });

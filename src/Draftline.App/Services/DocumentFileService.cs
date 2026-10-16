@@ -59,12 +59,28 @@ public sealed partial class DocumentFileService : IAsyncDisposable
     /// Asks the person for a file and reads it as a wireframe. Null means they changed their mind, which
     /// is not a mistake and must not be reported as one.
     /// </summary>
-    public async Task<DocumentReadResult?> ImportAsync(CancellationToken cancellationToken = default)
+    public Task<DocumentReadResult?> ImportAsync(CancellationToken cancellationToken = default) =>
+        ImportAsync(_ => Task.CompletedTask, cancellationToken);
+
+    /// <summary>Transport a selected Blob in byte chunks and report actual reading progress.</summary>
+    public async Task<DocumentReadResult?> ImportAsync(Func<DocumentImportProgress, Task> progress, CancellationToken cancellationToken = default)
     {
         var module = await ModuleAsync(cancellationToken).ConfigureAwait(false);
-        var text = await module.InvokeAsync<string?>("pickTextFile", cancellationToken, ".json").ConfigureAwait(false);
-        return text is null ? null : DraftlineJson.Read(text);
+        if (!await module.InvokeAsync<bool>("pickJsonFile", cancellationToken).ConfigureAwait(false)) return null;
+        var file = await module.InvokeAsync<IJSStreamReference>("takePickedFile", cancellationToken).ConfigureAwait(false);
+        await using (file)
+        {
+            const long maximumBytes = 128 * 1024 * 1024;
+            if (file.Length > maximumBytes)
+                return DocumentReadResult.Failed("Файл больше 128 МБ. Разделите макет на несколько проектов.");
+            await using var stream = await file.OpenReadStreamAsync(maximumBytes, cancellationToken);
+            return await DraftlineJson.ReadAsync(stream, file.Length, progress, cancellationToken);
+        }
     }
+
+    /// <summary>Allow the rendered import status to reach the browser before synchronous model work.</summary>
+    public async Task PaintImportProgressAsync() =>
+        await (await ModuleAsync(CancellationToken.None)).InvokeVoidAsync("paintImportProgress");
 
     /// <summary>
     /// What the file is called: the wireframe's own name, and the screen's when the file is one screen,

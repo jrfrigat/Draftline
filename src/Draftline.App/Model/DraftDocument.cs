@@ -76,6 +76,7 @@ public sealed class DraftDocument
     /// <summary>The screen with this identity, or null.</summary>
     public DraftLayer? FindLayer(string? id) => string.IsNullOrEmpty(id) ? null : Layers.FirstOrDefault(layer => layer.Id == id);
     /// <summary>The screen a preview opens on: the one named as the start, or the first there is.</summary>
+    [JsonIgnore]
     public DraftLayer StartLayer => FindLayer(StartLayerId) ?? Layers[0];
 
     /// <summary>Marks a screen as the one a preview opens on.</summary>
@@ -118,10 +119,13 @@ public sealed class DraftDocument
     }
 
     /// <summary>Every block of every screen - what a count, an export or a migration walks.</summary>
+    [JsonIgnore]
     public IEnumerable<WireframeElement> AllElements => Layers.SelectMany(layer => layer.Elements);
     /// <summary>Every stored screen version, including inactive alternatives.</summary>
+    [JsonIgnore]
     public IEnumerable<List<WireframeElement>> ScreenElementLists => Layers.SelectMany(layer => new[] { layer.Elements }.Concat(layer.Alternates.Select(alternate => alternate.Elements)));
     /// <summary>All stored blocks, including reusable sources and inactive alternatives.</summary>
+    [JsonIgnore]
     public IEnumerable<WireframeElement> StoredElements => ScreenElementLists.SelectMany(elements => elements).Concat(Components.SelectMany(component => component.Elements));
 
     private void ClearMissingTransitions()
@@ -142,6 +146,7 @@ public sealed class DraftDocument
     }
 
     /// <summary>How many blocks the whole wireframe holds.</summary>
+    [JsonIgnore]
     public int TotalElements => Layers.Sum(layer => layer.Elements.Count);
 
     /// <summary>Notes that the document was written to just now.</summary>
@@ -167,6 +172,19 @@ public sealed class DraftDocument
     /// scratch, so nothing downstream has to defend itself against a half-written document.
     /// </summary>
     public void Normalize()
+    {
+        foreach (var _ in NormalizeSteps()) { }
+    }
+
+    /// <summary>Repairs imported screens in batches so the browser can paint progress.</summary>
+    public async Task NormalizeAsync(Func<int, int, Task> progress)
+    {
+        foreach (var completed in NormalizeSteps())
+            if (completed % 8 == 0 || completed == Layers.Count)
+                await progress(completed, Layers.Count);
+    }
+
+    private IEnumerable<int> NormalizeSteps()
     {
         MockupTheme ??= new();
         MockupTheme.Normalize();
@@ -218,6 +236,7 @@ public sealed class DraftDocument
         }
 
         var identities = new HashSet<string>(StringComparer.Ordinal);
+        var completed = 0;
         foreach (var layer in Layers)
         {
             // The size an older file named belongs to the screen it had, so a screen that arrives
@@ -244,6 +263,7 @@ public sealed class DraftDocument
                 layer.Id = Guid.NewGuid().ToString("n");
                 identities.Add(layer.Id);
             }
+            yield return ++completed;
         }
 
         if (FindLayer(StartLayerId)is null)

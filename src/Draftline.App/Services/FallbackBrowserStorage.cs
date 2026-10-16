@@ -41,6 +41,12 @@ public sealed class FallbackBrowserStorage : IBrowserStorage
         await storage.SetAsync(key, value, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task SetManyAsync(IReadOnlyDictionary<string, string> entries, CancellationToken cancellationToken = default)
+    {
+        var storage = await CurrentAsync(cancellationToken).ConfigureAwait(false);
+        await storage.SetManyAsync(entries, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <inheritdoc/>
     public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
