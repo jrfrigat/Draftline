@@ -4,6 +4,11 @@ namespace Draftline.App.Model;
 public static class ImageAssets
 {
     public const int MaximumBytes = 5 * 1024 * 1024;
+    public static long EncodedBytes(string data)
+    {
+        var comma = data.IndexOf(',');
+        return comma < 0 ? 0 : (long)(data.Length - comma - 1) * 3 / 4;
+    }
     public static string Mime(ReadOnlySpan<byte> bytes)
     {
         if(bytes.Length<12 || bytes.Length>MaximumBytes)return "";

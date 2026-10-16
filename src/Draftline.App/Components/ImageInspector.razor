@@ -7,10 +7,12 @@
     <label class="df-image-import">Локальное изображение (PNG, JPEG, GIF, WebP, до 5 МБ)
         <InputFile OnChange="Import" accept="image/png,image/jpeg,image/gif,image/webp" disabled="@_loading" />
     </label>
+    <p class="df-hint">При необходимости изображение уменьшается до 2048 px и 2 МБ. Оптимизация сохраняет один кадр.</p>
     @if(_error.Length>0){<p role="alert">@_error</p>}
+    @if(_notice.Length>0){<p role="status">@_notice</p>}
     @if(ImageAssets.HasImage(Element))
     {
-        <p class="df-hint">@Element.ImageName · @Element.ImageWidth × @Element.ImageHeight</p>
+        <p class="df-hint">@Element.ImageName · @Element.ImageWidth × @Element.ImageHeight · @(ImageAssets.EncodedBytes(Element.ImageData) / 1024) КБ</p>
         <FlareSelect Label="Вписывание изображения" Size="FieldSize.Xs" Value="@Element.ImageFit" ValueChanged="@((string? value)=>Change(e=>e.ImageFit=value??"contain"))">
             <option value="contain">Вписать целиком</option><option value="cover">Заполнить</option><option value="stretch">Растянуть</option>
         </FlareSelect>
@@ -29,18 +31,21 @@
     private IJSObjectReference? _module;
     private bool _loading;
     private string _error="";
+    private string _notice="";
     private void Change(Action<WireframeElement> change)=>Session.Edit("Изображение изменено",_=>{change(Element);ImageAssets.Normalize(Element);});
     private async Task Import(InputFileChangeEventArgs args)
     {
-        _loading=true;_error="";var id=Element.Id;var layerId=Session.CurrentLayerId;
+        _loading=true;_error="";_notice="";var id=Element.Id;var layerId=Session.CurrentLayerId;var documentId=Session.Document.Id;
         try
         {
             using var stream=args.File.OpenReadStream(ImageAssets.MaximumBytes);using var buffer=new MemoryStream();await stream.CopyToAsync(buffer);
             var bytes=buffer.ToArray();var mime=ImageAssets.Mime(bytes);if(mime.Length==0)throw new InvalidOperationException("Выберите PNG, JPEG, GIF или WebP до 5 МБ.");
             var data="data:"+mime+";base64,"+Convert.ToBase64String(bytes);
-            _module??=await Js.InvokeAsync<IJSObjectReference>("import","./js/draftline-images.js");var dimensions=await _module.InvokeAsync<double[]>("dimensions",data);
-            if(Session.Document.FindLayer(layerId)?.Find(id) is not { } target)return;
-            Session.Edit("Изображение загружено",_=>{target.ImageData=data;target.ImageName=args.File.Name;target.ImageWidth=dimensions[0];target.ImageHeight=dimensions[1];target.CropX=target.CropY=0;target.CropWidth=target.CropHeight=1;});
+            _module??=await Js.InvokeAsync<IJSObjectReference>("import","./js/draftline-images.js");
+            var prepared=await _module.InvokeAsync<string[]>("prepare",data);
+            if(Session.Document.Id!=documentId || Session.Document.FindLayer(layerId)?.Find(id) is not { } target)return;
+            Session.Edit("Изображение загружено",_=>{target.ImageData=prepared[0];target.ImageName=args.File.Name;target.ImageWidth=int.Parse(prepared[1]);target.ImageHeight=int.Parse(prepared[2]);target.CropX=target.CropY=0;target.CropWidth=target.CropHeight=1;ImageAssets.Normalize(target);});
+            _notice=prepared[4]=="true" ? "Изображение оптимизировано для макета." : "Изображение сохранено в исходном качестве.";
         }
         catch(Exception exception) when(exception is IOException or JSException or InvalidOperationException){_error="Не удалось загрузить изображение: "+exception.Message;}
         finally{_loading=false;}
