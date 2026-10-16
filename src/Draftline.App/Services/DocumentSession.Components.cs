@@ -92,8 +92,8 @@ public sealed partial class DocumentSession
                     added.ComponentOriginX=first.ComponentOriginX;added.ComponentOriginY=first.ComponentOriginY;added.ComponentBaseline=Snapshot(templates[i]);
                     added.GroupPath=new(first.GroupPath);
                 }
-            foreach(var layer in Document.Layers)
-            foreach(var instance in layer.Elements.Where(e=>e.ComponentKey==definition.Id).GroupBy(e=>e.InstanceKey).Select(g=>g.ToList()).ToList())
+            foreach(var elements in Document.ScreenElementLists)
+            foreach(var instance in elements.Where(e=>e.ComponentKey==definition.Id).GroupBy(e=>e.InstanceKey).Select(g=>g.ToList()).ToList())
             {
                 var origin=instance[0];var materialized=Materialize(definition,origin.ComponentOriginX,origin.ComponentOriginY,origin.InstanceKey);
                 var mapping=instance.ToDictionary(e=>e.SourceKey,e=>e.Id);
@@ -101,16 +101,17 @@ public sealed partial class DocumentSession
                 foreach(var current in instance)
                 {
                     var source=templates.FirstOrDefault(e=>e.Id==current.SourceKey);
-                    if(source is null){layer.Elements.Remove(current);continue;}
+                    if(source is null){elements.Remove(current);continue;}
                     var fallback=old.GetValueOrDefault(current.SourceKey,source);
-                    var merged=MergeTemplate(current,ReadSnapshot(current.ComponentBaseline,fallback),source,current.InstanceKey==key);
+                    var merged=MergeTemplate(current,ReadSnapshot(current.ComponentBaseline,fallback),source,
+                        ReferenceEquals(elements, CurrentLayer.Elements) && current.InstanceKey==key);
                     merged.ParentTabsId=mapping.GetValueOrDefault(source.ParentTabsId,"");
-                    layer.Elements[layer.Elements.IndexOf(current)]=merged;
+                    elements[elements.IndexOf(current)]=merged;
                 }
                 foreach(var added in materialized.Where(e=>!instance.Any(oldElement=>oldElement.SourceKey==e.SourceKey)))
                 {
                     added.ParentTabsId=mapping.GetValueOrDefault(templates.First(e=>e.Id==added.SourceKey).ParentTabsId,"");
-                    added.GroupPath=new(origin.GroupPath);added.ZIndex=layer.NextZIndex();layer.Elements.Add(added);
+                    added.GroupPath=new(origin.GroupPath);added.ZIndex=elements.Count == 0 ? 1 : elements.Max(e=>e.ZIndex)+1;elements.Add(added);
                 }
             }
         }, false);

@@ -121,15 +121,7 @@ public sealed class DraftDocument
 
         Layers.Remove(layer);
 
-        foreach (var element in AllElements)
-        {
-            if(element.ComponentKey.Length>0 && (!Components.Any(c=>c.Id==element.ComponentKey) || element.InstanceKey.Length==0))ComponentDefinition.Detach(element);
-            if (element.TargetLayerId == id)
-            {
-                element.Transition = TransitionKind.None;
-                element.TargetLayerId = string.Empty;
-            }
-        }
+        ClearMissingTransitions();
 
         if (StartLayerId == id)
         {
@@ -141,6 +133,29 @@ public sealed class DraftDocument
 
     /// <summary>Every block of every screen - what a count, an export or a migration walks.</summary>
     public IEnumerable<WireframeElement> AllElements => Layers.SelectMany(layer => layer.Elements);
+
+    /// <summary>Every stored screen version, including inactive alternatives.</summary>
+    public IEnumerable<List<WireframeElement>> ScreenElementLists => Layers.SelectMany(layer =>
+        new[] { layer.Elements }.Concat(layer.Alternates.Select(alternate => alternate.Elements)));
+
+    /// <summary>All stored blocks, including reusable sources and inactive alternatives.</summary>
+    public IEnumerable<WireframeElement> StoredElements => ScreenElementLists.SelectMany(elements => elements)
+        .Concat(Components.SelectMany(component => component.Elements));
+
+    private void ClearMissingTransitions()
+    {
+        var ids = Layers.Select(layer => layer.Id).ToHashSet(StringComparer.Ordinal);
+        foreach (var element in StoredElements)
+        {
+            if (!ids.Contains(element.TargetLayerId))
+            {
+                element.Transition = TransitionKind.None;
+                element.TargetLayerId = "";
+            }
+            foreach (var row in NavItems.Rows(element.ChoiceItems))
+                if (!ids.Contains(row.Item.TargetLayerId)) row.Item.TargetLayerId = "";
+        }
+    }
 
     /// <summary>How many blocks the whole wireframe holds.</summary>
     public int TotalElements => Layers.Sum(layer => layer.Elements.Count);
@@ -251,14 +266,12 @@ public sealed class DraftDocument
 
         // A transition into a screen that no longer exists is not a transition: it is cleared here
         // rather than left pointing at nothing, because a preview would otherwise walk into a wall.
-        foreach (var element in AllElements)
+        foreach (var element in StoredElements)
         {
-            if (element.Transition != TransitionKind.None && FindLayer(element.TargetLayerId) is null)
-            {
-                element.Transition = TransitionKind.None;
-                element.TargetLayerId = string.Empty;
-            }
+            if (element.ComponentKey.Length > 0 && (!Components.Any(component => component.Id == element.ComponentKey) || element.InstanceKey.Length == 0))
+                ComponentDefinition.Detach(element);
         }
+        ClearMissingTransitions();
 
         // The members an older file used are emptied, so writing this document back carries screens only.
         CanvasWidth = 0;
