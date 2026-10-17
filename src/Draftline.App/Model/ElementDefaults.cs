@@ -58,8 +58,8 @@ public static class ElementDefaults
     {
         ("Основные", (IReadOnlyList<WireframeKind>)new[] { WireframeKind.Panel, WireframeKind.Text, WireframeKind.Heading, WireframeKind.Image, WireframeKind.Divider, WireframeKind.Badge, WireframeKind.Avatar }),
         ("Формы", new[] { WireframeKind.Button, WireframeKind.TextField, WireframeKind.TextArea, WireframeKind.Checkbox, WireframeKind.Radio, WireframeKind.Select, WireframeKind.Slider, WireframeKind.Calendar }),
-        ("Данные", new[] { WireframeKind.List, WireframeKind.DataGrid, WireframeKind.Tree, WireframeKind.Progress, WireframeKind.Map, WireframeKind.Video }),
-        ("Навигация", new[] { WireframeKind.Tabs, WireframeKind.MenuBar, WireframeKind.Breadcrumbs, WireframeKind.Accordion, WireframeKind.StatusBar })
+        ("Данные", new[] { WireframeKind.List, WireframeKind.DataGrid, WireframeKind.Stat, WireframeKind.Tree, WireframeKind.Progress, WireframeKind.Map, WireframeKind.Video }),
+        ("Навигация", new[] { WireframeKind.PageHeader, WireframeKind.Tabs, WireframeKind.MenuBar, WireframeKind.Breadcrumbs, WireframeKind.Accordion, WireframeKind.StatusBar })
     }.Concat(ExtraElements.Sections).ToArray();
 
     /// <summary>A fresh block of this kind, with its identity in place and its data already started.</summary>
@@ -89,6 +89,7 @@ public static class ElementDefaults
         }
 
         ExtraElements.Initialize(element);
+        SummaryBlocks.Initialize(element);
         TreeState.Normalize(element);
         NavItems.Normalize(element);
         ControlRange.Normalize(element);
@@ -100,6 +101,8 @@ public static class ElementDefaults
     public static (double Width, double Height) SizeOf(WireframeKind kind) => ExtraElements.Definitions.TryGetValue(kind, out var extra) ? (extra.Width, extra.Height) : kind switch
     {
         WireframeKind.Heading => (240, 40),
+        WireframeKind.Stat => (280, 112),
+        WireframeKind.PageHeader => (480, 264),
         WireframeKind.Text => (200, 24),
         WireframeKind.Button => (120, 40),
         WireframeKind.TextField => (200, 40),
@@ -130,6 +133,8 @@ public static class ElementDefaults
     public static string PlaceholderFor(WireframeKind kind) => ExtraElements.Definitions.TryGetValue(kind, out var extra) ? extra.Text : kind switch
     {
         WireframeKind.Heading => "Заголовок",
+        WireframeKind.Stat => "Выручка",
+        WireframeKind.PageHeader => "Обзор проекта",
         WireframeKind.Text => "Текст",
         WireframeKind.Button => "Кнопка",
         WireframeKind.TextField => "Поле ввода",
@@ -150,6 +155,8 @@ public static class ElementDefaults
         WireframeKind.Panel => "Панель",
         WireframeKind.Text => "Текст",
         WireframeKind.Heading => "Заголовок",
+        WireframeKind.Stat => "Показатель",
+        WireframeKind.PageHeader => "Шапка страницы",
         WireframeKind.Button => "Кнопка",
         WireframeKind.TextField => "Поле ввода",
         WireframeKind.TextArea => "Многострочное поле",
@@ -204,12 +211,12 @@ public static class ElementDefaults
     /// <summary>True when the kind carries a check state.</summary>
     public static bool HasCheck(WireframeKind kind) => kind is WireframeKind.Checkbox or WireframeKind.Radio or WireframeKind.Switch or WireframeKind.AudioPlayer;
     /// <summary>True when the block draws a sentence rather than a control.</summary>
-    public static bool IsTextual(WireframeKind kind) => ExtraElements.Is(kind) || kind is WireframeKind.Heading or WireframeKind.Text or WireframeKind.Button or WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Checkbox or WireframeKind.Radio or WireframeKind.Badge or WireframeKind.Avatar or WireframeKind.Image or WireframeKind.Panel or WireframeKind.Calendar or WireframeKind.Map or WireframeKind.Video;
+    public static bool IsTextual(WireframeKind kind) => ExtraElements.Is(kind) || SummaryBlocks.Is(kind) || kind is WireframeKind.Heading or WireframeKind.Text or WireframeKind.Button or WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Checkbox or WireframeKind.Radio or WireframeKind.Badge or WireframeKind.Avatar or WireframeKind.Image or WireframeKind.Panel or WireframeKind.Calendar or WireframeKind.Map or WireframeKind.Video;
     /// <summary>True when the kind has a second line worth writing: a description, a detail, a caption.</summary>
-    public static bool AcceptsSecondaryText(WireframeKind kind) => kind is WireframeKind.Text or WireframeKind.Heading or WireframeKind.Panel or WireframeKind.List or WireframeKind.Tooltip or WireframeKind.Popover or WireframeKind.Alert;
+    public static bool AcceptsSecondaryText(WireframeKind kind) => SummaryBlocks.Is(kind) || kind is WireframeKind.Text or WireframeKind.Heading or WireframeKind.Panel or WireframeKind.List or WireframeKind.Tooltip or WireframeKind.Popover or WireframeKind.Alert;
     /// <summary>
     /// True when the kind stands for something a person types, chooses or drags, so a value makes
     /// sense. A bar and a slider read it as a percentage.
     /// </summary>
-    public static bool AcceptsValue(WireframeKind kind) => ExtraElements.HasValue(kind) || kind is WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Select or WireframeKind.Progress or WireframeKind.Slider;
+    public static bool AcceptsValue(WireframeKind kind) => ExtraElements.HasValue(kind) || kind is WireframeKind.Stat or WireframeKind.TextField or WireframeKind.TextArea or WireframeKind.Select or WireframeKind.Progress or WireframeKind.Slider;
 }

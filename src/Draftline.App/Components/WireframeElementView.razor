@@ -20,6 +20,11 @@
             <span class="df-heading"><WireframeIconView Key="@Element.IconKey" />@Element.DisplayText</span>
             break;
 
+        case WireframeKind.Stat:
+        case WireframeKind.PageHeader:
+            <SummaryElement Element="Element" Interactive="Interactive" Activated="Activate" />
+            break;
+
         case WireframeKind.Text:
             <span class="df-text-block">
                 <span class="df-text"><WireframeIconView Key="@Element.IconKey" />@Element.DisplayText</span>

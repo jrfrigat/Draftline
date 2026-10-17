@@ -102,6 +102,10 @@ public static partial class SvgExporter
         svg.Append('>');
         switch (element.Kind)
         {
+            case WireframeKind.Stat:
+            case WireframeKind.PageHeader:
+                WriteSummary(svg, element, x, y, size);
+                break;
             case WireframeKind.Panel:
                 Box(svg, x, y, element.Width, element.Height, "none");
                 if (!string.IsNullOrWhiteSpace(text))

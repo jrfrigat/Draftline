@@ -64,6 +64,18 @@ public sealed class WireframeElement
     public string Placeholder { get; set; } = string.Empty;
     /// <summary>The second line of a block: a row's detail, a panel's description, a caption.</summary>
     public string SecondaryText { get; set; } = string.Empty;
+    /// <summary>Unit displayed beside a metric.</summary>
+    public string StatUnit { get; set; } = string.Empty;
+    /// <summary>Formatted change in a metric.</summary>
+    public string StatDelta { get; set; } = string.Empty;
+    /// <summary>Semantic change colour: default, success, warning, error or info.</summary>
+    public string StatTone { get; set; } = "default";
+    /// <summary>Section label above a page heading.</summary>
+    public string HeaderEyebrow { get; set; } = string.Empty;
+    /// <summary>Label of the page header's primary action; empty hides it.</summary>
+    public string HeaderAction { get; set; } = string.Empty;
+    /// <summary>Semantic heading level, from 1 to 6.</summary>
+    public int HeadingLevel { get; set; } = 1;
     /// <summary>Column headers of a table; every other kind ignores them.</summary>
     public List<string> Columns { get; set; } = new();
     /// <summary>
@@ -190,6 +202,12 @@ public sealed class WireframeElement
         Value = Value,
         Placeholder = Placeholder,
         SecondaryText = SecondaryText,
+        StatUnit = StatUnit,
+        StatDelta = StatDelta,
+        StatTone = StatTone,
+        HeaderEyebrow = HeaderEyebrow,
+        HeaderAction = HeaderAction,
+        HeadingLevel = HeadingLevel,
         Columns = new List<string>(Columns),
         Rows = Rows.Select(row => new List<string>(row)).ToList(),
         TableStyle = TableStyle,

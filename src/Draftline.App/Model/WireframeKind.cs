@@ -97,5 +97,9 @@ public enum WireframeKind
     Alert,
     CoverFlow,
     IosKeyboard,
-    Camera
+    Camera,
+    /// <summary>A labelled metric with a unit, change and caption.</summary>
+    Stat,
+    /// <summary>A page title, section label, description and primary action.</summary>
+    PageHeader
 }

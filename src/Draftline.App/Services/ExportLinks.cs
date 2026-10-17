@@ -19,7 +19,14 @@ public static class ExportLinks
                     continue;
                 if (e.HasTransition)
                 {
-                    links.Add(new(e.X, e.Y, e.Width, e.Height, e.TargetLayerId, ""));
+                    if (e.Kind == WireframeKind.PageHeader)
+                    {
+                        var action = SummaryBlocks.ActionBounds(e);
+                        if (!string.IsNullOrEmpty(e.HeaderAction) && action.Width > 0 && action.Height > 0)
+                            links.Add(new(action.X, action.Y, action.Width, action.Height, e.TargetLayerId, ""));
+                    }
+                    else
+                        links.Add(new(e.X, e.Y, e.Width, e.Height, e.TargetLayerId, ""));
                     continue;
                 }
 

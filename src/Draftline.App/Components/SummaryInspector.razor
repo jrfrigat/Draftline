@@ -1,0 +1,37 @@
+@inject DocumentSession Session
+@if (Element.Kind == WireframeKind.Stat)
+{
+    <TextEditorField Label="Единица измерения" Value="@Element.StatUnit"
+                    ValueChanged="@((string? value) => Change(e => e.StatUnit = value ?? ""))" />
+    <TextEditorField Label="Изменение показателя" Value="@Element.StatDelta"
+                    ValueChanged="@((string? value) => Change(e => e.StatDelta = value ?? ""))" />
+    <FlareSelect Variant="InputVariant.Outlined" Label="Цвет изменения" Size="FieldSize.Xs" Value="@Element.StatTone"
+                 ValueChanged="@((string? value) => Change(e => e.StatTone = value ?? "default"))">
+        <option value="default">Обычный</option>
+        <option value="success">Успех</option>
+        <option value="warning">Предупреждение</option>
+        <option value="error">Ошибка</option>
+        <option value="info">Информация</option>
+    </FlareSelect>
+    <FlareSelect Variant="InputVariant.Outlined" Label="Размер показателя" Size="FieldSize.Xs" Value="@(Element.FontScale <= .75 ? "small" : Element.FontScale >= 1.5 ? "large" : "medium")"
+                 ValueChanged="@((string? value) => Change(e => e.FontScale = value == "small" ? .75 : value == "large" ? 1.5 : 1))">
+        <option value="small">Маленький</option>
+        <option value="medium">Средний</option>
+        <option value="large">Большой</option>
+    </FlareSelect>
+}
+else if (Element.Kind == WireframeKind.PageHeader)
+{
+    <TextEditorField Label="Надзаголовок" Value="@Element.HeaderEyebrow"
+                    ValueChanged="@((string? value) => Change(e => e.HeaderEyebrow = value ?? ""))" />
+    <TextEditorField Label="Подпись действия" Value="@Element.HeaderAction"
+                    ValueChanged="@((string? value) => Change(e => e.HeaderAction = value ?? ""))" />
+    <FlareNumericField Variant="InputVariant.Outlined" Label="Уровень заголовка" Size="FieldSize.Xs" Min="1" Max="6" Step="1"
+                       Value="@((double)Element.HeadingLevel)" ValueChanged="@((double? value) => Change(e => e.HeadingLevel = (int)(value ?? 1)))" />
+    <p class="df-hint">Действие использует переход блока, заданный ниже. Пустая подпись скрывает кнопку.</p>
+}
+@code {
+    /// <summary>The selected metric or page header.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    private void Change(Action<WireframeElement> edit) => Session.Edit("Содержимое блока изменено", _ => { edit(Element); SummaryBlocks.Normalize(Element); });
+}

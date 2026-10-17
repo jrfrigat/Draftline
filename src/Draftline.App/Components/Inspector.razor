@@ -50,6 +50,8 @@ else
                              Value="@element.DisplayText" ValueChanged="@(value => SetText(element, value))" />
             <p class="df-hint">Двойной щелчок по блоку или F2 — изменить текст. Enter — применить.</p>
 
+            @if (!SummaryBlocks.Is(element.Kind))
+            {
             <div class="df-inspector__pair">
                 <FlareNumericField Variant="InputVariant.Outlined" Class="df-inspector__number" Label="Масштаб текста" Size="FieldSize.Xs" Min="0.5" Max="4" Step="0.5"
                                    Value="@element.FontScale"
@@ -58,28 +60,47 @@ else
                     Жирный
                 </FlareCheckbox>
             </div>
+            }
         }
 
         @if (ElementDefaults.AcceptsValue(element.Kind))
         {
+            @if (element.Kind == WireframeKind.Stat)
+            {
+                <TextEditorField @key="@($"stat-value-{element.Id}")" Label="Значение" Value="@element.Value" ValueChanged="@(value => SetValue(element, value))" />
+            }
+            else
+            {
             <FlareTextField Variant="InputVariant.Outlined" Label="Значение" Size="FieldSize.Xs"
                             Value="@element.Value"
                             ValueChanged="@((string? value) => SetValue(element, value))" />
+            }
 
+            @if (element.Kind != WireframeKind.Stat)
+            {
             <FlareTextField Variant="InputVariant.Outlined" Label="Подсказка" Size="FieldSize.Xs"
                             Value="@element.Placeholder"
                             ValueChanged="@((string? value) => SetPlaceholder(element, value))" />
+            }
         }
 
         @if (ElementDefaults.AcceptsSecondaryText(element.Kind))
         {
+            @if (SummaryBlocks.Is(element.Kind))
+            {
+                <TextEditorField @key="@($"summary-caption-{element.Id}")" Label="Вторая строка" Value="@element.SecondaryText" ValueChanged="@(value => SetSecondaryText(element, value))" />
+            }
+            else
+            {
             <FlareTextField Variant="InputVariant.Outlined" Label="Вторая строка" Size="FieldSize.Xs"
                             Value="@element.SecondaryText"
                             ValueChanged="@((string? value) => SetSecondaryText(element, value))" />
+            }
         }
 
         <TabPanelInspector Element="element" />
         <TreeInspector Element="element" />
+        <SummaryInspector Element="element" />
 
         <NavInspector Element="element" />
         <TableInspector Element="element" />

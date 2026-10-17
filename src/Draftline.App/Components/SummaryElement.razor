@@ -1,0 +1,45 @@
+@if (Drawing is not null)
+{
+    <div class="df-summary-native" style="@(!Interactive ? "pointer-events:none" : null)">
+    @if (Element.Kind == WireframeKind.Stat)
+    {
+        <FlareStat Label="@Element.DisplayText" Value="@Element.Value" Unit="@Element.StatUnit" Delta="@Element.StatDelta"
+                   DeltaColor="@Tone" Caption="@Element.SecondaryText" Size="@Size" />
+    }
+    else
+    {
+        <FlarePageHeader Title="@Element.DisplayText" Eyebrow="@Element.HeaderEyebrow" Description="@Element.SecondaryText" HeadingLevel="Element.HeadingLevel">
+            <ActionsContent>
+                @if (!string.IsNullOrEmpty(Element.HeaderAction))
+                {
+                    <FlareButton Disabled="@(!Interactive || Element.Disabled)" OnClick="Activate">@Element.HeaderAction</FlareButton>
+                }
+            </ActionsContent>
+        </FlarePageHeader>
+    }
+    </div>
+}
+else
+{
+    <div class="df-extra-art" role="group" aria-label="@AccessibleName">@((MarkupString)_fragment.Render(Element, Drawing))</div>
+    @if (Interactive && Element.Kind == WireframeKind.PageHeader && !string.IsNullOrEmpty(Element.HeaderAction))
+    {
+        <button type="button" class="df-summary-action" style="@ActionStyle" aria-label="@Element.HeaderAction" disabled="@Element.Disabled" @onclick="Activate"></button>
+    }
+}
+@code {
+    /// <summary>The authored block or preview-owned copy.</summary>
+    [Parameter, EditorRequired] public WireframeElement Element { get; set; } = null!;
+    /// <summary>Resolved drawing theme; null keeps the low-fidelity drawing.</summary>
+    [CascadingParameter] public DrawingTheme? Drawing { get; set; }
+    /// <summary>Enables the page action in the preview.</summary>
+    [Parameter] public bool Interactive { get; set; }
+    /// <summary>The block's existing navigation callback.</summary>
+    [Parameter] public EventCallback Activated { get; set; }
+    private readonly ElementFragmentCache _fragment = new();
+    private string ActionStyle => FormattableString.Invariant($"width:{SummaryBlocks.ActionBounds(Element).Width}px;height:{SummaryBlocks.ActionBounds(Element).Height}px");
+    private FlareColor Tone => Element.StatTone switch { "success" => FlareColor.Success, "warning" => FlareColor.Warning, "error" => FlareColor.Error, "info" => FlareColor.Info, _ => FlareColor.Default };
+    private FlareSize Size => Element.FontScale >= 1.5 ? FlareSize.Lg : Element.FontScale <= .75 ? FlareSize.Sm : FlareSize.Md;
+    private string AccessibleName => Element.Kind == WireframeKind.Stat ? $"{Element.DisplayText}: {Element.Value} {Element.StatUnit}, {Element.StatDelta}, {Element.SecondaryText}" : $"{Element.HeaderEyebrow}, {Element.DisplayText}, {Element.SecondaryText}";
+    private Task Activate() => Interactive && !Element.Disabled ? Activated.InvokeAsync() : Task.CompletedTask;
+}

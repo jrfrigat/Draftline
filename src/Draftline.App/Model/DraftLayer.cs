@@ -108,6 +108,7 @@ public sealed class DraftLayer
             element.Value ??= string.Empty;
             element.Placeholder ??= string.Empty;
             element.SecondaryText ??= string.Empty;
+            SummaryBlocks.Normalize(element);
             element.TargetLayerId ??= string.Empty;
             element.Options ??= new List<string>();
             ElementState.Normalize(element);
