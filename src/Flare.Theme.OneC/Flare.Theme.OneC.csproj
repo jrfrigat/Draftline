@@ -12,7 +12,7 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Flare.Theme.FluentUI2" Version="0.44.0" />
+    <PackageReference Include="Flare.Theme.FluentUI2" Version="0.45.0" />
     <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
