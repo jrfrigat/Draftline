@@ -82,6 +82,10 @@
                                        Disabled="Session.IsPreviewing" OnClick="@(() => SetBlocksFolded(!_blocksFolded))" />
                     <RibbonCommand Label="@(_sidesFolded ? "Показать свойства и экраны" : "Скрыть свойства и экраны")" Icon="panel-right" Pressed="@(!_sidesFolded)"
                                        Disabled="Session.IsPreviewing" OnClick="@(() => SetSidesFolded(!_sidesFolded))" />
+                    <RibbonCommand Label="@(_propertiesExpanded ? "Скрыть свойства" : "Показать свойства")" Icon="panel-right" Pressed="_propertiesExpanded"
+                                   OnClick="@(() => ToggleRightPanel(true))" />
+                    <RibbonCommand Label="@(_layersExpanded ? "Скрыть экраны" : "Показать экраны")" Icon="panel-right" Pressed="_layersExpanded"
+                                   OnClick="@(() => ToggleRightPanel(false))" />
                 </FlareRibbonGroup>
             </FlareRibbonTab>
         </FlareRibbon>
@@ -116,16 +120,19 @@
     </ChildContent>
 
     <RightToolPanel>
-        <section id="df-properties" tabindex="-1" aria-label="Свойства и экраны">
-        @* These panels own their expanded state independently. Registering both as the IDE layout's
-           right tool panel makes their different titles continuously invalidate the same region. *@
-        <FlareAccordion AllowMultiple="true">
-            <FlareAccordionPanel Header="Свойства" @bind-Expanded="_propertiesExpanded">
+        @if (_propertiesExpanded)
+        {
+            <FlareToolPanel Title="Свойства" Position="ToolPanelPosition.Right">
+                <section id="df-properties" tabindex="-1" aria-label="Свойства">
                 <Inspector />
-            </FlareAccordionPanel>
-            <FlareAccordionPanel Header="Экраны" @bind-Expanded="_layersExpanded">
+                </section>
+            </FlareToolPanel>
+        }
+        @if (_layersExpanded)
+        {
+            <FlareToolPanel Title="Экраны" Position="ToolPanelPosition.Right">
                 <LayerPanel />
-            </FlareAccordionPanel>
+        <FlareAccordion AllowMultiple="true">
             <FlareAccordionPanel Header="Блоки на экране">
                 <BlockList />
             </FlareAccordionPanel>
@@ -136,7 +143,8 @@
                 <AlternatePanel />
             </FlareAccordionPanel>
         </FlareAccordion>
-        </section>
+            </FlareToolPanel>
+        }
     </RightToolPanel>
 
     <StatusBar>
@@ -205,6 +213,13 @@
     // Keep each panel's choice when preview temporarily unmounts the right region.
     private bool _propertiesExpanded = true;
     private bool _layersExpanded = true;
+
+    private void ToggleRightPanel(bool properties)
+    {
+        if (properties) _propertiesExpanded = !_propertiesExpanded;
+        else _layersExpanded = !_layersExpanded;
+        SetSidesFolded(!_propertiesExpanded && !_layersExpanded);
+    }
 
     /// <inheritdoc />
     protected override void OnInitialized()
@@ -294,6 +309,8 @@
 
     private void SetSidesFolded(bool folded)
     {
+        if (!folded && !_propertiesExpanded && !_layersExpanded)
+            (_propertiesExpanded, _layersExpanded) = (true, true);
         _sidesFolded = folded;
         if (_compact && !folded) _blocksFolded = true;
     }
