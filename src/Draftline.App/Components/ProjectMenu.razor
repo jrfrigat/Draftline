@@ -161,6 +161,9 @@
     /// </summary>
     private async Task DeleteProject(string id, string name)
     {
+        // The confirmation replaces the project picker rather than stacking its focus trap.
+        _menuOpen = false;
+        StateHasChanged();
         var confirmed = await Dialog.ConfirmAsync(
             "Удалить макет?",
             $"«{name}» исчезнет из хранилища браузера. Это действие нельзя отменить.",
